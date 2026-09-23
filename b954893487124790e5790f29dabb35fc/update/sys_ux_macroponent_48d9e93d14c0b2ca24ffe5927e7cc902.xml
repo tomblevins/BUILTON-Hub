@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ux_macroponent">
+    <sys_ux_macroponent action="INSERT_OR_UPDATE">
+        <associated_types>d8899a0473000010f7353c78caf6a750,c1251a89db4c1010793ddf6b5e96199c</associated_types>
+        <bundles/>
+        <category>primitives</category>
+        <component_dependencies/>
+        <composition>[]</composition>
+        <da_relay_models/>
+        <data/>
+        <description/>
+        <disable_auto_reflow>false</disable_auto_reflow>
+        <dispatched_events/>
+        <ext_controller_dep/>
+        <extends/>
+        <extension_point/>
+        <form_factors>{}</form_factors>
+        <handled_events/>
+        <interactions/>
+        <interfaces/>
+        <internal_event_mappings/>
+        <keyboard_shortcuts>{}</keyboard_shortcuts>
+        <layout>{}</layout>
+        <macroponent_dependencies/>
+        <name>Mars Landing Lumen</name>
+        <output_prop_mapping/>
+        <props>[
+    {
+        "defaultValue": "@context.props.table",
+        "description": "Use this for contact name",
+        "label": " Table (parameter = 'table'",
+        "mandatory": false,
+        "name": "frameTable",
+        "readOnly": false,
+        "valueType": "string"
+    },
+    {
+        "defaultValue": "@context.props.sysId",
+        "description": "Record ID",
+        "label": "Record ID (parameter = 'record'",
+        "mandatory": false,
+        "name": "frameRecord",
+        "readOnly": false,
+        "valueType": "string"
+    },
+    {
+        "defaultValue": "",
+        "description": "",
+        "label": "Parameters (JSON) (parameter = 'paramjson')",
+        "mandatory": false,
+        "name": "paramJSON",
+        "readOnly": false,
+        "valueType": "string"
+    },
+    {
+        "defaultValue": "",
+        "description": "Use this for the URL",
+        "label": "Frame URL (portal view/page)",
+        "mandatory": false,
+        "name": "frameUrl",
+        "readOnly": false,
+        "valueType": "string"
+    }
+]</props>
+        <required_sys_props/>
+        <required_translations>[ ]</required_translations>
+        <root_component display_value="marslanding-lumen">d5ec47c22253ee79bdda6d38a67721be</root_component>
+        <root_component_config>{"frameTable":"@context/frameTable","frameRecord":"@context/frameRecord","paramJSON":"@context/paramJSON","frameUrl":"@context/frameUrl"}</root_component_config>
+        <root_component_definition>{"availableSlots":[]}</root_component_definition>
+        <schema_version>1.0.0</schema_version>
+        <state_persistence_config/>
+        <state_properties/>
+        <style_config>{}</style_config>
+        <sys_class_name>sys_ux_macroponent</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 18:22:32</sys_created_on>
+        <sys_id>48d9e93d14c0b2ca24ffe5927e7cc902</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Mars Landing Lumen</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ux_macroponent_48d9e93d14c0b2ca24ffe5927e7cc902</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 18:22:32</sys_updated_on>
+    </sys_ux_macroponent>
+</record_update>

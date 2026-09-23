@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGCommentSignal</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Viewer-relative unanswered-comment signal. Backs the My Engagements row badges and the portal header indicator.</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGCommentSignal</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGCommentSignal = Class.create();
+PTAGCommentSignal.prototype = {
+  TABLE: 'x_snc_ptag_engage_engagement_request',
+  READ_PREF: 'ptag.hub.read.',
+
+  initialize: function () {
+    this.me = String(gs.getUserName());
+  },
+
+  /* Comment state for a set of request sys_ids, from the CURRENT viewer's point
+     of view. Returns sys_id -> { total, unanswered, last_by, last_on, pending,
+     unread }.
+
+     "unanswered" is deliberately NOT the size of the thread. It is the number of
+     comments OTHER people have left since the viewer's own most recent comment,
+     which is the only figure a requester cares about: how many things are still
+     waiting on me. Your own replies never inflate it. Because the baseline is
+     gs.getUserName(), the answer is correct for whoever is looking - Jon sees his
+     backlog, Wally sees his. */
+  forRecords: function (ids) {
+    var out = {};
+    if (!ids || !ids.length) { return out; }
+    var seq = {};
+    var jf = new GlideRecord('sys_journal_field');
+    jf.addQuery('name', this.TABLE);
+    jf.addQuery('element', 'comments');   /* customer-visible only, never work_notes */
+    jf.addQuery('element_id', 'IN', ids.join(','));
+    jf.orderBy('sys_created_on');
+    jf.setLimit(5000);
+    jf.query();
+    while (jf.next()) {
+      var eid = String(jf.getValue('element_id'));
+      if (!seq[eid]) { seq[eid] = []; }
+      seq[eid].push({ by: String(jf.getValue('sys_created_by') || ''),
+                      on: String(jf.getValue('sys_created_on') || '') });
+    }
+    for (var k in seq) {
+      if (seq.hasOwnProperty(k)) { out[k] = this._state(k, seq[k]); }
+    }
+    return out;
+  },
+
+  _state: function (sysId, entries) {
+    var lastMine = -1, i;
+    for (i = 0; i < entries.length; i++) {
+      if (entries[i].by === this.me) { lastMine = i; }
+    }
+    var last = entries[entries.length - 1];
+    var st = {
+      total: entries.length,
+      unanswered: entries.length - (lastMine + 1),
+      last_by: last.by,
+      last_on: last.on,
+      unread: false
+    };
+    st.pending = st.unanswered > 0;
+    if (st.pending) {
+      /* read receipts are per user and hold an internal UTC datetime, so a plain
+         string compare against sys_created_on is chronological */
+      var seen = '';
+      try { seen = String(gs.getUser().getPreference(this.READ_PREF + sysId) || ''); }
+      catch (e) {}
+      st.unread = (!seen || seen < last.on);
+    }
+    return st;
+  },
+
+  /* Everything the viewer is on the hook for, across every request they opened.
+     Backs BOTH the header signal and the My Engagements list, which is the whole
+     point: two surfaces, one implementation, no chance of them disagreeing. */
+  analyzeMine: function () {
+    var ids = [];
+    var gr = new GlideRecord(this.TABLE);
+    gr.addQuery('opened_by', gs.getUserID());
+    gr.setLimit(500);
+    gr.query();
+    while (gr.next()) { ids.push(gr.getUniqueValue()); }
+
+    var map = this.forRecords(ids);
+    var res = { map: map, comments: 0, records: 0, ids: [] };
+    for (var k in map) {
+      if (!map.hasOwnProperty(k) || !map[k].pending) { continue; }
+      res.records++;
+      res.comments += map[k].unanswered;
+      res.ids.push(k);
+    }
+    return res;
+  },
+
+  /* Flag the trailing run of comments from other people - the EXACT set the row
+     badge counts. Kept here beside the count so a "New" chip in the thread and
+     the number on the badge can never disagree about what unanswered means.
+     Expects entries in chronological order with .author still holding the
+     user_name, not the display name. */
+  markUnanswered: function (entries) {
+    var lastMine = -1, i;
+    if (!entries || !entries.length) { return entries; }
+    for (i = 0; i < entries.length; i++) {
+      if (entries[i].author === this.me) { lastMine = i; }
+    }
+    for (i = 0; i < entries.length; i++) {
+      entries[i].is_new = (i > lastMine) && (entries[i].author !== this.me);
+    }
+    return entries;
+  },
+
+  /* user_name -> display name in one query, for the "New reply from X" copy */
+  displayNames: function (userNames) {
+    var out = {};
+    if (!userNames || !userNames.length) { return out; }
+    var u = new GlideRecord('sys_user');
+    u.addQuery('user_name', 'IN', userNames.join(','));
+    u.query();
+    while (u.next()) {
+      out[String(u.getValue('user_name'))] = String(u.getValue('name') || '');
+    }
+    return out;
+  },
+
+  type: 'PTAGCommentSignal'
+};
+]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 01:01:18</sys_created_on>
+        <sys_id>c2775716939a4f144639f8597bba1022</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PTAGCommentSignal</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_c2775716939a4f144639f8597bba1022</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 02:49:57</sys_updated_on>
+    </sys_script_include>
+</record_update>

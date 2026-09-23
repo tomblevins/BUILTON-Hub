@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>PTAG I9 AI-layer data posture decision record (see data/ptag_hub_i9_build.json for evidence)</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_snc_ptag_engage.ai_posture_write_boundary</name>
+        <read_roles/>
+        <suffix>ai_posture_write_boundary</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 19:19:45</sys_created_on>
+        <sys_id>f3e2ad45879a0b90e5790f29dabb359a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.ai_posture_write_boundary</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_properties_f3e2ad45879a0b90e5790f29dabb359a</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 19:19:45</sys_updated_on>
+        <type>string</type>
+        <value>agents: journal work_notes only ([AI Completeness Draft], one per run); skill: exec_summary + exec_summary_generated_on only; AI never writes state/assignment/scores</value>
+        <write_roles/>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=f3e2ad45879a0b90e5790f29dabb359a"/>
+</record_update>

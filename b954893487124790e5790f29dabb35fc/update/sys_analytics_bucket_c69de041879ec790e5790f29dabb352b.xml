@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_analytics_bucket">
+    <sys_analytics_bucket action="INSERT_OR_UPDATE">
+        <analytics_channel display_value="NextExperience">c8ae7e45732130107d804c9885f6a7a5</analytics_channel>
+        <application_name>PTAG Engagement Hub</application_name>
+        <bucket_document_id>a9dc688dca5ec790dae7fc128df0b714</bucket_document_id>
+        <bucket_metadata/>
+        <bucket_metadata_customer_override/>
+        <bucket_table_name>sys_ux_page_registry</bucket_table_name>
+        <bucket_type/>
+        <enable_unauthenticated_user_tracking>false</enable_unauthenticated_user_tracking>
+        <enabled>true</enabled>
+        <internal_name_for_index>x_snc_ptag_engage.sys_ux_page_registry.a9dc688dca5ec790dae7fc128df0b714</internal_name_for_index>
+        <sys_class_name>sys_analytics_bucket</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 15:26:42</sys_created_on>
+        <sys_id>c69de041879ec790e5790f29dabb352b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Engagement Hub</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_analytics_bucket_c69de041879ec790e5790f29dabb352b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 15:26:42</sys_updated_on>
+    </sys_analytics_bucket>
+</record_update>

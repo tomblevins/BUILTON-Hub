@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_theme">
+    <sp_theme action="INSERT_OR_UPDATE">
+        <css_variables>/* == PTAG BOOT SPLASH ====================================================
+   Lives in the THEME, not in a widget, and that placement is the whole point.
+   The PTAG design system (fonts, tokens, base css, icon sprite) is injected at
+   runtime by ptag_global's link function, so until Angular boots the document
+   has no styling at all - that was the bare white page with the stock spinner.
+   Widget css cannot fix it: it is delivered when the widget renders, i.e. after
+   boot. Theme css IS compiled into sp-bootstrap-rem.scss and linked in &lt;head&gt;,
+   so it paints on the first frame.
+
+   Everything here is deliberately self-contained: literal colours and easings,
+   no var(--pt-*), because the tokens do not exist yet at this point.
+
+   The splash is cleared by ptag_global's link function adding .pt-booted to
+   &lt;html&gt;. An animation can only be beaten by an animation, hence pt-boot-out
+   rather than a plain opacity rule. There is also a hard 8s failsafe so a
+   failed boot can never strand a full-screen overlay on the user. == */
+html, body { background: #0a0e16; }
+
+html::before {
+  content: ""; position: fixed; inset: 0; z-index: 999999;
+  background:
+    radial-gradient(760px 420px at 50% 42%, rgba(99, 223, 78, 0.09), transparent 70%),
+    radial-gradient(520px 320px at 78% 8%, rgba(56, 189, 248, 0.06), transparent 70%),
+    #0a0e16;
+  animation: pt-boot-breathe 2.6s cubic-bezier(0.22, 0.61, 0.24, 1) infinite,
+             pt-boot-timeout 0s linear 8s forwards;
+}
+html::after {
+  content: ""; position: fixed; z-index: 1000000;
+  top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
+  border-radius: 50%;
+  border: 2px solid rgba(99, 223, 78, 0.16);
+  border-top-color: #63df4e;
+  border-right-color: rgba(99, 223, 78, 0.55);
+  animation: pt-boot-spin 1.05s linear infinite,
+             pt-boot-timeout 0s linear 8s forwards;
+}
+html.pt-booted::before, html.pt-booted::after {
+  animation: pt-boot-out 0.42s cubic-bezier(0.22, 0.61, 0.24, 1) forwards;
+}
+@keyframes pt-boot-spin { to { transform: rotate(360deg); } }
+@keyframes pt-boot-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.93; } }
+@keyframes pt-boot-timeout { to { opacity: 0; visibility: hidden; } }
+@keyframes pt-boot-out { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  html::before { animation: pt-boot-timeout 0s linear 8s forwards; }
+  html::after  { animation: pt-boot-timeout 0s linear 8s forwards; }
+}
+/* == PTAG BOOT SPLASH END == */</css_variables>
+        <footer/>
+        <footer_fixed>false</footer_fixed>
+        <header/>
+        <icon/>
+        <logo/>
+        <logo_alt_text/>
+        <matching_now_experience_theme/>
+        <name>PTAG Engage Dark</name>
+        <navbar_fixed>false</navbar_fixed>
+        <sys_class_name>sp_theme</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:52:07</sys_created_on>
+        <sys_id>49f9cd3887924790e5790f29dabb358e</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>PTAG Engage Dark</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_theme_49f9cd3887924790e5790f29dabb358e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 02:01:38</sys_updated_on>
+        <turn_off_scss_compilation>false</turn_off_scss_compilation>
+    </sp_theme>
+</record_update>

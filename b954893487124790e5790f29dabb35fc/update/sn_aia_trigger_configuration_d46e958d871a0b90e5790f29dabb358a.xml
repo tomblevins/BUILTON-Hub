@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_trigger_configuration">
+    <sn_aia_trigger_configuration action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <business_rule/>
+        <channel display_value="Now Assist Panel">b023fcb3537321106167ddeeff7b12a8</channel>
+        <condition table="x_snc_ptag_engage_engagement_request">state=-2^EQ<item display_value="Need more information" endquery="false" field="state" goto="false" newquery="false" operator="=" or="false" value="-2"/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </condition>
+        <description>Declarative trigger registration for the PTAG Completeness Chase use case (state enters Need more information). RUNTIME NOTE: on this instance the generated flow path fails with a conversation-service NPE (Conversation.getDomain null) and the triggerConfi</description>
+        <enable_discovery>false</enable_discovery>
+        <internal_name>x_snc_ptag_engage.ptag_request_needs_more_info</internal_name>
+        <name>PTAG - Request needs more info</name>
+        <notification_script/>
+        <objective_template><![CDATA[Engagement request ${number} entered 'Need more information'. Record sys_id: ${sys_id}. Review it for missing or weak intake signals and append ONE work note draft (the write tool prefixes it with [AI Completeness Draft]) listing at most three specific gaps in requester-friendly wording. Journal write only; change no fields.]]></objective_template>
+        <portal/>
+        <profile/>
+        <run_as/>
+        <run_as_script/>
+        <run_as_user display_value="Jon DeLuna">3494c6283be9be90c9c355f726e45afc</run_as_user>
+        <run_dayofmonth/>
+        <run_dayofweek/>
+        <run_period/>
+        <run_start/>
+        <run_time/>
+        <show_notifications>false</show_notifications>
+        <sys_class_name>sn_aia_trigger_configuration</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:59:50</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>d46e958d871a0b90e5790f29dabb358a</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>x_snc_ptag_engage_engagement_request</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_trigger_configuration_d46e958d871a0b90e5790f29dabb358a</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 19:53:19</sys_updated_on>
+        <target_table>x_snc_ptag_engage_engagement_request</target_table>
+        <trigger_flow display_value="Engagement Request - Use case: PTAG Completeness Chase - a06ed58d871a0b90e5790f29dabb3501">e86ed58d871a0b90e5790f29dabb3503</trigger_flow>
+        <trigger_flow_definition_type>record_update</trigger_flow_definition_type>
+        <trigger_strategy>unique_changes</trigger_strategy>
+        <usecase display_value="PTAG Completeness Chase">0c6e958d871a0b90e5790f29dabb357c</usecase>
+    </sn_aia_trigger_configuration>
+</record_update>

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGScoringEngine</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGScoringEngine</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGScoringEngine = Class.create();
+PTAGScoringEngine.prototype = {
+    /* PTAG Engagement Hub decision layer (I7).
+       Model = data rows in x_snc_ptag_engage_scoring_weight:
+         row_type weight -> additive scoring rules (rule: boolean_true |
+                            value_match | numeric_band | all_nonempty)
+         row_type band   -> score ranges (threshold_min..threshold_max -> band)
+         row_type gate   -> hard caps (rule all_false over signal list -> cap band)
+       Banding note: blueprint preferred sys_decision; headless authoring is
+       blocked (conditions bind to a Workflow Studio-generated var__m_* input
+       model; sn_dt has no authoring API), so band/gate rows live here as
+       admin-tunable config. */
+    initialize: function () {
+        this.WEIGHTS = 'x_snc_ptag_engage_scoring_weight';
+        this.REQUEST = 'x_snc_ptag_engage_engagement_request';
+        this.VERSION_PROP = 'x_snc_ptag_engage.scoring_model_version';
+        this.STAMP_PROP = 'x_snc_ptag_engage.last_weight_change';
+        this.TERMINAL = '3,7,8,9';
+        this.RANK = { needs_development: 0, standard: 1, fast_track: 2 };
+    },
+
+    modelVersion: function () {
+        return parseInt(gs.getProperty(this.VERSION_PROP, '1'), 10) || 1;
+    },
+
+    bumpModelVersion: function () {
+        var v = this.modelVersion() + 1;
+        gs.setProperty(this.VERSION_PROP, String(v));
+        return v;
+    },
+
+    _rows: function (rowType) {
+        var out = [];
+        var gr = new GlideRecord(this.WEIGHTS);
+        gr.addQuery('active', true);
+        gr.addQuery('row_type', rowType);
+        gr.orderBy('signal');
+        gr.query();
+        while (gr.next()) {
+            out.push({
+                signal: String(gr.getValue('signal') || ''),
+                signal_value: String(gr.getValue('signal_value') || ''),
+                rule: String(gr.getValue('rule') || ''),
+                weight: parseInt(gr.getValue('weight'), 10) || 0,
+                tmin: (gr.getValue('threshold_min') === null || gr.getValue('threshold_min') === '') ? null : parseInt(gr.getValue('threshold_min'), 10),
+                tmax: (gr.getValue('threshold_max') === null || gr.getValue('threshold_max') === '') ? null : parseInt(gr.getValue('threshold_max'), 10),
+                band: String(gr.getValue('band') || '')
+            });
+        }
+        return out;
+    },
+
+    /* currency/number safe: handles '60000000', 'USD;60000000', '$60,000,000' */
+    _num: function (raw) {
+        var s = String(raw === null || raw === undefined ? '' : raw);
+        if (s.indexOf(';') >= 0) s = s.split(';').pop();
+        s = s.replace(/[^0-9.\-]/g, '');
+        if (!s) return null;
+        var n = parseFloat(s);
+        return isNaN(n) ? null : n;
+    },
+
+    /* html-aware emptiness: tags/nbsp stripped before the check */
+    _text: function (gr, field) {
+        if (!gr.isValidField(field)) return '';
+        var v = String(gr.getValue(field) || '');
+        v = v.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ');
+        return v.replace(/\s+/g, ' ').trim();
+    },
+
+    _isTrue: function (gr, field) {
+        return gr.isValidField(field) && String(gr.getElement(field)) === 'true';
+    },
+
+    /* I15 TAM normalization: effective TAM = declared TAM x scope multiplier.
+       Multipliers are row_type=normalization rows (signal partner_scope,
+       value_match on the scope choice -> weight = multiplier). Empty/unknown
+       scope -> 1, so pre-I15 records (which carry no scope) score identically. */
+    _tamMultiplier: function (gr) {
+        if (!gr.isValidField('partner_scope')) { return 1; }
+        var scope = String(gr.getValue('partner_scope') || '');
+        if (!scope) { return 1; }
+        var g = new GlideRecord(this.WEIGHTS);
+        g.addQuery('active', true);
+        g.addQuery('row_type', 'normalization');
+        g.addQuery('signal', 'partner_scope');
+        g.addQuery('signal_value', scope);
+        g.query();
+        if (g.next()) {
+            var w = parseInt(g.getValue('weight'), 10);
+            if (!isNaN(w) && w > 0) { return w; }
+        }
+        return 1;
+    },
+
+    /* additive weight rows; numeric_band = highest matching floor wins per signal */
+    score: function (gr) {
+        var total = 0;
+        var bandBest = {};
+        var tamMult = this._tamMultiplier(gr);
+        var rows = this._rows('weight');
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            if (r.rule === 'boolean_true') {
+                if (this._isTrue(gr, r.signal)) total += r.weight;
+            } else if (r.rule === 'value_match') {
+                if (gr.isValidField(r.signal) && String(gr.getValue(r.signal) || '') === r.signal_value) total += r.weight;
+            } else if (r.rule === 'all_nonempty') {
+                var fs = r.signal.split(',');
+                var all = fs.length > 0;
+                for (var j = 0; j < fs.length; j++) {
+                    if (!this._text(gr, fs[j].trim())) { all = false; break; }
+                }
+                if (all) total += r.weight;
+            } else if (r.rule === 'numeric_band') {
+                var val = this._num(gr.isValidField(r.signal) ? gr.getValue(r.signal) : null);
+                if (val !== null && r.signal === 'tam') { val = val * tamMult; }
+                if (val !== null && r.tmin !== null && val >= r.tmin) {
+                    var cur = bandBest[r.signal];
+                    if (!cur || r.tmin > cur.tmin) bandBest[r.signal] = r;
+                }
+            }
+        }
+        for (var k in bandBest) {
+            if (bandBest.hasOwnProperty(k)) total += bandBest[k].weight;
+        }
+        return Math.max(0, Math.min(100, total));
+    },
+
+    /* band rows classify; gate rows cap. Lowest cap wins. */
+    band: function (score, gr) {
+        var raw = 'needs_development';
+        var bands = this._rows('band');
+        for (var i = 0; i < bands.length; i++) {
+            var b = bands[i];
+            if (b.tmin !== null && b.tmax !== null && score >= b.tmin && score <= b.tmax) { raw = b.band; break; }
+        }
+        var out = raw;
+        var gates = this._rows('gate');
+        for (var g = 0; g < gates.length; g++) {
+            var gt = gates[g];
+            if (gt.rule === 'all_false') {
+                var fs = gt.signal.split(',');
+                var allFalse = fs.length > 0;
+                for (var j = 0; j < fs.length; j++) {
+                    if (this._isTrue(gr, fs[j].trim())) { allFalse = false; break; }
+                }
+                if (allFalse && gt.band && this.RANK[gt.band] < this.RANK[out]) out = gt.band;
+            }
+        }
+        return { band: out, raw_band: raw, gated: out !== raw };
+    },
+
+    /* distinct request columns referenced by active weight/gate rows */
+    signalFields: function () {
+        var seen = {};
+        var rows = this._rows('weight').concat(this._rows('gate'));
+        for (var i = 0; i < rows.length; i++) {
+            var fs = rows[i].signal.split(',');
+            for (var j = 0; j < fs.length; j++) {
+                var f = fs[j].trim();
+                if (f) seen[f] = true;
+            }
+        }
+        return Object.keys(seen);
+    },
+
+    signalsChanged: function (current) {
+        var fs = this.signalFields();
+        for (var i = 0; i < fs.length; i++) {
+            if (current.isValidField(fs[i]) && current.getElement(fs[i]).changes()) return true;
+        }
+        return false;
+    },
+
+    /* stamp score/band/version on the (before-BR) record; no update() here */
+    apply: function (current) {
+        var s = this.score(current);
+        var b = this.band(s, current);
+        current.setValue('score', s);
+        current.setValue('score_band', b.band);
+        current.setValue('scoring_version', this.modelVersion());
+        return { score: s, band: b.band, gated: b.gated };
+    },
+
+    /* batch: open (non-terminal) + unlocked records only */
+    rescoreOpen: function (reason) {
+        var n = 0;
+        var gr = new GlideRecord(this.REQUEST);
+        gr.addQuery('state', 'NOT IN', this.TERMINAL);
+        gr.addQuery('score_locked', false);
+        gr.query();
+        while (gr.next()) {
+            var s = this.score(gr);
+            var b = this.band(s, gr).band;
+            var v = this.modelVersion();
+            if (parseInt(gr.getValue('score'), 10) !== s ||
+                String(gr.getValue('score_band') || '') !== b ||
+                parseInt(gr.getValue('scoring_version'), 10) !== v) {
+                gr.setValue('score', s);
+                gr.setValue('score_band', b);
+                gr.setValue('scoring_version', v);
+                gr.update();
+                n++;
+            }
+        }
+        gs.info('[PTAGScoringEngine] rescoreOpen (' + (reason || 'manual') + '): ' + n + ' record(s) restamped, model v' + this.modelVersion());
+        return n;
+    },
+
+    /* debounce: one pending sys_trigger job, replaced on every weight change;
+       falls back to a scheduled event + script action if sys_trigger writes are
+       refused cross-scope. Returns the path taken (for the build ledger). */
+    /* debounce: schedule ONE burst-collapsed rescore ~seconds out.
+       Mechanism: gs.eventQueueScheduled on the triggering weight row + a
+       Script Action; parm1 carries the change stamp and only the event whose
+       stamp still equals x_snc_ptag_engage.last_weight_change executes - i.e.
+       only the LAST change in a burst rescored. sys_trigger was the preferred
+       carrier (blueprint) but scoped BRs cannot insert sys_trigger
+       (cross-scope write policy refused, evidence in the I7 ledger), and
+       eventQueueScheduled with a null record is a silent no-op in scope -
+       the event MUST be queued on a real GlideRecord. */
+    scheduleRescoreDebounced: function (seconds, rec) {
+        var wait = parseInt(seconds, 10) || 60;
+        var when = new GlideDateTime();
+        when.addSeconds(wait);
+        var stamp = String(new GlideDateTime().getNumericValue());
+        gs.setProperty(this.STAMP_PROP, stamp);
+        gs.eventQueueScheduled('x_snc_ptag_engage.rescore_due', rec, stamp, '', when);
+        return 'event:' + stamp;
+    },
+
+    type: 'PTAGScoringEngine'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:50:00</sys_created_on>
+        <sys_id>a435648d87dac790e5790f29dabb3533</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAGScoringEngine</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_a435648d87dac790e5790f29dabb3533</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-24 14:51:00</sys_updated_on>
+    </sys_script_include>
+</record_update>

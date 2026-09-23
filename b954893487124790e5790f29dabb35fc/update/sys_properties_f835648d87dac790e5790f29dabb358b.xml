@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>PTAG Hub scoring model version. Bumped automatically on any scoring_weight change; stamped onto records as scoring_version at (re)score time.</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_snc_ptag_engage.scoring_model_version</name>
+        <read_roles/>
+        <suffix>scoring_model_version</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:50:02</sys_created_on>
+        <sys_id>f835648d87dac790e5790f29dabb358b</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.scoring_model_version</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_properties_f835648d87dac790e5790f29dabb358b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:58:29</sys_updated_on>
+        <type>integer</type>
+        <value>1</value>
+        <write_roles/>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=f835648d87dac790e5790f29dabb358b"/>
+</record_update>

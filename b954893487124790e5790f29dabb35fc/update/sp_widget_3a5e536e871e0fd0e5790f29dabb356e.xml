@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($scope, spUtil, $timeout) {
+  var c = this;
+  try { document.body.style.setProperty('background', '#f1f3f5', 'important'); } catch (e) {}
+  try { document.body.style.setProperty('margin', '0', 'important'); } catch (e) {}
+  /* I63: framed embed never scrolls itself - the frame self-sizes, so the
+     inner scrollbar was pure rounding noise (Jon's dark-grey bar). */
+  try {
+    if (window.frameElement) {
+      document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+      document.body.style.setProperty('overflow', 'hidden', 'important');
+    }
+  } catch (e) {}
+
+  function syncFrame() {
+    try {
+      var fe = window.frameElement;
+      if (!fe) { return; }
+      fe.style.setProperty('border', '0', 'important');
+      fe.style.setProperty('box-shadow', 'none', 'important');
+      fe.style.setProperty('width', '100%', 'important');
+      fe.style.setProperty('overflow', 'hidden', 'important');
+      try { fe.setAttribute('scrolling', 'no'); } catch (e2) {}
+      /* I61: measure the widget ROOT, not body.scrollHeight - body can never
+         report smaller than the iframe viewport, so the old measure RATCHETED:
+         the frame grew with the drill but never shrank back, leaving the outer
+         page with a stale, cut-off scroll extent. The root's rect is
+         viewport-independent, so the frame recovers when panels close. */
+      var root = document.querySelector('.pt-cc');
+      if (!root) { return; }
+      var h = Math.max(Math.ceil(root.getBoundingClientRect().height) + 2, 640);
+      if (fe.__ptH === undefined || Math.abs(fe.__ptH - h) > 4) {
+        fe.__ptH = h;
+        fe.style.setProperty('height', h + 'px', 'important');
+      }
+      if (document.documentElement.scrollTop) { document.documentElement.scrollTop = 0; }
+      if (document.body.scrollTop) { document.body.scrollTop = 0; }
+      var p = fe.parentElement;
+      for (var k = 0; k < 4 && p; k++) {
+        p.style.setProperty('border', '0', 'important');
+        p.style.setProperty('box-shadow', 'none', 'important');
+        p = p.parentElement;
+      }
+    } catch (e) {}
+  }
+  syncFrame();
+  try { setInterval(syncFrame, 800); } catch (e) {}
+
+  var PRACTICE_PAL = ['#2e9e4f', '#4f5fd6', '#d98e15', '#0e7ac4', '#e0719f', '#6d3fc4'];
+  var OTHER_GREY = '#aab3bc';
+  var RAMP4 = ['#14522c', '#227a43', '#37a55e', '#6cc287'];
+  var RAMP3 = ['#14522c', '#37a55e', '#6cc287'];
+
+  function donut(items, palette, greyLast) {
+    var total = 0, i;
+    items = items || [];
+    for (i = 0; i < items.length; i++) { total += items[i].count; }
+    var slices = [], cum = 0, GAP = 1.6;
+    for (i = 0; i < items.length; i++) {
+      var pct = total ? (items[i].count / total * 100) : 0;
+      var seg = Math.max(pct - GAP, 0.4);
+      var color = (greyLast && items[i].id === '__other__') ? OTHER_GREY
+                : palette[Math.min(i, palette.length - 1)];
+      slices.push({label: items[i].label, count: items[i].count, id: items[i].id,
+                   color: color,
+                   dash: seg.toFixed(2) + ' ' + (100 - seg).toFixed(2),
+                   offset: String((25 - cum - GAP / 2).toFixed(2))});
+      cum += pct;
+    }
+    return slices;
+  }
+
+  c.practiceColor = function(name) {
+    var s = c.practiceSlices || [];
+    for (var i = 0; i < s.length; i++) { if (s[i].label === name) { return s[i].color; } }
+    return OTHER_GREY;
+  };
+  c.hov = null;
+  c.setHov = function(k) { c.hov = k; };
+  c.clearHov = function() { c.hov = null; };
+  c.ageBucket = function(d) { return d < 7 ? 0 : (d < 14 ? 1 : (d < 30 ? 2 : 3)); };
+
+  function build() {
+    var mix = $scope.data.practiceMix || [];
+    c.practiceSlices = donut(mix, PRACTICE_PAL, true);
+    var ids = [];
+    for (var i = 0; i < mix.length && i < 5; i++) {
+      if (mix[i].id && mix[i].id !== '__other__') { ids.push(mix[i].id); }
+    }
+    c.topPracticeIds = ids.join(',');
+    var bands = $scope.data.bands || [];
+    c.bandSlices = donut(bands, bands.length > 3 ? RAMP4 : RAMP3, false);
+  }
+  build();
+
+  /* I59: value-watch. spUtil.update MERGES data in place, so a reference
+     watch on 'data' never fires - that is what left the spinner stuck. */
+  $scope.$watch('data.asOf', function(nv, ov) {
+    if (nv === ov) { return; }
+    build();
+    c.refreshing = false;
+    if (c.dp && !c.dp.busy && c.dpArgs) { fetchDrill(false); }
+  });
+
+  c.refreshing = false;
+  c.refresh = function() {
+    if (c.refreshing) { return; }
+    c.refreshing = true;
+    var done = function() { c.refreshing = false; };
+    try {
+      var p = spUtil.update($scope);
+      if (p && p.then) { p.then(done, done); }
+    } catch (e) { done(); }
+    $timeout(done, 8000);   /* failsafe: never spin forever */
+  };
+
+
+  /* ---- I68: scroll to the drill on open, return on close ---- */
+  var savedScroll = null;
+  function collectScrollers() {
+    /* I68b: the frame is SLOTTED through shadow DOM, so a parentElement/host
+       walk BYPASSES the tree that actually scrolls (div.page.scroll-y, proven
+       live: unreachable in 100 hops). Scan the whole top document instead -
+       same technique the shell widget uses. */
+    var list = [];
+    try {
+      function scan(node, depth) {
+        if (!node || depth > 60) { return; }
+        if (node.nodeType === 1) {
+          try {
+            if (node.scrollHeight > node.clientHeight + 4 && node.clientHeight > 100) {
+              list.push(node);
+            }
+          } catch (e) {}
+          if (node.shadowRoot) { scan(node.shadowRoot, depth + 1); }
+        }
+        var kids = node.children || node.childNodes || [];
+        for (var i = 0; i < kids.length; i++) { scan(kids[i], depth + 1); }
+      }
+      scan(window.top.document.documentElement, 0);
+    } catch (e) {}
+    return list;
+  }
+  function saveScroll() {
+    try {
+      savedScroll = collectScrollers().map(function(s) {
+        return {el: s, top: s.scrollTop, left: s.scrollLeft};
+      });
+      savedScroll.push({win: window.top, x: window.top.scrollX, y: window.top.scrollY});
+    } catch (e) { savedScroll = null; }
+  }
+  function restoreScroll() {
+    var s = savedScroll;
+    savedScroll = null;
+    if (!s) { return; }
+    function apply() {
+      try {
+        s.forEach(function(r) {
+          if (r.win) { r.win.scrollTo(r.x, r.y); }
+          else { r.el.scrollTop = r.top; r.el.scrollLeft = r.left; }
+        });
+      } catch (e) {}
+    }
+    $timeout(apply, 80);
+    $timeout(apply, 450);
+    $timeout(apply, 1300);  /* final pass: outlast the 800ms sync tick, whose
+                               height shrink triggers shell scroll anchoring */
+  }
+  function scrollToDrill() {
+    /* I69: ONE motion, not two. Size the frame first (immediate sync instead
+       of waiting for the 800ms tick), then a single smooth scroll that lands
+       true. The panel grows downward from its pinned top when rows arrive,
+       so no corrective second scroll is ever needed. */
+    $timeout(syncFrame, 60);
+    $timeout(function() {
+      try {
+        var p = document.getElementById('ptag-drill');
+        if (p) { p.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+      } catch (e) {}
+    }, 220);
+  }
+
+  /* ---------- drill ---------- */
+  c.cols = [
+    {key: 'number', label: 'Number', w: '110px'},
+    {key: 'title', label: 'Title'},
+    {key: 'practice', label: 'Practice', w: '170px'},
+    {key: 'state', label: 'State', w: '150px'},
+    {key: 'score', label: 'Score', w: '80px', num: true},
+    {key: 'age', label: 'Age', w: '80px', num: true},
+    {key: 'updated_ms', label: 'Updated', w: '150px', num: true}
+  ];
+  var NUMERIC = {score: 1, age: 1, updated_ms: 1};
+
+  function matchTerm(r, key, t) {
+    if (key === 'score' || key === 'age') {
+      var m = t.match(/^(>=|<=|>|<)\s*(-?\d+)$/);
+      if (m) {
+        var v = r[key];
+        if (v === null || v === undefined) { return false; }
+        var n = parseInt(m[2], 10);
+        if (m[1] === '>') { return v > n; }
+        if (m[1] === '<') { return v < n; }
+        if (m[1] === '>=') { return v >= n; }
+        return v <= n;
+      }
+    }
+    var raw = (key === 'updated_ms') ? r.updated : r[key];
+    if (raw === null || raw === undefined) { raw = ''; }
+    return String(raw).toLowerCase().indexOf(t) > -1;
+  }
+  function matchCell(r, key, query) {
+    var qq = String(query || '').trim();
+    if (!qq) { return true; }
+    /* comma = OR within the column; columns AND together */
+    var terms = qq.split(',');
+    var any = false;
+    for (var i = 0; i < terms.length; i++) {
+      var t = terms[i].trim().toLowerCase();
+      if (!t) { continue; }
+      any = true;
+      if (matchTerm(r, key, t)) { return true; }
+    }
+    return !any;
+  }
+  c.filtersOn = function() {
+    if (!c.dp) { return false; }
+    var f = c.dp.filters || {};
+    for (var k in f) { if (String(f[k] || '').trim()) { return true; } }
+    return false;
+  };
+  c.applyFilter = function() {
+    if (!c.dp) { return; }
+    var f = c.dp.filters || {};
+    c.dp.view = c.dp.rows.filter(function(r) {
+      for (var i = 0; i < c.cols.length; i++) {
+        if (!matchCell(r, c.cols[i].key, f[c.cols[i].key])) { return false; }
+      }
+      return true;
+    });
+    c.dp.page = 1;
+    applySort();
+  };
+  c.clearCols = function() {
+    if (!c.dp) { return; }
+    c.dp.filters = {};
+    c.applyFilter();
+  };
+
+  function fetchDrill(showBusy) {
+    if (showBusy) { c.dp.busy = true; }
+    var a = c.dpArgs;
+    $scope.server.get({action: 'drill', kind: a.kind, value: a.value, ids: a.ids || ''})
+      .then(function(r) {
+        if (!c.dp) { return; }
+        c.dp.rows = (r.data && r.data.drill) || [];
+        c.applyFilter();
+        c.dp.busy = false;
+        /* I70: glide only AFTER the rows land - the panel is at final size,
+           so nothing regrows mid-flight and nothing jumps back. */
+        if (showBusy) { scrollToDrill(); }
+      }, function() { if (c.dp) { c.dp.busy = false; } });
+  }
+
+  c.drill = function(kind, value, label, slot, sortHint) {
+    if (c.dp && c.dp.label === label) { c.closeDrill(); return; }
+    if (!c.dp) { saveScroll(); }   /* fresh open: remember where Jon was */
+    var sortKey = sortHint === 'score' ? 'score' : (sortHint === 'updated' ? 'updated_ms' : 'age');
+    c.dpArgs = {kind: kind, value: String(value),
+                ids: (kind === 'practice' && String(value) === '__other__') ? c.topPracticeIds : ''};
+    c.dp = {label: label, slot: slot, sort: sortKey, dir: -1, rows: [], view: [],
+            filters: {}, page: 1, busy: true};
+    fetchDrill(true);
+  };
+  c.drillPractice = function(s) {
+    var v = s.id === '__other__' ? '__other__' : (s.id ? s.id : '__none__');
+    c.drill('practice', v, 'Practice: ' + s.label, 3, 'age');
+  };
+  c.closeDrill = function() { c.dp = null; c.dpArgs = null;
+    $timeout(syncFrame, 60); $timeout(syncFrame, 320);
+    restoreScroll(); };
+
+  function applySort() {
+    if (!c.dp) { return; }
+    var key = c.dp.sort, dir = c.dp.dir, num = NUMERIC[key];
+    c.dp.view.sort(function(a, b) {
+      var av = a[key], bv = b[key];
+      if (num) {
+        av = (av === null || av === undefined) ? -Infinity : av;
+        bv = (bv === null || bv === undefined) ? -Infinity : bv;
+        return (av - bv) * dir;
+      }
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+    repage();
+  }
+  var PAGE_SIZE = 10;
+  function repage() {
+    if (!c.dp) { return; }
+    c.dp.pageCount = Math.max(1, Math.ceil(c.dp.view.length / PAGE_SIZE));
+    if (!c.dp.page || c.dp.page < 1) { c.dp.page = 1; }
+    if (c.dp.page > c.dp.pageCount) { c.dp.page = c.dp.pageCount; }
+    var s = (c.dp.page - 1) * PAGE_SIZE;
+    c.dp.paged = c.dp.view.slice(s, s + PAGE_SIZE);
+  }
+  c.rangeStart = function() {
+    return (c.dp && c.dp.view.length) ? (c.dp.page - 1) * PAGE_SIZE + 1 : 0;
+  };
+  c.rangeEnd = function() {
+    return c.dp ? Math.min(c.dp.page * PAGE_SIZE, c.dp.view.length) : 0;
+  };
+  c.prevPage = function() { if (c.dp && c.dp.page > 1) { c.dp.page--; repage(); } };
+  c.nextPage = function() {
+    if (c.dp && c.dp.page < c.dp.pageCount) { c.dp.page++; repage(); }
+  };
+  c.sortBy = function(key) {
+    if (!c.dp) { return; }
+    if (c.dp.sort === key) { c.dp.dir = -c.dp.dir; }
+    else { c.dp.sort = key; c.dp.dir = 1; }
+    applySort();
+  };
+
+  c.recUrl = function(r) {
+    return '/now/ptag-engagement-hub/record/x_snc_ptag_engage_engagement_request/' + r.id;
+  };
+  c.openRec = function(r) {
+    var url = c.recUrl(r);
+    /* I60: client-side route push - the workspace router opens the record as
+       a CHILD TAB with no page reload (proven live: marker survived, subtab
+       rendered). Fallback = old full navigation. */
+    try {
+      var t = window.top;
+      t.history.pushState({}, '', url);
+      t.dispatchEvent(new t.PopStateEvent('popstate', {state: {}}));
+      return;
+    } catch (e) {}
+    try { window.top.location.href = url; } catch (e2) { window.location.href = url; }
+  };
+  c.openRecA = function(ev, r) {
+    /* Number link: plain left-click routes client-side; ctrl/meta/shift or
+       middle-click keep native link behavior (new browser tab). */
+    if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button === 1) {
+      ev.stopPropagation();
+      return;
+    }
+    ev.preventDefault();
+    ev.stopPropagation();
+    c.openRec(r);
+  };
+
+  function onKey(ev) {
+    if (ev.keyCode === 27 && c.dp) { $scope.$apply(function() { c.closeDrill(); }); }
+  }
+  document.addEventListener('keydown', onKey);
+  $scope.$on('$destroy', function() { document.removeEventListener('keydown', onKey); });
+
+  try {
+    spUtil.recordWatch($scope, 'x_snc_ptag_engage_engagement_request', '',
+      function() { spUtil.update($scope); });
+  } catch (e) {}
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>.pt-cc { min-height: 640px; color: #16181c;
+  font-family: "Source Sans Pro", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: #f1f3f5; }
+.pt-cc__wrap { max-width: 1400px; margin: 0 auto; padding: 26px 28px 30px; }
+
+/* ---- flat cards, subtle borders ---- */
+.pt-cc .glass-card { background: #ffffff; border: 1px solid #adb8c2; border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(22, 24, 28, 0.04), 0 4px 12px rgba(22, 24, 28, 0.04);
+  padding: 20px 22px; min-width: 0; }
+.pt-cc .glass-card--interactive { cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 160ms; }
+.pt-cc .glass-card--interactive:hover { transform: translateY(-1px); border-color: #8a97a3;
+  box-shadow: 0 2px 4px rgba(22, 24, 28, 0.05), 0 10px 24px rgba(22, 24, 28, 0.08); }
+.pt-cc .glass-card--active { border-color: #2e9e4f;
+  box-shadow: 0 0 0 1px #2e9e4f, 0 4px 12px rgba(22, 24, 28, 0.06); }
+.pt-cc [role="button"]:focus-visible { outline: 2px solid #2e9e4f; outline-offset: 2px; }
+
+/* ---- header ---- */
+.pt-cc__head { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 14px; margin-bottom: 20px; }
+.pt-cc__title { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; color: #16181c; }
+.pt-cc__sub { font-size: 12px; color: #667080; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.pt-cc__live { width: 6px; height: 6px; border-radius: 50%; background: #2e9e4f;
+  animation: pt-cc-live 2.4s ease-in-out infinite; }
+@keyframes pt-cc-live { 0% { opacity: 1; } 50% { opacity: 0.35; } 100% { opacity: 1; } }
+.pt-cc__hr { display: flex; align-items: center; gap: 12px; }
+.pt-cc__asof { font-size: 11px; color: #667080; }
+.pt-cc__refresh { display: inline-flex; align-items: center; gap: 6px; background: #ffffff;
+  border: 1px solid #adb8c2; border-radius: 10px; padding: 7px 12px; font-size: 12px;
+  font-weight: 600; color: #227a43; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(22, 24, 28, 0.04);
+  transition: box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms; }
+.pt-cc__refresh:hover { border-color: #8a97a3; box-shadow: 0 4px 12px rgba(22, 24, 28, 0.08); }
+.pt-cc__ric { width: 13px; height: 13px; }
+.pt-cc__refresh.is-busy .pt-cc__ric { animation: pt-cc-spin 0.9s linear infinite; }
+@keyframes pt-cc-spin { to { transform: rotate(360deg); } }
+
+/* ---- KPI strip ---- */
+.pt-cc__kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 20px; }
+.pt-cc__kpi { position: relative; padding: 16px 18px; }
+.pt-cc__kpi--green::before, .pt-cc__kpi--amber::before { content: ''; position: absolute;
+  left: 0; top: 18px; width: 3px; height: 20px; border-radius: 0 3px 3px 0; }
+.pt-cc__kpi--green::before { background: #2e9e4f; }
+.pt-cc__kpi--amber::before { background: #b8790e; }
+.pt-cc__kn { font-size: 30px; font-weight: 700; color: #16181c; line-height: 1.1; }
+.pt-cc__kl { font-size: 12px; font-weight: 500; color: #5b6572; margin-top: 3px; }
+
+/* ---- rows ---- */
+.pt-cc__row { display: grid; gap: 20px; margin-bottom: 20px; }
+.pt-cc__row--mid { grid-template-columns: 7fr 5fr; }
+.pt-cc__row--duo { grid-template-columns: 1fr 1fr; }
+.pt-cc__ct { margin: 0 0 14px; font-size: 14px; font-weight: 600; color: #16181c;
+  display: flex; align-items: center; }
+.pt-cc__cs { font-weight: 400; font-size: 12px; color: #667080; margin-left: 6px; }
+
+/* ---- pipeline bars ---- */
+.pt-cc__bar { display: flex; align-items: center; gap: 10px; height: 30px; border-radius: 8px;
+  padding: 0 6px; cursor: pointer; transition: background 120ms ease-out, opacity 150ms ease-out; }
+.pt-cc__bar:hover, .pt-cc__bar.is-open { background: rgba(46, 158, 79, 0.08); }
+.pt-cc__card--pipeline:hover .pt-cc__bar:not(:hover) { opacity: 0.45; }
+.pt-cc__bar:hover .pt-cc__bf { filter: brightness(1.06); }
+.pt-cc__bl { flex: 0 0 130px; font-size: 12px; color: #5b6572; text-align: right; }
+.pt-cc__bt { flex: 1; height: 12px; border-radius: 6px; background: #eef1f4; overflow: hidden; }
+.pt-cc__bf { display: block; height: 100%; border-radius: 0 4px 4px 0; min-width: 2px;
+  background: #2e9e4f; transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1); }
+.pt-cc__bar.is-attn .pt-cc__bf { background: #b8790e; }
+.pt-cc__bar.is-neg .pt-cc__bf { background: #cf4437; }
+.pt-cc__bn { flex: 0 0 28px; font-size: 12px; font-weight: 600; color: #16181c;
+  font-variant-numeric: tabular-nums; }
+.pt-cc__bn.is-zero { color: #667080; font-weight: 400; }
+
+/* ---- queue age heat ---- */
+.pt-cc__heat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pt-cc__cell { border-radius: 12px; min-height: 88px; padding: 14px 8px; text-align: center;
+  cursor: pointer; transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms,
+    opacity 150ms ease-out; }
+.pt-cc__heat:hover .pt-cc__cell:not(:hover):not(.is-zero) { opacity: 0.55; }
+.pt-cc__cell:hover:not(.is-zero) { transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 22px rgba(22, 24, 28, 0.14); }
+.pt-cc__cell.is-open { box-shadow: 0 0 0 2px #2e9e4f; }
+.pt-cc__cell.sev-0 { background: #e6f4ea; border: 1px solid rgba(29, 122, 56, 0.18); }
+.pt-cc__cell.sev-0 .pt-cc__cn, .pt-cc__cell.sev-0 .pt-cc__cl { color: #1d7a38; }
+.pt-cc__cell.sev-1 { background: #fbf0d9; border: 1px solid rgba(138, 95, 14, 0.18); }
+.pt-cc__cell.sev-1 .pt-cc__cn, .pt-cc__cell.sev-1 .pt-cc__cl { color: #8a5f0e; }
+.pt-cc__cell.sev-2 { background: #fae8d8; border: 1px solid rgba(150, 73, 26, 0.18); }
+.pt-cc__cell.sev-2 .pt-cc__cn, .pt-cc__cell.sev-2 .pt-cc__cl { color: #96491a; }
+.pt-cc__cell.sev-3 { background: #fae3e1; border: 1px solid rgba(168, 50, 40, 0.18); }
+.pt-cc__cell.sev-3 .pt-cc__cn, .pt-cc__cell.sev-3 .pt-cc__cl { color: #a83228; }
+.pt-cc__cell.is-zero { background: #f6f8f9; border: 1px solid #e9edf1; cursor: default; }
+.pt-cc__cell.is-zero .pt-cc__cn, .pt-cc__cell.is-zero .pt-cc__cl { color: #8b94a0; }
+.pt-cc__cn { font-size: 24px; font-weight: 700; }
+.pt-cc__cl { font-size: 11px; font-weight: 500; margin-top: 2px; }
+
+/* ---- donuts ---- */
+.pt-cc__dwrap { display: flex; align-items: center; gap: 20px; }
+.pt-cc__dring { position: relative; flex: 0 0 140px; }
+.pt-cc__donut { width: 140px; height: 140px; display: block; }
+.pt-cc__donut circle { fill: none; }
+.pt-cc__dbg { stroke: #eef1f4; stroke-width: 5.4; }
+.pt-cc__seg { cursor: pointer; pointer-events: visibleStroke;
+  transition: stroke-width 150ms ease-out, opacity 150ms ease-out, filter 150ms ease-out; }
+.pt-cc__seg:hover, .pt-cc__seg.is-hov { stroke-width: 7.2;
+  filter: brightness(1.08) drop-shadow(0 1px 2px rgba(22, 24, 28, 0.25)); }
+.pt-cc__seg.is-dim { opacity: 0.4; }
+.pt-cc__dcenter { position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; pointer-events: none; }
+.pt-cc__dcenter b { font-size: 22px; font-weight: 700; color: #16181c; line-height: 1.05; }
+.pt-cc__dcenter span { font-size: 11px; color: #667080; }
+.pt-cc__legend { list-style: none; margin: 0; padding: 0; font-size: 12px; min-width: 0; flex: 1; }
+.pt-cc__legend li { display: flex; align-items: center; gap: 7px; padding: 4px 6px;
+  border-radius: 6px; cursor: pointer; transition: background 120ms ease-out; }
+.pt-cc__legend li:hover, .pt-cc__legend li.is-open { background: rgba(46, 158, 79, 0.05); }
+.pt-cc__lgl { color: #16181c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-cc__legend b { color: #16181c; margin-left: auto; padding-left: 8px;
+  font-variant-numeric: tabular-nums; }
+.pt-cc__sw { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 10px; }
+.pt-cc__none { color: #667080; font-size: 12px; }
+
+/* ---- drill panel ---- */
+.pt-cc__drill { margin-bottom: 20px; background: #ffffff; border: 1px solid #adb8c2;
+  box-shadow: 0 1px 2px rgba(22, 24, 28, 0.04), 0 10px 28px rgba(22, 24, 28, 0.08);
+  padding: 0; overflow: hidden; animation: pt-cc-open 240ms cubic-bezier(0.2, 0, 0, 1); }
+@keyframes pt-cc-open { from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); } }
+.pt-cc__dhead { display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; }
+.pt-cc__fchip { background: #227a43; color: #ffffff; font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
+.pt-cc__dcount { font-size: 13px; color: #5b6572; }
+.pt-cc__dspace { flex: 1; }
+.pt-cc__ghost { background: transparent; border: 0; color: #227a43; font-size: 13px;
+  font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.pt-cc__ghost:hover { background: rgba(46, 158, 79, 0.08); }
+.pt-cc__x { background: transparent; border: 0; width: 28px; height: 28px; border-radius: 8px;
+  font-size: 18px; color: #5b6572; cursor: pointer; line-height: 1; }
+.pt-cc__x:hover { background: #eef1f4; }
+.pt-cc__dbusy { padding: 24px 16px; font-size: 13px; color: #667080; }
+.pt-cc__tblwrap { overflow: visible; }
+.pt-cc__tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.pt-cc__tbl th { position: sticky; top: 0; background: #fafbfc; z-index: 1; text-align: left;
+  border-bottom: 1px solid #adb8c2; padding: 0; }
+.pt-cc__tbl .pt-cc__frow th { top: 33px; padding: 5px 8px; background: #fafbfc; }
+.pt-cc__fin { width: 100%; height: 26px; border: 1px solid #d5dce2; border-radius: 6px;
+  padding: 0 8px; font-size: 12px; color: #16181c; background: #ffffff; box-sizing: border-box; }
+.pt-cc__fin:focus { outline: none; border-color: #2e9e4f; box-shadow: 0 0 0 2px rgba(46, 158, 79, 0.15); }
+.pt-cc__fin::placeholder { color: #aab3bc; }
+.pt-cc__tbl th.is-num { text-align: right; }
+.pt-cc__tbl thead tr:first-child th button { width: 100%; background: transparent; border: 0;
+  cursor: pointer; padding: 9px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #5b6572; text-align: inherit; }
+.pt-cc__tbl th.is-sorted button { color: #16181c; }
+.pt-cc__chev { margin-left: 4px; font-size: 8px; }
+.pt-cc__tbl td { padding: 0 12px; height: 40px; font-size: 13px; color: #16181c;
+  border-bottom: 1px solid #eef1f4; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.pt-cc__tbl tbody tr { cursor: pointer; transition: background 120ms ease-out; }
+.pt-cc__tbl tbody tr:hover { background: rgba(46, 158, 79, 0.05); }
+.pt-cc__tbl tbody tr:focus-visible { outline: 2px solid #2e9e4f; outline-offset: -2px; }
+.pt-cc__numlink { color: #1d7a38; font-weight: 600; text-decoration: none; }
+.pt-cc__numlink:hover { text-decoration: underline; }
+.pt-cc__pdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 7px; vertical-align: baseline; }
+.pt-cc__num { text-align: right; font-variant-numeric: tabular-nums; }
+.pt-chip2 { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px;
+  font-weight: 700; }
+.pt-chip2--happy { background: #227a43; color: #ffffff; }
+.pt-chip2--attn { background: #f2b84b; color: #5c4306; }
+.pt-chip2--neg { background: #b0362c; color: #ffffff; }
+.pt-cc__agec.age-1 { color: #8a5f0e; font-weight: 600; }
+.pt-cc__agec.age-2 { color: #96491a; font-weight: 600; }
+.pt-cc__agec.age-3 { color: #a83228; font-weight: 600; }
+.pt-cc__nomatch { padding: 20px 16px; font-size: 13px; color: #667080; }
+.pt-cc__dempty { text-align: center; padding: 48px 16px; }
+.pt-cc__de-t { font-size: 14px; font-weight: 600; color: #16181c; }
+.pt-cc__de-s { font-size: 13px; color: #667080; margin: 4px 0 12px; }
+.pt-cc__denied { padding: 22px; color: #667080; font-size: 13px; }
+
+/* ---- responsive ---- */
+@media (max-width: 1100px) { .pt-cc__kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 980px) {
+  .pt-cc__row--mid, .pt-cc__row--duo { grid-template-columns: 1fr; }
+  .pt-cc__upd { display: none; }
+}
+
+/* ---- reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .pt-cc *, .pt-cc *::before, .pt-cc *::after {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important; }
+  .pt-cc__live { animation: none; opacity: 1; }
+}
+
+/* ---- I62: drill pager (fixed 10/page) ---- */
+.pt-cc__pager { display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+  border-top: 1px solid #eef1f4; }
+.pt-cc__prange { font-size: 12px; color: #667080; }
+.pt-cc__pspace { flex: 1; }
+.pt-cc__ppos { font-size: 12px; color: #5b6572; font-variant-numeric: tabular-nums; }
+.pt-cc__pbtn { width: 28px; height: 28px; border: 1px solid #adb8c2; border-radius: 8px;
+  background: #ffffff; color: #227a43; font-size: 10px; cursor: pointer; line-height: 1; }
+.pt-cc__pbtn:hover:not(:disabled) { background: rgba(46, 158, 79, 0.08); }
+.pt-cc__pbtn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- I63: hover pop + view-all ---- */
+.pt-cc__all { margin-left: auto; background: transparent; border: 1px solid #adb8c2;
+  border-radius: 8px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #227a43;
+  cursor: pointer; transition: background 120ms, border-color 120ms; }
+.pt-cc__all:hover { background: rgba(46, 158, 79, 0.08); border-color: #8a97a3; }
+.pt-cc__bt { transition: transform 150ms ease-out; }
+.pt-cc__bar:hover .pt-cc__bt { transform: scaleY(1.6); }
+.pt-cc__bn { transition: transform 150ms ease-out, color 150ms ease-out; }
+.pt-cc__bar:hover .pt-cc__bn { transform: scale(1.4); color: #227a43; }
+.pt-cc__bar:hover .pt-cc__bf { filter: brightness(1.1) drop-shadow(0 1px 2px rgba(22, 24, 28, 0.3)); }
+.pt-cc__bl { transition: color 150ms ease-out, font-weight 150ms; }
+.pt-cc__bar:hover .pt-cc__bl { color: #16181c; font-weight: 600; }
+.pt-cc__dcenter--btn { pointer-events: none; }
+.pt-cc__dcenter--btn b, .pt-cc__dcenter--btn span { pointer-events: auto; cursor: pointer; }
+.pt-cc__dcenter--btn:hover b { color: #227a43; }</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description>I56 glass command center: staff-wide live analytics (KPIs, pipeline, practice/score donuts, queue age, arrivals) hand-rolled SVG, staff-gated. Workspace home embed via Lumen.</description>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_command_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Engagement Pulse</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* I58: Engagement Pulse - light-glass analytics + drill lists. Staff-gated. */
+  var TABLE = 'x_snc_ptag_engage_engagement_request';
+  data.denied = false;
+  try {
+    if (!new x_snc_ptag_engage.PTAGHubAccess().isStaff()) { data.denied = true; return; }
+  } catch (e) { data.denied = true; return; }
+
+  var LABELS = {'1':'Submitted','-1':'Under Review','2':'In Backlog','4':'Planned',
+                '5':'In Development','3':'Completed','-2':'Need More Info',
+                '7':'Unlikely','9':'Cancelled','8':'Duplicate'};
+  var HAPPY = ['1','-1','2','4','5','3'];
+  var BRANCH = ['-2','7','8','9'];
+  var KIND = {'-2':'attn','7':'neg','8':'neg','9':'neg'};
+  var ACTIVE_STATES = ['1','-1','-2','2','4','5'];
+  var nowMs = new GlideDateTime().getNumericValue();
+
+  function ageDays(gr) {
+    var entered = gr.getValue('state_entered_on') || gr.getValue('sys_created_on');
+    var d = Math.floor((nowMs - new GlideDateTime(entered).getNumericValue()) / 86400000);
+    return d < 0 ? 0 : d;
+  }
+
+  /* ---------- drill: filtered row list ---------- */
+  if (input && input.action === 'drill') {
+    var kind = String(input.kind || '');
+    var val = String(input.value || '');
+    var rows = [];
+    var jsFilter = null;
+    var g = new GlideRecord(TABLE);
+    if (kind === 'state') { g.addQuery('state', val); }
+    else if (kind === 'practice') {
+      if (val === '__other__') {
+        var ids = String(input.ids || '').replace(/[^0-9a-f,]/g, '');
+        if (ids) { g.addQuery('practice', 'NOT IN', ids); }
+        g.addNotNullQuery('practice');
+      } else if (val === '__none__') { g.addNullQuery('practice'); }
+      else if (/^[0-9a-f]{32}$/.test(val)) { g.addQuery('practice', val); }
+      else { g.addQuery('sys_id', 'invalid'); }
+    }
+    else if (kind === 'band') { g.addQuery('score_band', val); g.addNotNullQuery('score'); }
+    else if (kind === 'scored') { g.addNotNullQuery('score'); }
+    else if (kind === 'active') { g.addQuery('state', 'IN', ACTIVE_STATES.join(',')); }
+    else if (kind === 'completed') { g.addQuery('state', '3'); }
+    else if (kind === 'age') {
+      g.addQuery('state', 'IN', ACTIVE_STATES.join(','));
+      var bi = parseInt(val, 10) || 0;
+      jsFilter = function(r2) {
+        var d = ageDays(r2);
+        return bi === 0 ? d < 7 : (bi === 1 ? (d >= 7 && d < 14) : (bi === 2 ? (d >= 14 && d < 30) : d >= 30));
+      };
+    }
+    /* kind 'total': no filter */
+    g.orderByDesc('sys_updated_on');
+    g.setLimit(500);
+    g.query();
+    while (g.next()) {
+      if (jsFilter && !jsFilter(g)) { continue; }
+      var st = String(g.getValue('state') || '1');
+      var sc = parseFloat(g.getValue('score'));
+      rows.push({
+        id: g.getUniqueValue(),
+        number: g.getValue('number'),
+        title: String(g.getValue('short_description') || ''),
+        practice: g.practice.getDisplayValue() || 'Unassigned',
+        state: LABELS[st] || st,
+        state_kind: KIND[st] || 'happy',
+        score: isNaN(sc) ? null : Math.round(sc),
+        age: ageDays(g),
+        updated: g.getDisplayValue('sys_updated_on'),
+        updated_ms: new GlideDateTime(g.getValue('sys_updated_on')).getNumericValue()
+      });
+    }
+    data.drill = rows;
+    return;
+  }
+
+  /* ---------- dashboard analytics ---------- */
+  var counts = {}, total = 0, i;
+  var ga = new GlideAggregate(TABLE);
+  ga.addAggregate('COUNT');
+  ga.groupBy('state');
+  ga.query();
+  while (ga.next()) {
+    var n = parseInt(ga.getAggregate('COUNT'), 10) || 0;
+    counts[String(ga.getValue('state'))] = n;
+    total += n;
+  }
+  data.total = total;
+  data.completed = counts['3'] || 0;
+  var act = 0;
+  for (i = 0; i < ACTIVE_STATES.length; i++) { act += counts[ACTIVE_STATES[i]] || 0; }
+  data.active = act;
+
+  var mx = 1;
+  data.pipeline = [];
+  for (i = 0; i < HAPPY.length; i++) {
+    var c1 = counts[HAPPY[i]] || 0;
+    if (c1 > mx) { mx = c1; }
+    data.pipeline.push({state: HAPPY[i], label: LABELS[HAPPY[i]], count: c1, kind: 'happy'});
+  }
+  data.branches = [];
+  for (i = 0; i < BRANCH.length; i++) {
+    if (counts[BRANCH[i]]) {
+      if (counts[BRANCH[i]] > mx) { mx = counts[BRANCH[i]]; }
+      data.branches.push({state: BRANCH[i], label: LABELS[BRANCH[i]],
+                          count: counts[BRANCH[i]], kind: KIND[BRANCH[i]]});
+    }
+  }
+  data.maxCount = mx;
+
+  var mix = [];
+  var pr = new GlideAggregate(TABLE);
+  pr.addAggregate('COUNT');
+  pr.groupBy('practice');
+  pr.query();
+  while (pr.next()) {
+    var plabel = '';
+    try { plabel = String(pr.practice.getDisplayValue() || ''); } catch (e2) {}
+    mix.push({label: plabel || 'Unassigned', id: String(pr.getValue('practice') || ''),
+              count: parseInt(pr.getAggregate('COUNT'), 10) || 0});
+  }
+  mix.sort(function(a, b) { return b.count - a.count; });
+  if (mix.length > 6) {
+    var rest = 0;
+    for (i = 5; i < mix.length; i++) { rest += mix[i].count; }
+    mix = mix.slice(0, 5);
+    mix.push({label: 'Other', id: '__other__', count: rest});
+  }
+  data.practiceMix = mix;
+
+  var bands = [];
+  var sb = new GlideAggregate(TABLE);
+  sb.addNotNullQuery('score');
+  sb.addAggregate('COUNT');
+  sb.groupBy('score_band');
+  sb.query();
+  while (sb.next()) {
+    var blabel = '';
+    try { blabel = String(sb.score_band.getDisplayValue() || ''); } catch (e3) {}
+    bands.push({label: blabel || 'No band', id: String(sb.getValue('score_band') || ''),
+                count: parseInt(sb.getAggregate('COUNT'), 10) || 0});
+  }
+  bands.sort(function(a, b) { return b.count - a.count; });
+  data.bands = bands;
+  data.avgScore = null;
+  data.scored = 0;
+  var ssum = 0;
+  var sgr = new GlideRecord(TABLE);
+  sgr.addNotNullQuery('score');
+  sgr.setLimit(5000);
+  sgr.query();
+  while (sgr.next()) {
+    var sv = parseFloat(sgr.getValue('score'));
+    if (!isNaN(sv)) { ssum += sv; data.scored++; }
+  }
+  if (data.scored) { data.avgScore = Math.round(ssum / data.scored); }
+
+  var buckets = [0, 0, 0, 0];
+  var oldest = null;
+  var gr = new GlideRecord(TABLE);
+  gr.addQuery('state', 'IN', ACTIVE_STATES.join(','));
+  gr.setLimit(2000);
+  gr.query();
+  while (gr.next()) {
+    var days = ageDays(gr);
+    buckets[days < 7 ? 0 : (days < 14 ? 1 : (days < 30 ? 2 : 3))]++;
+    if (!oldest || days > oldest.days) {
+      oldest = {number: gr.getValue('number'), days: days,
+                label: LABELS[String(gr.getValue('state'))] || ''};
+    }
+  }
+  data.age = [{label: '< 7d', count: buckets[0], sev: 0},
+              {label: '7-14d', count: buckets[1], sev: 1},
+              {label: '14-30d', count: buckets[2], sev: 2},
+              {label: '30d+', count: buckets[3], sev: 3}];
+  data.oldest = oldest;
+  data.asOf = new GlideDateTime().getDisplayValue();
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 20:09:52</sys_created_on>
+        <sys_id>3a5e536e871e0fd0e5790f29dabb356e</sys_id>
+        <sys_mod_count>17</sys_mod_count>
+        <sys_name>PTAG Engagement Pulse</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_3a5e536e871e0fd0e5790f29dabb356e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 22:16:50</sys_updated_on>
+        <template><![CDATA[<div class="pt-cc">
+  <div class="pt-cc__denied" ng-if="data.denied">Not authorized.</div>
+  <div class="pt-cc__wrap" ng-if="!data.denied">
+
+    <script type="text/ng-template" id="ptagDrill.html">
+      <section class="pt-cc__drill glass-card" id="ptag-drill" role="region" aria-label="Drill-down list">
+        <div class="pt-cc__dhead">
+          <span class="pt-cc__fchip">{{c.dp.label}}</span>
+          <span class="pt-cc__dcount" aria-live="polite">{{c.dp.view.length}}{{c.filtersOn() ? ' of ' + c.dp.rows.length : ''}} request{{c.dp.view.length == 1 ? '' : 's'}}</span>
+          <span class="pt-cc__dspace"></span>
+          <button type="button" class="pt-cc__ghost" ng-if="c.filtersOn()" ng-click="c.clearCols()">Clear column search</button>
+          <button type="button" class="pt-cc__ghost" ng-click="c.closeDrill()">Clear filter</button>
+          <button type="button" class="pt-cc__x" ng-click="c.closeDrill()" aria-label="Close">&times;</button>
+        </div>
+        <div class="pt-cc__dbusy" ng-if="c.dp.busy">Loading&hellip;</div>
+        <div class="pt-cc__tblwrap" ng-if="!c.dp.busy && c.dp.rows.length">
+          <table class="pt-cc__tbl">
+            <thead>
+              <tr>
+                <th ng-repeat="col in c.cols" ng-style="col.w ? {width: col.w} : {}"
+                    ng-class="{'is-sorted': c.dp.sort === col.key, 'is-num': col.num}">
+                  <button type="button" ng-click="c.sortBy(col.key)"
+                          ng-attr-aria-sort="{{c.dp.sort === col.key ? (c.dp.dir === 1 ? 'ascending' : 'descending') : 'none'}}">
+                    {{col.label}}<span class="pt-cc__chev" ng-if="c.dp.sort === col.key">{{c.dp.dir === 1 ? '▲' : '▼'}}</span>
+                  </button>
+                </th>
+              </tr>
+              <tr class="pt-cc__frow">
+                <th ng-repeat="col in c.cols">
+                  <input type="text" class="pt-cc__fin" ng-model="c.dp.filters[col.key]"
+                         ng-change="c.applyFilter()" ng-model-options="{debounce: 150}"
+                         placeholder="Search" aria-label="Search {{col.label}}">
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="r in c.dp.paged track by r.id" ng-click="c.openRec(r)" tabindex="0"
+                  ng-keydown="$event.keyCode === 13 && c.openRec(r)">
+                <td><a class="pt-cc__numlink" ng-href="{{c.recUrl(r)}}" target="_top"
+                       ng-click="c.openRecA($event, r)">{{r.number}}</a></td>
+                <td class="pt-cc__ttl">{{r.title}}</td>
+                <td><span class="pt-cc__pdot" ng-style="{background: c.practiceColor(r.practice)}"></span>{{r.practice}}</td>
+                <td><span class="pt-chip2" ng-class="'pt-chip2--' + r.state_kind">{{r.state}}</span></td>
+                <td class="pt-cc__num">{{r.score === null ? '—' : r.score}}</td>
+                <td class="pt-cc__num pt-cc__agec" ng-class="'age-' + c.ageBucket(r.age)">{{r.age}}d</td>
+                <td class="pt-cc__num pt-cc__upd">{{r.updated}}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pt-cc__nomatch" ng-if="!c.dp.view.length">
+            No rows match your column search.
+            <button type="button" class="pt-cc__ghost" ng-click="c.clearCols()">Clear column search</button>
+          </div>
+        </div>
+        <div class="pt-cc__pager" ng-if="!c.dp.busy && c.dp.view.length">
+          <span class="pt-cc__prange">Showing {{c.rangeStart()}}&ndash;{{c.rangeEnd()}} of {{c.dp.view.length}}</span>
+          <span class="pt-cc__pspace"></span>
+          <button type="button" class="pt-cc__pbtn" ng-click="c.prevPage()"
+                  ng-disabled="c.dp.page <= 1" aria-label="Previous page">&#9664;</button>
+          <span class="pt-cc__ppos">Page {{c.dp.page}} of {{c.dp.pageCount}}</span>
+          <button type="button" class="pt-cc__pbtn" ng-click="c.nextPage()"
+                  ng-disabled="c.dp.page >= c.dp.pageCount" aria-label="Next page">&#9654;</button>
+        </div>
+        <div class="pt-cc__dempty" ng-if="!c.dp.busy && !c.dp.rows.length">
+          <div class="pt-cc__de-t">No requests in this slice</div>
+          <div class="pt-cc__de-s">Nothing currently matches {{c.dp.label}}.</div>
+          <button type="button" class="pt-cc__ghost" ng-click="c.closeDrill()">Clear filter</button>
+        </div>
+      </section>
+    </script>
+
+    <header class="pt-cc__head">
+      <div>
+        <div class="pt-cc__title">Engagement Pulse</div>
+        <div class="pt-cc__sub"><span class="pt-cc__live" aria-hidden="true"></span>PTAG pipeline &middot; live</div>
+      </div>
+      <div class="pt-cc__hr">
+        <span class="pt-cc__asof">as of {{data.asOf}}</span>
+        <button type="button" class="pt-cc__refresh" ng-click="c.refresh()"
+                ng-class="{'is-busy': c.refreshing}" aria-label="Refresh dashboard">
+          <svg viewBox="0 0 16 16" class="pt-cc__ric" aria-hidden="true">
+            <path d="M8 2a6 6 0 1 0 5.9 7h-1.63A4.5 4.5 0 1 1 8 3.5c1.24 0 2.36.5 3.17 1.32L9 7h5V2l-1.77 1.77A5.98 5.98 0 0 0 8 2z" fill="currentColor"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="pt-cc__kpis">
+      <div class="glass-card glass-card--interactive pt-cc__kpi" role="button" tabindex="0"
+           ng-click="c.drill('total', '', 'All requests', 1, 'updated')"
+           ng-class="{'glass-card--active': c.dp.label === 'All requests'}">
+        <div class="pt-cc__kn">{{data.total}}</div><div class="pt-cc__kl">Total requests</div>
+      </div>
+      <div class="glass-card glass-card--interactive pt-cc__kpi pt-cc__kpi--green" role="button" tabindex="0"
+           ng-click="c.drill('active', '', 'Active requests', 1, 'age')"
+           ng-class="{'glass-card--active': c.dp.label === 'Active requests'}">
+        <div class="pt-cc__kn">{{data.active}}</div><div class="pt-cc__kl">Active</div>
+      </div>
+      <div class="glass-card glass-card--interactive pt-cc__kpi" role="button" tabindex="0"
+           ng-click="c.drill('completed', '', 'Completed', 1, 'updated')"
+           ng-class="{'glass-card--active': c.dp.label === 'Completed'}">
+        <div class="pt-cc__kn">{{data.completed}}</div><div class="pt-cc__kl">Completed</div>
+      </div>
+      <div class="glass-card glass-card--interactive pt-cc__kpi" role="button" tabindex="0"
+           ng-click="c.drill('scored', '', 'Scored requests', 1, 'score')"
+           ng-class="{'glass-card--active': c.dp.label === 'Scored requests'}">
+        <div class="pt-cc__kn">{{data.avgScore === null ? '—' : data.avgScore}}</div>
+        <div class="pt-cc__kl">Avg score ({{data.scored}} scored)</div>
+      </div>
+      <div class="glass-card glass-card--interactive pt-cc__kpi pt-cc__kpi--amber" role="button" tabindex="0" ng-if="data.oldest"
+           ng-click="c.drill('active', '', 'Oldest waiting', 1, 'age')"
+           ng-class="{'glass-card--active': c.dp.label === 'Oldest waiting'}">
+        <div class="pt-cc__kn">{{data.oldest.days}}d</div>
+        <div class="pt-cc__kl">Oldest waiting &middot; {{data.oldest.number}} in {{data.oldest.label}}</div>
+      </div>
+    </div>
+
+    <div ng-if="c.dp.slot === 1" ng-include="'ptagDrill.html'"></div>
+
+    <div class="pt-cc__row pt-cc__row--mid">
+      <section class="glass-card pt-cc__card--pipeline">
+        <h3 class="pt-cc__ct">Pipeline<button type="button" class="pt-cc__all" ng-click="c.drill('total', '', 'Pipeline: all states', 2, 'updated')">View all</button></h3>
+        <div class="pt-cc__bar" ng-repeat="p in data.pipeline" role="button" tabindex="0"
+             ng-click="c.drill('state', p.state, 'Pipeline: ' + p.label, 2, 'age')"
+             ng-class="{'is-open': c.dp.label === 'Pipeline: ' + p.label}">
+          <span class="pt-cc__bl">{{p.label}}</span>
+          <span class="pt-cc__bt"><span class="pt-cc__bf"
+            ng-style="{width: (p.count / data.maxCount * 100) + '%'}"></span></span>
+          <span class="pt-cc__bn" ng-class="{'is-zero': !p.count}">{{p.count}}</span>
+        </div>
+        <div class="pt-cc__bar" ng-repeat="p in data.branches" role="button" tabindex="0"
+             ng-click="c.drill('state', p.state, 'Pipeline: ' + p.label, 2, 'age')"
+             ng-class="['is-' + p.kind, {'is-open': c.dp.label === 'Pipeline: ' + p.label}]">
+          <span class="pt-cc__bl">{{p.label}}</span>
+          <span class="pt-cc__bt"><span class="pt-cc__bf"
+            ng-style="{width: (p.count / data.maxCount * 100) + '%'}"></span></span>
+          <span class="pt-cc__bn">{{p.count}}</span>
+        </div>
+      </section>
+      <section class="glass-card pt-cc__card--age">
+        <h3 class="pt-cc__ct">Queue age <span class="pt-cc__cs">active requests, time in state</span><button type="button" class="pt-cc__all" ng-click="c.drill('active', '', 'Queue: all active', 2, 'age')">View all</button></h3>
+        <div class="pt-cc__heat">
+          <div class="pt-cc__cell" ng-repeat="a in data.age"
+               ng-class="['sev-' + a.sev, {'is-zero': !a.count, 'is-open': c.dp.label === 'Queue age: ' + a.label}]"
+               ng-attr-role="{{a.count ? 'button' : undefined}}"
+               ng-attr-tabindex="{{a.count ? 0 : undefined}}"
+               ng-click="a.count && c.drill('age', a.sev, 'Queue age: ' + a.label, 2, 'age')">
+            <div class="pt-cc__cn">{{a.count}}</div>
+            <div class="pt-cc__cl">{{a.label}}</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div ng-if="c.dp.slot === 2" ng-include="'ptagDrill.html'"></div>
+
+    <div class="pt-cc__row pt-cc__row--duo">
+      <section class="glass-card">
+        <h3 class="pt-cc__ct">Practice mix<button type="button" class="pt-cc__all" ng-click="c.drill('total', '', 'Practice: all', 3, 'updated')">View all</button></h3>
+        <div class="pt-cc__dwrap">
+          <div class="pt-cc__dring">
+            <svg viewBox="0 0 42 42" class="pt-cc__donut" aria-hidden="true">
+              <circle class="pt-cc__dbg" cx="21" cy="21" r="15.9155"></circle>
+              <circle class="pt-cc__seg" ng-repeat="s in c.practiceSlices" cx="21" cy="21" r="15.9155"
+                      fill="none" stroke-width="5.4" ng-attr-stroke="{{s.color}}"
+                      ng-attr-stroke-dasharray="{{s.dash}}" ng-attr-stroke-dashoffset="{{s.offset}}"
+                      ng-mouseenter="c.setHov('p' + s.id)" ng-mouseleave="c.clearHov()"
+                      ng-class="{'is-hov': c.hov === 'p' + s.id, 'is-dim': c.hov && c.hov.charAt(0) === 'p' && c.hov !== 'p' + s.id}"
+                      ng-click="c.drillPractice(s)"></circle>
+            </svg>
+            <div class="pt-cc__dcenter pt-cc__dcenter--btn" role="button" tabindex="0" ng-click="c.drill('total', '', 'Practice: all', 3, 'updated')"><b>{{data.total}}</b><span>requests</span></div>
+          </div>
+          <ul class="pt-cc__legend">
+            <li ng-repeat="s in c.practiceSlices" role="button" tabindex="0" ng-click="c.drillPractice(s)"
+                ng-mouseenter="c.setHov('p' + s.id)" ng-mouseleave="c.clearHov()"
+                ng-class="{'is-open': c.dp.label === 'Practice: ' + s.label}">
+              <span class="pt-cc__sw" ng-style="{background: s.color}"></span>
+              <span class="pt-cc__lgl">{{s.label}}</span><b>{{s.count}}</b>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <section class="glass-card">
+        <h3 class="pt-cc__ct">Score bands <span class="pt-cc__cs">scored requests</span><button type="button" class="pt-cc__all" ng-click="c.drill('scored', '', 'Score bands: all scored', 3, 'score')">View all</button></h3>
+        <div class="pt-cc__dwrap" ng-if="c.bandSlices.length">
+          <div class="pt-cc__dring">
+            <svg viewBox="0 0 42 42" class="pt-cc__donut" aria-hidden="true">
+              <circle class="pt-cc__dbg" cx="21" cy="21" r="15.9155"></circle>
+              <circle class="pt-cc__seg" ng-repeat="s in c.bandSlices" cx="21" cy="21" r="15.9155"
+                      fill="none" stroke-width="5.4" ng-attr-stroke="{{s.color}}"
+                      ng-attr-stroke-dasharray="{{s.dash}}" ng-attr-stroke-dashoffset="{{s.offset}}"
+                      ng-mouseenter="c.setHov('b' + s.id)" ng-mouseleave="c.clearHov()"
+                      ng-class="{'is-hov': c.hov === 'b' + s.id, 'is-dim': c.hov && c.hov.charAt(0) === 'b' && c.hov !== 'b' + s.id}"
+                      ng-click="c.drill('band', s.id, 'Score band: ' + s.label, 3, 'score')"></circle>
+            </svg>
+            <div class="pt-cc__dcenter pt-cc__dcenter--btn" role="button" tabindex="0" ng-click="c.drill('scored', '', 'Score bands: all scored', 3, 'score')"><b>{{data.scored}}</b><span>scored</span></div>
+          </div>
+          <ul class="pt-cc__legend">
+            <li ng-repeat="s in c.bandSlices" role="button" tabindex="0"
+                ng-click="c.drill('band', s.id, 'Score band: ' + s.label, 3, 'score')"
+                ng-mouseenter="c.setHov('b' + s.id)" ng-mouseleave="c.clearHov()"
+                ng-class="{'is-open': c.dp.label === 'Score band: ' + s.label}">
+              <span class="pt-cc__sw" ng-style="{background: s.color}"></span>
+              <span class="pt-cc__lgl">{{s.label}}</span><b>{{s.count}}</b>
+            </li>
+          </ul>
+        </div>
+        <div class="pt-cc__none" ng-if="!c.bandSlices.length">Nothing scored yet.</div>
+      </section>
+    </div>
+
+    <div ng-if="c.dp.slot === 3" ng-include="'ptagDrill.html'"></div>
+  </div>
+</div>]]></template>
+    </sp_widget>
+</record_update>

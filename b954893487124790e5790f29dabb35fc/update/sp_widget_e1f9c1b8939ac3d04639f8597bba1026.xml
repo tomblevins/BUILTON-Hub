@@ -1,0 +1,899 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($timeout) {
+  var c = this;
+  c.step = 1;
+  c.form = { partner_scope: 'global' };
+  c.err = {};
+  c.busy = false;
+  c.copied = false;
+
+  /* ---- I41: submit-time attachments. Queued locally, uploaded AFTER create
+     via the platform Attachment API (the record's write-ACL is the authority,
+     i30's model). sys_id from the create response is used transiently as the
+     upload target and never displayed. ---- */
+  c.att = { maxMb: 10, maxFiles: 5, accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.csv,.msg,.eml' };
+  c.queue = [];
+  c.attErr = '';
+  c.up = { busy: false, total: 0, done: 0, failed: [] };
+  var qSeq = 0;
+
+  c.fileSize = function(n) {
+    n = parseInt(n, 10) || 0;
+    if (n < 1024) { return n + ' B'; }
+    if (n < 1048576) { return Math.round(n / 1024) + ' KB'; }
+    return (Math.round(n / 104857.6) / 10) + ' MB';
+  };
+
+  function attAllowed(name) {
+    var acc = c.att.accept.split(',');
+    var dot = String(name || '').lastIndexOf('.');
+    if (dot < 0) { return false; }
+    var ext = String(name).substring(dot).toLowerCase();
+    for (var i = 0; i < acc.length; i++) {
+      if (acc[i].trim().toLowerCase() === ext) { return true; }
+    }
+    return false;
+  }
+
+  c.pickFiles = function() {
+    var el = document.getElementById('pt-sub-file-input');
+    if (el) { el.value = ''; el.click(); }
+  };
+
+  c.filesPicked = function(fileList) {
+    var files = [], i;
+    for (i = 0; i < fileList.length; i++) { files.push(fileList[i]); }
+    if (!files.length) { return; }
+    $timeout(function() {
+      c.attErr = '';
+      for (var j = 0; j < files.length; j++) {
+        var f = files[j];
+        if (c.queue.length >= c.att.maxFiles) {
+          c.attErr = 'Up to ' + c.att.maxFiles + ' files per submission.';
+          break;
+        }
+        if (!attAllowed(f.name)) { c.attErr = '"' + f.name + '" is not an accepted file type.'; continue; }
+        if (f.size > c.att.maxMb * 1048576) { c.attErr = '"' + f.name + '" is over ' + c.att.maxMb + ' MB.'; continue; }
+        var dup = false;
+        for (var d = 0; d < c.queue.length; d++) {
+          if (c.queue[d].name === f.name && c.queue[d].size === f.size) { dup = true; break; }
+        }
+        if (dup) { continue; }
+        c.queue.push({ key: ++qSeq, name: f.name, size: f.size, file: f });
+      }
+    });
+  };
+
+  c.dequeue = function(entry) {
+    if (c.busy) { return; }
+    var ix = c.queue.indexOf(entry);
+    if (ix > -1) { c.queue.splice(ix, 1); }
+    c.attErr = '';
+  };
+
+  /* browser -> /api/now/attachment/file; X-UserToken is the session CSRF token */
+  function uploadOne(file, sysId) {
+    var tok = '';
+    try { tok = window.g_ck || (window.NOW && window.NOW.user_token) || ''; } catch (e) {}
+    var url = '/api/now/attachment/file?table_name=x_snc_ptag_engage_engagement_request' +
+              '&table_sys_id=' + encodeURIComponent(sysId) +
+              '&file_name=' + encodeURIComponent(file.name);
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'X-UserToken': tok,
+        'Accept': 'application/json'
+      },
+      body: file
+    }).then(function(res) {
+      if (!res.ok) { throw new Error('upload failed (' + res.status + ')'); }
+      return res;
+    });
+  }
+
+  /* per-file failure isolation: the record exists by now, so one bad file must
+     not sink the rest. Failures are named on the receipt; the My Engagements
+     modal (i30) is the retry surface. */
+  function uploadQueue(sysId) {
+    if (!c.queue.length) { return; }
+    c.up = { busy: true, total: c.queue.length, done: 0, failed: [] };
+    var chain = Promise.resolve();
+    c.queue.forEach(function(entry) {
+      chain = chain.then(function() {
+        return uploadOne(entry.file, sysId).then(function() {
+          $timeout(function() { c.up.done++; });
+        }, function() {
+          $timeout(function() { c.up.failed.push(entry.name); });
+        });
+      });
+    });
+    chain.then(function() { $timeout(function() { c.up.busy = false; c.queue = []; }); });
+  }
+
+  /* ---- reusable modal reference picker ----------------------------------
+     ONE parameterized helper set drives all four reference fields; c.form
+     holds the picked sys_ids, c.ref the display names for control + review. */
+  c.ref = {
+    partner:         { name: '' },
+    partner_manager: { name: '' },
+    target_geo:      { name: '' },
+    primary_product: { name: '' }
+  };
+  var RP_LABELS = {
+    partner: 'Parent Partner',
+    partner_manager: 'Partner Manager',
+    target_geo: 'Where is the target geo',
+    primary_product: 'What is the Primary Product Used?'
+  };
+  c.rp = { open: false, key: '', label: '', term: '', items: [], busy: false, hi: -1 };
+  var rpTimer = null, rpBrowse = [], rpSeq = 0;
+
+  function rpLock(on) {
+    /* body scroll locked while the picker is open */
+    try { document.body.classList[on ? 'add' : 'remove']('pt-modal-open'); } catch (e) {}
+  }
+
+  function rpSyncHi() {
+    /* highlight lands on the already-picked row when it is in the list */
+    var sel = c.form[c.rp.key], hi = -1;
+    if (sel) {
+      for (var i = 0; i < c.rp.items.length; i++) {
+        if (c.rp.items[i].id === sel) { hi = i; break; }
+      }
+    }
+    c.rp.hi = hi;
+  }
+
+  function rpScrollTo(i) {
+    $timeout(function() {
+      var list = document.querySelector('.pt-modal__list');
+      var el = list && list.children[i];
+      if (el && el.scrollIntoView) { el.scrollIntoView({ block: 'nearest' }); }
+    }, 0);
+  }
+
+  function rpFetch(term, isBrowse) {
+    var seq = ++rpSeq;
+    c.rp.busy = true;
+    c.server.get({ action: 'search', key: c.rp.key, term: term }).then(function(r) {
+      if (seq !== rpSeq || !c.rp.open) { return; }
+      c.rp.items = (r.data && r.data.matches) || [];
+      if (isBrowse) { rpBrowse = c.rp.items; }
+      rpSyncHi();
+      c.rp.busy = false;
+    }, function() {
+      if (seq === rpSeq) { c.rp.items = []; c.rp.busy = false; }
+    });
+  }
+
+  c.rpOpen = function(key) {
+    c.rp = { open: true, key: key, label: RP_LABELS[key] || key, term: '', items: [], busy: true, hi: -1 };
+    rpBrowse = [];
+    rpLock(true);
+    rpFetch('', true); /* default browse: first 25 ORDERBYname */
+    $timeout(function() {
+      var el = document.getElementById('pt-rp-search');
+      if (el) { el.focus(); }
+    }, 80);
+  };
+
+  c.rpTermChange = function() {
+    if (rpTimer) { $timeout.cancel(rpTimer); }
+    var term = String(c.rp.term || '').trim();
+    if (term.length < 2) { c.rp.items = rpBrowse; rpSyncHi(); c.rp.busy = false; return; }
+    rpTimer = $timeout(function() { rpFetch(term, false); }, 250);
+  };
+
+  c.rpPick = function(m) {
+    var key = c.rp.key;
+    c.form[key] = m.id;
+    c.ref[key].name = m.name;
+    if (c.err[key]) { delete c.err[key]; }
+    c.rpClose();
+  };
+
+  c.rpClear = function(key) {
+    c.form[key] = '';
+    c.ref[key].name = '';
+  };
+
+  c.rpClose = function() {
+    if (rpTimer) { $timeout.cancel(rpTimer); }
+    rpSeq++;
+    rpLock(false);
+    c.rp = { open: false, key: '', label: '', term: '', items: [], busy: false, hi: -1 };
+  };
+
+  c.rpKeydown = function(ev) {
+    var k = ev.keyCode, n = c.rp.items.length;
+    if (k === 27) { ev.preventDefault(); ev.stopPropagation(); c.rpClose(); return; }
+    if (k === 38 || k === 40) {
+      /* arrows navigate the option list */
+      ev.preventDefault();
+      if (!n) { return; }
+      var h = c.rp.hi;
+      h = (k === 40) ? ((h + 1) % n) : (h <= 0 ? n - 1 : h - 1);
+      c.rp.hi = h;
+      rpScrollTo(h);
+      return;
+    }
+    if (k === 13 && c.rp.hi >= 0 && c.rp.hi < n) {
+      /* Enter selects the highlighted row */
+      ev.preventDefault();
+      c.rpPick(c.rp.items[c.rp.hi]);
+    }
+  };
+
+  /* mandatory mirror of Tom's producer variables (verbatim flags):
+     step 1 all five mandatory; step 2 the two descriptions; step 3 none */
+  var REQ = {
+    1: ['partner', 'partner_manager', 'partner_scope', 'practice', 'target_geo', 'short_description'],
+    2: ['idea_description', 'what_is_the_partners_ai_strategy'],
+    3: []
+  };
+  var FLAGS = ['pipeline', 'business_owner', 'executive_sponsor', 'corporate_alignment',
+               'budget', 'has_customers', 'certified_resources'];
+
+  function hasVal(v) { return v !== null && v !== undefined && String(v).trim() !== ''; }
+
+  function validate(step) {
+    c.err = {};
+    var ok = true;
+    var req = REQ[step] || [];
+    for (var i = 0; i < req.length; i++) {
+      if (!hasVal(c.form[req[i]])) { c.err[req[i]] = true; ok = false; }
+    }
+    if (step === 3 && hasVal(c.form.tam)) {
+      var t = parseFloat(String(c.form.tam).replace(/[$,\s]/g, ''));
+      if (isNaN(t) || t < 0) { c.err.tam = true; ok = false; }
+    }
+    return ok;
+  }
+
+  /* I42: readiness probes for the subdued button state. Same REQ sets that
+     validate() enforces, but NO c.err mutation - the dimming reads state, the
+     click still explains it. */
+  function stepReady(step) {
+    var req = REQ[step] || [];
+    for (var i = 0; i < req.length; i++) {
+      if (!hasVal(c.form[req[i]])) { return false; }
+    }
+    if (step === 3 && hasVal(c.form.tam)) {
+      var t = parseFloat(String(c.form.tam).replace(/[$,\s]/g, ''));
+      if (isNaN(t) || t < 0) { return false; }
+    }
+    return true;
+  }
+  c.stepReady = stepReady;
+  c.formReady = function() { return stepReady(1) && stepReady(2) && stepReady(3); };
+
+  c.next = function() { if (validate(c.step)) { c.step = Math.min(3, c.step + 1); toTop(); } };
+  c.back = function() { c.err = {}; c.step = Math.max(1, c.step - 1); toTop(); };
+
+  c.nameOf = function(list, id) {
+    list = list || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i].name; } }
+    return '';
+  };
+
+  c.signals = function() {
+    var n = 0;
+    for (var i = 0; i < FLAGS.length; i++) { if (c.form[FLAGS[i]] === true) { n++; } }
+    return n;
+  };
+
+  c.submit = function() {
+    if (c.busy) { return; }
+    if (!validate(1)) { c.step = 1; return; }
+    if (!validate(2)) { c.step = 2; return; }
+    if (!validate(3)) { c.step = 3; return; }
+    c.busy = true;
+    c.server.get({ action: 'create', form: c.form }).then(function(r) {
+      c.data.errors = r.data.errors || [];
+      c.data.result = r.data.result || { ok: false };
+      if (c.data.result.ok && c.data.result.sys_id) { uploadQueue(String(c.data.result.sys_id)); }  /* I41 */
+      c.busy = false;
+      toTop();
+    }, function() {
+      c.busy = false;
+      c.data.errors = ['Something went wrong submitting the request. Please try again.'];
+    });
+  };
+
+  c.reset = function() {
+    c.form = { partner_scope: 'global' }; c.err = {}; c.step = 1; c.copied = false;
+    c.queue = []; c.attErr = ''; c.up = { busy: false, total: 0, done: 0, failed: [] };  /* I41 */
+    for (var k in c.ref) {
+      if (c.ref.hasOwnProperty(k)) { c.ref[k] = { name: '' }; }
+    }
+    c.rpClose();
+    rpBrowse = [];
+    c.data.result = { ok: false };
+    c.data.errors = [];
+  };
+
+  c.trackUrl = function() {
+    /* I6: status link is number-based; the dormant status_token is not exposed */
+    var n = (c.data.result && c.data.result.number) || '';
+    return window.location.origin + window.location.pathname + '?id=ptag_status&number=' + encodeURIComponent(n);
+  };
+
+  c.copy = function() {
+    copyText(c.trackUrl(), function(ok) {
+      $timeout(function() { c.copied = ok; });
+      $timeout(function() { c.copied = false; }, 2200);
+    });
+  };
+
+  function toTop() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+  }
+
+  function copyText(txt, done) {
+    function fallback() {
+      try {
+        var el = document.createElement('textarea');
+        el.value = txt;
+        el.setAttribute('readonly', '');
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(el);
+        done(!!ok);
+      } catch (e) { done(false); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() { done(true); }, fallback);
+    } else { fallback(); }
+  }
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>/* I5 REFS: ptag_submit_w - all styling via pt-* classes from ptag_global
+   (design-tokens.css + global.css). The .pt-refselect control and the
+   .pt-modal picker system live in ptag_global css field, inside the
+   SKIN:GLOBAL-COMPONENTS section. No widget-local styles. */
+
+
+/* == I41: submit-time attachment status on the receipt == */
+.pt-subatt { margin-top: 14px; }
+.pt-subatt__line { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: var(--pt-text-mute); font-size: var(--pt-fs-sm); }
+.pt-subatt__line--err { color: var(--pt-state-declined); }
+
+
+/* == I42: continue/submit subdued until the step's mandatory set is filled.
+   Still clickable on purpose - the click runs validate() and lights up what
+   is missing, which a disabled button cannot do. == */
+.pt-btn.is-unready { opacity: .45; filter: saturate(.55); cursor: not-allowed; box-shadow: none; }
+.pt-btn.is-unready:hover { filter: saturate(.55); transform: none; }
+</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_submit_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Submit Engagement</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* I5 REFS: reference sources unified on the intake app lookup tables.
+     - no input            -> serve option lists (I44: all four lookup tables
+                              now live in x_snc_ptag_engage - fully independent)
+     - action === 'search' -> whitelisted reference picker feed. term >= 2
+                              chars = CONTAINS search, explicit * wildcards
+                              honored (I11: split on *, AND of LIKEs; top 25);
+                              shorter/empty term = browse (first 25
+                              ORDERBYname). sys_id+name only.
+     - action === 'create' -> validate (mandatory mirror) + scoped insert; the
+       before-insert BR stamps number / state / opened_by (+ the dormant
+       status_token) and auto-assigns by practice name; the receipt exposes
+       the number only (I6). */
+  var TABLE = 'x_snc_ptag_engage_engagement_request';
+  data.result = { ok: false };
+  data.errors = [];
+
+  var SEARCH = {
+    partner: 'customer_account',
+    partner_manager: 'sys_user',
+    target_geo: 'cmn_location',
+    primary_product: 'cmdb_ci_business_app'
+  };
+
+  function hasVal(v) { return v !== null && v !== undefined && String(v).trim() !== ''; }
+
+  if (input && input.action === 'search') {
+    /* table-whitelisted; returns sys_id + name only */
+    data.matches = [];
+    var tbl = SEARCH[String(input.key || '')] || '';
+    var term = String(input.term || '').trim();
+    if (!tbl || term.length > 80) { return; }
+    try {
+      var s = new GlideRecord(tbl);
+      if (term.length >= 2) {
+        /* I11 WILDCARD: CONTAINS matching with explicit * support.
+           Split the term on '*', drop empty fragments, AND one contains
+           condition per fragment - encoded-query semantics:
+             "corp"  -> name LIKE corp
+             "1*inn" -> name LIKE 1 ^ name LIKE inn
+           Operator note: encoded LIKE === CONTAINS. The CONTAINS operator
+           is used because on this build 3-arg addQuery passes 'LIKE'
+           through unnormalized (matches nothing), while the value-as-data
+           form stays injection-safe (no string-built queries).
+           An all-wildcard term (e.g. "**") behaves as browse. */
+        var frags = String(term).split('*');
+        var applied = 0;
+        for (var fi = 0; fi < frags.length; fi++) {
+          if (frags[fi] === '') { continue; }
+          s.addQuery('name', 'CONTAINS', frags[fi]);
+          applied++;
+        }
+        if (!applied) { s.addNotNullQuery('name'); }
+        s.setLimit(25);
+      } else {
+        /* browse mode: first 25 by name */
+        s.addNotNullQuery('name');
+        s.setLimit(25);
+      }
+      s.orderBy('name');
+      s.query();
+      while (s.next()) { data.matches.push({ id: s.getUniqueValue(), name: String(s.getValue('name') || '').trim() }); }
+    } catch (eS) { data.matches = []; }
+    return;
+  }
+
+  function list(tbl, asIs) {
+    var out = [];
+    try {
+      var g = new GlideRecord(tbl);
+      /* asIs: intake-app lookups bypass the active filter. Names are
+         trimmed for DISPLAY only (one intake route name carries a
+         trailing space) - the sys_id binding is untouched. */
+      if (!asIs && g.isValidField('active')) { g.addActiveQuery(); }
+      g.orderBy('name');
+      g.query();
+      while (g.next()) { out.push({ id: g.getUniqueValue(), name: String(g.getValue('name') || '').trim() }); }
+    } catch (eL) { out = []; }
+    return out;
+  }
+
+  var MATURITY_FALLBACK = [
+    { id: 'Idea', name: 'Idea' }, { id: 'in_market', name: 'In Market' },
+    { id: 'pilot', name: 'Pilot' }, { id: 'prototype', name: 'Prototype' },
+    { id: 'ready_for_sale', name: 'Ready For Sale' }
+  ];
+
+  if (!input) {
+    data.practices = list('x_snc_ptag_engage_practice', true);
+    data.routes = list('x_snc_ptag_engage_route_to_market', true);
+    data.industries = list('x_snc_ptag_engage_industry');
+    data.use_cases = list('x_snc_ptag_engage_partner_use_case');
+    data.maturity = [];
+    try {
+      var mc = new GlideRecord('sys_choice');
+      mc.addQuery('name', TABLE);
+      mc.addQuery('element', 'in_market_status');
+      mc.addQuery('inactive', false);
+      mc.addQuery('language', 'en');
+      mc.orderBy('sequence');
+      mc.query();
+      while (mc.next()) { data.maturity.push({ id: mc.getValue('value'), name: mc.getValue('label') }); }
+    } catch (eM) { data.maturity = []; }
+    if (!data.maturity.length) { data.maturity = MATURITY_FALLBACK; }
+    data.partner_scopes = [];
+    try {
+      var pc = new GlideRecord('sys_choice');
+      pc.addQuery('name', TABLE);
+      pc.addQuery('element', 'partner_scope');
+      pc.addQuery('inactive', false);
+      pc.addQuery('language', 'en');
+      pc.orderBy('sequence');
+      pc.query();
+      while (pc.next()) { data.partner_scopes.push({ id: pc.getValue('value'), name: pc.getValue('label') }); }
+    } catch (ePS) { data.partner_scopes = []; }
+    if (!data.partner_scopes.length) {
+      data.partner_scopes = [
+        { id: 'global', name: 'Global' },
+        { id: 'multi_regional', name: 'Multi-regional' },
+        { id: 'regional', name: 'Regional' }
+      ];
+    }
+    return;
+  }
+
+  if (input.action !== 'create') { return; }
+
+  var f = input.form || {};
+  var errs = [];
+
+  /* mandatory mirror: exactly the producer's mandatory=true variables */
+  if (!hasVal(f.partner)) { errs.push('Parent Partner is required.'); }
+  if (!hasVal(f.partner_manager)) { errs.push('Partner Manager is required.'); }
+  if (!hasVal(f.practice)) { errs.push('Practice is required.'); }
+  if (!hasVal(f.target_geo)) { errs.push('Where is the target geo is required.'); }
+  if (!hasVal(f.short_description)) { errs.push('Short Description is required.'); }
+  if (!hasVal(f.idea_description)) { errs.push('Engagement Description is required.'); }
+  if (!hasVal(f.what_is_the_partners_ai_strategy)) { errs.push('What is the Partners AI Strategy? is required.'); }
+
+  function refOk(tbl, id) {
+    try { var g = new GlideRecord(tbl); return g.get(String(id)); } catch (eR) { return false; }
+  }
+  var REFS = [
+    ['partner', 'customer_account', 'Parent Partner'],
+    ['partner_manager', 'sys_user', 'Partner Manager'],
+    ['practice', 'x_snc_ptag_engage_practice', 'Practice'],
+    ['target_geo', 'cmn_location', 'Target geo'],
+    ['primary_product', 'cmdb_ci_business_app', 'Primary Product'],
+    ['primary_industry', 'x_snc_ptag_engage_industry', 'Primary Target Industry'],
+    ['route_to_market', 'x_snc_ptag_engage_route_to_market', 'Route to Market'],
+    ['partner_use_case', 'x_snc_ptag_engage_partner_use_case', 'Primary Use Case']
+  ];
+  for (var i = 0; i < REFS.length; i++) {
+    if (hasVal(f[REFS[i][0]]) && !refOk(REFS[i][1], f[REFS[i][0]])) {
+      errs.push(REFS[i][2] + ' not recognized.');
+    }
+  }
+
+  var MATS = { 'Idea': 1, 'in_market': 1, 'pilot': 1, 'prototype': 1, 'ready_for_sale': 1 };
+  if (hasVal(f.in_market_status) && !MATS[String(f.in_market_status)]) {
+    errs.push('Maturity value not recognized.');
+  }
+
+  var SCOPES = { 'global': 1, 'multi_regional': 1, 'regional': 1 };
+  if (hasVal(f.partner_scope) && !SCOPES[String(f.partner_scope)]) {
+    errs.push('Partner Market Scope value not recognized.');
+  }
+
+  var tam = null;
+  if (hasVal(f.tam)) {
+    tam = parseFloat(String(f.tam).replace(/[$,\s]/g, ''));
+    if (isNaN(tam) || tam < 0) { errs.push('TAM must be a non-negative number.'); tam = null; }
+  }
+
+  if (errs.length) { data.errors = errs; return; }
+
+  var rec = new GlideRecord(TABLE);
+  rec.initialize();
+  rec.setValue('partner', String(f.partner));
+  rec.setValue('partner_manager', String(f.partner_manager));
+  rec.setValue('practice', String(f.practice));
+  rec.setValue('target_geo', String(f.target_geo));
+  rec.setValue('short_description', String(f.short_description).trim());
+  rec.setValue('idea_description', String(f.idea_description));
+  rec.setValue('what_is_the_partners_ai_strategy', String(f.what_is_the_partners_ai_strategy));
+  if (hasVal(f.primary_product)) { rec.setValue('primary_product', String(f.primary_product)); }
+  if (hasVal(f.primary_industry)) { rec.setValue('primary_industry', String(f.primary_industry)); }
+  if (hasVal(f.route_to_market)) { rec.setValue('route_to_market', String(f.route_to_market)); }
+  if (hasVal(f.partner_use_case)) { rec.setValue('partner_use_case', String(f.partner_use_case)); }
+  if (hasVal(f.customer_pain_points)) { rec.setValue('customer_pain_points', String(f.customer_pain_points)); }
+  if (hasVal(f.value_prop)) { rec.setValue('value_prop', String(f.value_prop)); }
+  if (hasVal(f.in_market_status)) { rec.setValue('in_market_status', String(f.in_market_status)); }
+  rec.setValue('partner_scope', hasVal(f.partner_scope) ? String(f.partner_scope) : 'global');
+  if (tam !== null) { rec.setValue('tam', tam); }
+  var flags = ['pipeline', 'business_owner', 'executive_sponsor', 'corporate_alignment',
+               'budget', 'has_customers', 'certified_resources'];
+  for (var k = 0; k < flags.length; k++) { rec.setValue(flags[k], f[flags[k]] === true); }
+
+  var sid = rec.insert();
+  if (!sid) {
+    data.errors = ['Could not create the engagement: ' + (rec.getLastErrorMessage() || 'unknown error')];
+    return;
+  }
+  var out = new GlideRecord(TABLE);
+  if (out.get(sid)) {
+    data.result = { ok: true, number: out.getValue('number'), sys_id: sid };
+  } else {
+    data.result = { ok: true, number: '', sys_id: sid };
+  }
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:52:09</sys_created_on>
+        <sys_id>e1f9c1b8939ac3d04639f8597bba1026</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>PTAG Submit Engagement</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_e1f9c1b8939ac3d04639f8597bba1026</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 19:25:34</sys_updated_on>
+        <template><![CDATA[<!-- I6 RECEIPT: ptag_submit_w - internal register + number-based status link (I5 REFS structure unchanged) -->
+<section class="pt-section">
+  <div class="pt-shell pt-shell--form">
+
+    <header class="pt-center pt-reveal" style="margin-bottom: 32px;">
+      <h1 style="margin-bottom: 8px; font-size: var(--pt-fs-2xl);">Submit an engagement</h1>
+      <p class="pt-muted" style="margin: 0;">Three quick steps. Fields marked <span class="pt-req">*</span> are required.</p>
+    </header>
+
+    <div class="pt-card pt-card--pad-lg pt-reveal" data-delay="80" ng-if="!data.result.ok">
+
+      <div class="pt-steps">
+        <div class="pt-step" ng-class="{'is-active': c.step == 1, 'is-done': c.step > 1}">
+          <div class="pt-step__k">01</div><div class="pt-step__t">General Info</div>
+        </div>
+        <div class="pt-step" ng-class="{'is-active': c.step == 2, 'is-done': c.step > 2}">
+          <div class="pt-step__k">02</div><div class="pt-step__t">Engagement Info</div>
+        </div>
+        <div class="pt-step" ng-class="{'is-active': c.step == 3}">
+          <div class="pt-step__k">03</div><div class="pt-step__t">Assessment</div>
+        </div>
+      </div>
+
+      <div class="pt-alert" ng-if="data.errors.length" role="alert">
+        <p ng-repeat="e in data.errors track by $index">{{e}}</p>
+      </div>
+
+      <div ng-show="c.step == 1">
+        <div class="pt-form-grid">
+
+          <div class="pt-field" ng-class="{'has-error': c.err.partner}">
+            <label for="pt-f-partner">Parent Partner <span class="pt-req">*</span></label>
+            <div class="pt-refselect" ng-class="{'is-set': !!c.form.partner}">
+              <button id="pt-f-partner" class="pt-refselect__btn" type="button" ng-click="c.rpOpen('partner')" aria-haspopup="dialog">
+                <span class="pt-refselect__val" ng-if="c.ref.partner.name">{{c.ref.partner.name}}</span>
+                <span class="pt-refselect__ph" ng-if="!c.ref.partner.name">Select a partner account&hellip;</span>
+              </button>
+              <button class="pt-refselect__clear pt-iconbtn" type="button" ng-if="c.ref.partner.name" ng-click="c.rpClear('partner')" aria-label="Clear Parent Partner"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+              <svg class="pt-i pt-i--sm pt-refselect__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+            </div>
+            <div class="pt-field__err" ng-if="c.err.partner">Parent Partner is required &mdash; pick from the list.</div>
+          </div>
+
+          <div class="pt-field" ng-class="{'has-error': c.err.partner_scope}">
+            <label for="pt-f-scope">Partner Market Scope <span class="pt-req">*</span></label>
+            <select id="pt-f-scope" class="pt-select" ng-model="c.form.partner_scope" ng-options="s.id as s.name for s in data.partner_scopes"></select>
+            <div class="pt-field__hint" ng-if="!c.err.partner_scope">Global = all three major areas (AMS&nbsp;+&nbsp;EMEA&nbsp;+&nbsp;APAC). Multi&#8209;regional = two. Regional = one area or a country cluster.</div>
+            <div class="pt-field__err" ng-if="c.err.partner_scope">Partner Market Scope is required.</div>
+          </div>
+
+          <div class="pt-field" ng-class="{'has-error': c.err.partner_manager}">
+            <label for="pt-f-pm">Partner Manager <span class="pt-req">*</span></label>
+            <div class="pt-refselect" ng-class="{'is-set': !!c.form.partner_manager}">
+              <button id="pt-f-pm" class="pt-refselect__btn" type="button" ng-click="c.rpOpen('partner_manager')" aria-haspopup="dialog">
+                <span class="pt-refselect__val" ng-if="c.ref.partner_manager.name">{{c.ref.partner_manager.name}}</span>
+                <span class="pt-refselect__ph" ng-if="!c.ref.partner_manager.name">Select a partner manager&hellip;</span>
+              </button>
+              <button class="pt-refselect__clear pt-iconbtn" type="button" ng-if="c.ref.partner_manager.name" ng-click="c.rpClear('partner_manager')" aria-label="Clear Partner Manager"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+              <svg class="pt-i pt-i--sm pt-refselect__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+            </div>
+            <div class="pt-field__err" ng-if="c.err.partner_manager">Partner Manager is required &mdash; pick from the list.</div>
+          </div>
+
+          <div class="pt-field" ng-class="{'has-error': c.err.practice}">
+            <label for="pt-f-practice">Practice <span class="pt-req">*</span></label>
+            <select id="pt-f-practice" class="pt-select" ng-model="c.form.practice" ng-options="p.id as p.name for p in data.practices"><option value="">Select a practice&hellip;</option></select>
+            <div class="pt-field__err" ng-if="c.err.practice">Practice is required.</div>
+          </div>
+
+          <div class="pt-field" ng-class="{'has-error': c.err.target_geo}">
+            <label for="pt-f-geo">Where is the target geo <span class="pt-req">*</span></label>
+            <div class="pt-refselect" ng-class="{'is-set': !!c.form.target_geo}">
+              <button id="pt-f-geo" class="pt-refselect__btn" type="button" ng-click="c.rpOpen('target_geo')" aria-haspopup="dialog">
+                <span class="pt-refselect__val" ng-if="c.ref.target_geo.name">{{c.ref.target_geo.name}}</span>
+                <span class="pt-refselect__ph" ng-if="!c.ref.target_geo.name">Select a location&hellip;</span>
+              </button>
+              <button class="pt-refselect__clear pt-iconbtn" type="button" ng-if="c.ref.target_geo.name" ng-click="c.rpClear('target_geo')" aria-label="Clear target geo"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+              <svg class="pt-i pt-i--sm pt-refselect__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+            </div>
+            <div class="pt-field__err" ng-if="c.err.target_geo">Where is the target geo is required &mdash; pick from the list.</div>
+          </div>
+
+          <div class="pt-field pt-field--full" ng-class="{'has-error': c.err.short_description}">
+            <label for="pt-f-short">Short Description <span class="pt-req">*</span></label>
+            <input id="pt-f-short" class="pt-input" type="text" ng-model="c.form.short_description" maxlength="160" placeholder="One line that names the engagement">
+            <div class="pt-field__err" ng-if="c.err.short_description">Short Description is required.</div>
+          </div>
+
+        </div>
+        <div class="pt-flex pt-flex--between" style="margin-top: 8px;">
+          <span class="pt-faint" style="font-size: var(--pt-fs-sm);">Step 1 of 3 &mdash; General Info</span>
+          <button class="pt-btn pt-btn--primary" type="button" ng-click="c.next()" ng-class="{'is-unready': !c.stepReady(1)}">Continue <svg class="pt-i pt-i--sm"><use href="#ptag-i-arrow-right"/></svg></button>
+        </div>
+      </div>
+
+      <div ng-show="c.step == 2">
+        <div class="pt-form-grid">
+
+          <div class="pt-field pt-field--full" ng-class="{'has-error': c.err.idea_description}">
+            <label for="pt-f-idea">Engagement Description <span class="pt-req">*</span></label>
+            <textarea id="pt-f-idea" class="pt-textarea" ng-model="c.form.idea_description" rows="5" placeholder="What is the engagement, who is it for, and what does success look like?"></textarea>
+            <div class="pt-field__err" ng-if="c.err.idea_description">Engagement Description is required.</div>
+          </div>
+
+          <div class="pt-field pt-field--full" ng-class="{'has-error': c.err.what_is_the_partners_ai_strategy}">
+            <label for="pt-f-ai">What is the Partners AI Strategy? <span class="pt-req">*</span></label>
+            <textarea id="pt-f-ai" class="pt-textarea" ng-model="c.form.what_is_the_partners_ai_strategy" rows="4" placeholder="How AI fits the partner's plan for this engagement"></textarea>
+            <div class="pt-field__err" ng-if="c.err.what_is_the_partners_ai_strategy">What is the Partners AI Strategy? is required.</div>
+          </div>
+
+          <div class="pt-field">
+            <label for="pt-f-product">What is the Primary Product Used?</label>
+            <div class="pt-refselect" ng-class="{'is-set': !!c.form.primary_product}">
+              <button id="pt-f-product" class="pt-refselect__btn" type="button" ng-click="c.rpOpen('primary_product')" aria-haspopup="dialog">
+                <span class="pt-refselect__val" ng-if="c.ref.primary_product.name">{{c.ref.primary_product.name}}</span>
+                <span class="pt-refselect__ph" ng-if="!c.ref.primary_product.name">Select a product&hellip; (optional)</span>
+              </button>
+              <button class="pt-refselect__clear pt-iconbtn" type="button" ng-if="c.ref.primary_product.name" ng-click="c.rpClear('primary_product')" aria-label="Clear Primary Product"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+              <svg class="pt-i pt-i--sm pt-refselect__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+            </div>
+          </div>
+
+          <div class="pt-field">
+            <label for="pt-f-industry">What is the Primary Target Industry?</label>
+            <select id="pt-f-industry" class="pt-select" ng-model="c.form.primary_industry" ng-options="i.id as i.name for i in data.industries"><option value="">Select an industry&hellip; (optional)</option></select>
+          </div>
+
+          <div class="pt-field">
+            <label for="pt-f-route">What is the preferred Route to Market?</label>
+            <select id="pt-f-route" class="pt-select" ng-model="c.form.route_to_market" ng-options="r.id as r.name for r in data.routes"><option value="">Select a route&hellip; (optional)</option></select>
+          </div>
+
+          <div class="pt-field">
+            <label for="pt-f-usecase">Primary Use Case</label>
+            <select id="pt-f-usecase" class="pt-select" ng-model="c.form.partner_use_case" ng-options="u.id as u.name for u in data.use_cases"><option value="">Select a use case&hellip; (optional)</option></select>
+          </div>
+
+        </div>
+        <div class="pt-flex pt-flex--between" style="margin-top: 8px;">
+          <button class="pt-btn pt-btn--ghost" type="button" ng-click="c.back()">Back</button>
+          <button class="pt-btn pt-btn--primary" type="button" ng-click="c.next()" ng-class="{'is-unready': !c.stepReady(2)}">Continue <svg class="pt-i pt-i--sm"><use href="#ptag-i-arrow-right"/></svg></button>
+        </div>
+      </div>
+
+      <div ng-show="c.step == 3">
+
+        <div class="pt-group-h">Desirability</div>
+        <div class="pt-form-grid">
+          <div class="pt-field pt-field--full">
+            <label for="pt-f-pain">Customer Pain Points</label>
+            <textarea id="pt-f-pain" class="pt-textarea" ng-model="c.form.customer_pain_points" rows="3" placeholder="What customer problems does this solve? (optional)"></textarea>
+          </div>
+          <div class="pt-field pt-field--full">
+            <label for="pt-f-vp">What is the high level Value Proposition?</label>
+            <textarea id="pt-f-vp" class="pt-textarea" ng-model="c.form.value_prop" rows="3" placeholder="Why this wins (optional)"></textarea>
+          </div>
+        </div>
+        <label class="pt-check" ng-class="{'is-on': c.form.pipeline}"><input type="checkbox" ng-model="c.form.pipeline"><span><b>Does the Partner have Pipeline for this?</b></span></label>
+        <div class="pt-form-grid" style="margin-top: 12px;">
+          <div class="pt-field" ng-class="{'has-error': c.err.tam}">
+            <label for="pt-f-tam">What is the TAM?</label>
+            <input id="pt-f-tam" class="pt-input" type="text" inputmode="decimal" ng-model="c.form.tam" placeholder="Total addressable market, USD (optional)">
+            <div class="pt-field__err" ng-if="c.err.tam">TAM must be a non-negative number.</div>
+          </div>
+        </div>
+
+        <div class="pt-group-h">Viability</div>
+        <label class="pt-check" ng-class="{'is-on': c.form.business_owner}"><input type="checkbox" ng-model="c.form.business_owner"><span><b>Is there a business owner?</b></span></label>
+        <label class="pt-check" ng-class="{'is-on': c.form.executive_sponsor}"><input type="checkbox" ng-model="c.form.executive_sponsor"><span><b>Is there an Executive Sponsor?</b></span></label>
+        <label class="pt-check" ng-class="{'is-on': c.form.corporate_alignment}"><input type="checkbox" ng-model="c.form.corporate_alignment"><span><b>Does this align to a Corporate Goal or Big Bet?</b></span></label>
+        <label class="pt-check" ng-class="{'is-on': c.form.budget}"><input type="checkbox" ng-model="c.form.budget"><span><b>Does this initiative have budget?</b></span></label>
+
+        <div class="pt-group-h">Feasibility</div>
+        <div class="pt-form-grid">
+          <div class="pt-field">
+            <label for="pt-f-maturity">What is the maturity of this solution?</label>
+            <select id="pt-f-maturity" class="pt-select" ng-model="c.form.in_market_status" ng-options="m.id as m.name for m in data.maturity"><option value="">Select maturity&hellip; (optional)</option></select>
+          </div>
+        </div>
+        <label class="pt-check" ng-class="{'is-on': c.form.has_customers}"><input type="checkbox" ng-model="c.form.has_customers"><span><b>Are there existing customers?</b></span></label>
+        <label class="pt-check" ng-class="{'is-on': c.form.certified_resources}"><input type="checkbox" ng-model="c.form.certified_resources"><span><b>Are there certified resources?</b></span></label>
+
+        <div class="pt-group-h">Attachments</div>
+        <p class="pt-muted" style="margin: 0 0 10px; font-size: var(--pt-fs-sm);">Optional &mdash; decks, one-pagers, anything that helps the assessment. Files upload when you submit.</p>
+        <input type="file" id="pt-sub-file-input" class="pt-files__input" multiple
+               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.csv,.msg,.eml" onchange="angular.element(this).scope().c.filesPicked(this.files)">
+        <ul class="pt-files" ng-if="c.queue.length">
+          <li class="pt-files__item" ng-repeat="f in c.queue track by f.key">
+            <svg class="pt-i pt-i--sm pt-files__ico" aria-hidden="true"><use href="#ptag-i-paperclip"/></svg>
+            <span class="pt-files__name">{{f.name}}</span>
+            <span class="pt-files__meta">{{c.fileSize(f.size)}}</span>
+            <button class="pt-iconbtn pt-files__rm" type="button" ng-click="c.dequeue(f)"
+                    ng-disabled="c.busy" aria-label="Remove {{f.name}}" title="Remove">
+              <svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg>
+            </button>
+          </li>
+        </ul>
+        <div class="pt-files__bar">
+          <button class="pt-btn pt-btn--subtle pt-btn--sm" type="button" ng-click="c.pickFiles()" ng-disabled="c.busy">
+            <svg class="pt-i pt-i--sm"><use href="#ptag-i-paperclip"/></svg> Add files
+          </button>
+          <span class="pt-files__hint">Up to {{c.att.maxFiles}} files, {{c.att.maxMb}} MB each</span>
+        </div>
+        <p class="pt-field__err" ng-if="c.attErr" role="alert">{{c.attErr}}</p>
+
+        <div class="pt-group-h">Review</div>
+        <div class="pt-review">
+          <div class="pt-review__row"><div class="pt-review__k">Parent Partner</div><div class="pt-review__v">{{c.ref.partner.name || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Partner Market Scope</div><div class="pt-review__v">{{c.nameOf(data.partner_scopes, c.form.partner_scope) || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Partner Manager</div><div class="pt-review__v">{{c.ref.partner_manager.name || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Practice</div><div class="pt-review__v">{{c.nameOf(data.practices, c.form.practice) || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Target geo</div><div class="pt-review__v">{{c.ref.target_geo.name || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Short Description</div><div class="pt-review__v">{{c.form.short_description || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Maturity</div><div class="pt-review__v">{{c.nameOf(data.maturity, c.form.in_market_status) || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Assessment signals</div><div class="pt-review__v">{{c.signals()}} of 7 confirmed</div></div>
+          <div class="pt-review__row" ng-if="c.queue.length"><div class="pt-review__k">Attachments</div><div class="pt-review__v">{{c.queue.length}} {{c.queue.length === 1 ? 'file' : 'files'}} ready to upload</div></div>
+        </div>
+
+        <div class="pt-flex pt-flex--between" style="margin-top: 24px;">
+          <button class="pt-btn pt-btn--ghost" type="button" ng-click="c.back()" ng-disabled="c.busy">Back</button>
+          <button class="pt-btn pt-btn--primary" type="button" ng-click="c.submit()" ng-disabled="c.busy" ng-class="{'is-unready': !c.formReady()}">
+            <svg class="pt-i pt-i--sm pt-spin" ng-if="c.busy"><use href="#ptag-i-loader-circle"/></svg>
+            <svg class="pt-i pt-i--sm" ng-if="!c.busy"><use href="#ptag-i-send"/></svg>
+            {{c.busy ? 'Submitting…' : 'Submit engagement'}}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="pt-card pt-card--pad-lg pt-success" ng-if="data.result.ok">
+      <div class="pt-success__ring"><svg class="pt-i pt-i--lg"><use href="#ptag-i-check"/></svg></div>
+      <h2 style="margin-bottom: 8px;">Request {{data.result.number}} submitted</h2>
+      <p class="pt-muted" style="max-width: 520px; margin: 0 auto;">The PTAG team has it from here. You'll get an email confirmation now and an update at every status change &mdash; or check live status any time below.</p>
+      <div class="pt-subatt" ng-if="c.up.total" aria-live="polite">
+        <p class="pt-subatt__line" ng-if="c.up.busy">
+          <svg class="pt-i pt-i--sm pt-spin"><use href="#ptag-i-loader-circle"/></svg>
+          <span>Uploading attachments&hellip; {{c.up.done}} of {{c.up.total}}</span>
+        </p>
+        <p class="pt-subatt__line" ng-if="!c.up.busy && !c.up.failed.length">
+          <svg class="pt-i pt-i--sm" style="color: var(--pt-green);"><use href="#ptag-i-check"/></svg>
+          <span>{{c.up.done}} {{c.up.done === 1 ? 'file' : 'files'}} attached</span>
+        </p>
+        <p class="pt-subatt__line pt-subatt__line--err" ng-if="!c.up.busy && c.up.failed.length" role="alert">
+          <span>{{c.up.failed.length === c.up.total ? 'Your files could not be uploaded' : (c.up.total - c.up.failed.length) + ' of ' + c.up.total + ' files attached; some failed'}}: {{c.up.failed.join(', ')}}. Your request went through &mdash; add files any time from My Engagements.</span>
+        </p>
+      </div>
+      <div class="pt-token"><svg class="pt-i pt-i--sm"><use href="#ptag-i-link"/></svg><span>{{c.trackUrl()}}</span></div>
+      <div style="margin-top: 14px;">
+        <button class="pt-btn pt-btn--subtle pt-btn--sm" type="button" ng-click="c.copy()">
+          <svg class="pt-i pt-i--sm" ng-if="!c.copied"><use href="#ptag-i-copy"/></svg>
+          <svg class="pt-i pt-i--sm" ng-if="c.copied" style="color: var(--pt-green);"><use href="#ptag-i-check"/></svg>
+          {{c.copied ? 'Copied' : 'Copy link'}}
+        </button>
+      </div>
+      <div class="pt-hero__cta" style="justify-content: center; margin-top: 28px;">
+        <a class="pt-btn pt-btn--primary pt-btn--pill" href="?id=ptag_status">View my engagements</a>
+        <button class="pt-btn pt-btn--ghost pt-btn--pill" type="button" ng-click="c.reset()">Submit another</button>
+      </div>
+    </div>
+
+    <!-- ONE reusable modal reference picker; parameterized by c.rp (key/label) -->
+    <div class="pt-modal-backdrop" ng-if="c.rp.open" ng-click="c.rpClose()" ng-keydown="c.rpKeydown($event)" role="presentation">
+      <div class="pt-modal" role="dialog" aria-modal="true" aria-labelledby="pt-rp-title" ng-click="$event.stopPropagation()">
+        <div class="pt-modal__head">
+          <h3 id="pt-rp-title" class="pt-modal__title">{{c.rp.label}}</h3>
+          <button type="button" class="pt-iconbtn pt-modal__close" ng-click="c.rpClose()" aria-label="Close"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+        </div>
+        <div class="pt-modal__search">
+          <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-search"/></svg>
+          <input id="pt-rp-search" class="pt-input" type="text" autocomplete="off" autofocus
+                 placeholder="Type at least 2 characters to search&hellip;"
+                 ng-model="c.rp.term" ng-change="c.rpTermChange()" aria-label="Search {{c.rp.label}}">
+        </div>
+        <ul class="pt-modal__list" ng-if="c.rp.items.length">
+          <li ng-repeat="m in c.rp.items track by m.id"><button type="button" class="pt-modal__opt" ng-class="{'is-selected': m.id === c.form[c.rp.key], 'is-hi': $index === c.rp.hi}" ng-mouseenter="c.rp.hi = $index" ng-click="c.rpPick(m)"><span class="pt-modal__opt-name">{{m.name}}</span><svg class="pt-i pt-i--sm pt-modal__opt-check" ng-if="m.id === c.form[c.rp.key]" aria-hidden="true"><use href="#ptag-i-check"/></svg></button></li>
+        </ul>
+        <div class="pt-modal__empty" ng-if="!c.rp.items.length && c.rp.busy">Searching&hellip;</div>
+        <div class="pt-modal__empty" ng-if="!c.rp.items.length && !c.rp.busy">No matches found &mdash; try a different search.</div>
+        <div class="pt-modal__foot">
+          <button type="button" class="pt-btn pt-btn--ghost pt-btn--sm" ng-click="c.rpClose()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>]]></template>
+    </sp_widget>
+</record_update>

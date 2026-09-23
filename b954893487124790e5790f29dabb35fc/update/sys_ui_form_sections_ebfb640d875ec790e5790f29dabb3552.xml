@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_form_sections form_id="ebfb640d875ec790e5790f29dabb3552" sys_domain="global" table="x_snc_ptag_engage_engagement_request" version="3">
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>0</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>abfb640d875ec790e5790f29dabb3572</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="x_snc_ptag_engage_engagement_request" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">ebfb640d875ec790e5790f29dabb3552</sys_ui_form>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>1</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>e7fb640d875ec790e5790f29dabb3573</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="x_snc_ptag_engage_engagement_request" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">ebfb640d875ec790e5790f29dabb3552</sys_ui_form>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form action="INSERT_OR_UPDATE">
+            <name>x_snc_ptag_engage_engagement_request</name>
+            <roles/>
+            <sys_class_name>sys_ui_form</sys_class_name>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>ebfb640d875ec790e5790f29dabb3552</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>x_snc_ptag_engage_engagement_request</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+            <sys_update_name>sys_ui_form_sections_ebfb640d875ec790e5790f29dabb3552</sys_update_name>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <view display_value="Default view" name="NULL">Default view</view>
+            <view_name/>
+        </sys_ui_form>
+    </sys_ui_form_sections>
+</record_update>

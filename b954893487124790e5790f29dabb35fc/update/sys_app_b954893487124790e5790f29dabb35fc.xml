@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_app">
+    <sys_app action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <can_edit_in_studio>true</can_edit_in_studio>
+        <enforce_license>log</enforce_license>
+        <guided_setup_guid/>
+        <hide_on_ui>false</hide_on_ui>
+        <ide_created/>
+        <installed_as_dependency>false</installed_as_dependency>
+        <js_level>es_latest</js_level>
+        <licensable>true</licensable>
+        <license/>
+        <license_category>none</license_category>
+        <license_definition/>
+        <license_model>none</license_model>
+        <logo/>
+        <menu/>
+        <name>PTAG Engagement Hub</name>
+        <package_json/>
+        <package_resolver_version>1.0.0</package_resolver_version>
+        <private>false</private>
+        <restrict_table_access>false</restrict_table_access>
+        <runtime_access_tracking>permissive</runtime_access_tracking>
+        <scope>x_snc_ptag_engage</scope>
+        <scoped_administration>false</scoped_administration>
+        <short_description>Production PTAG engagement intake with status transparency and clear ownership. Additive companion to PTAG - Intake and Assessment; no dependency on it. v2 complete (1.3.0/I10): branded portal with mobile nav + in-scope favicon; deterministic scoring engine (admin-tunable weights, decision-table banding, stamped score/band); AES assessor workspace with queues, Assessment tab and leadership dashboard; full lifecycle notification suite (9); approval-on-accept + convert-to-engagement handoff; AI layer (exec-summary skill, Completeness Chaser, Triage Assist, comparison skill - drafts only, journal-only writes, LLM never rates, all AI Control Tower-governed). Duplicate detector deferred on corpus volume (design/v2/dup_detector_deferral.md). 1.3.1 (I11 UX): CONTAINS + explicit-* wildcard search in the intake reference pickers; engagement detail modal on My Engagements with the customer-visible comment thread, guarded comment composer (PTAGHubAccess) and comment notifications N10/N11. 1.3.2 (I12 UX): landing hero panel merges the journey explainer into the pipeline rows - two-line items with the I6 state-context sub-notes, retitled 'Where your requests stand', each row an anchor into the new whitelisted ?state= filter on My Engagements (filter bar + Show all). 1.3.3 (I13 UX): landing gains a right-gutter section dot-rail + hero 'Explore' scroll cue and a track-by-number jump inside the pipeline card (-&gt; ?id=ptag_status&amp;number=). Track Status retired end-to-end - removed from header + footer nav, hero CTA now 'My engagements', all ptag_track references swept (7 notification templates + submit receipt repointed to ?id=ptag_status), ptag_track page + ptag_track_w widget deleted. My Engagements gains a permanent filter bar (state chips w/ viewer counts + PTAG-number filter, no-reload refilter + shareable URL sync, mutually exclusive) and the track page's state-flow timeline in two placements - the drill-in modal and a long-hover inline row peek. Seeds untouched.</short_description>
+        <sn_managed>false</sn_managed>
+        <source>x_snc_ptag_engage</source>
+        <store_correlation_id/>
+        <store_url/>
+        <subscription_entitlement/>
+        <sys_class_name>sys_app</sys_class_name>
+        <sys_code/>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:27:36</sys_created_on>
+        <sys_id>b954893487124790e5790f29dabb35fc</sys_id>
+        <sys_mod_count>84</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-29 16:10:25</sys_updated_on>
+        <template/>
+        <trackable>true</trackable>
+        <uninstall_blocked>false</uninstall_blocked>
+        <user_role/>
+        <vendor/>
+        <vendor_prefix/>
+        <version>1.45.1</version>
+    </sys_app>
+</record_update>

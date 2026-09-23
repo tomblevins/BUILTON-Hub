@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_one_extend_capability">
+    <sys_one_extend_capability action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Drafts a board-ready executive summary of one PTAG engagement request (situation, ask, sponsorship/readiness, next step). Facts-only; cites the system-stamped score/band; never emits its own rating; humans decide. Inputs are pre-normalized by x_snc_ptag_engage.PTAGAiUtil.</description>
+        <external>false</external>
+        <metadata>{"isGuidedStep":false}</metadata>
+        <name>PTAG Engagement Executive Summary</name>
+        <offglide_enabled>false</offglide_enabled>
+        <short_description>Exec summary draft for PTAG engagement requests</short_description>
+        <sys_class_name>sys_one_extend_capability</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:33:02</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>6b38d58987d60b90e5790f29dabb3572</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Engagement Executive Summary</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_one_extend_capability_6b38d58987d60b90e5790f29dabb3572</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:33:02</sys_updated_on>
+        <type>skill</type>
+    </sys_one_extend_capability>
+    <sys_translated_text action="delete_multiple" query="documentkey=6b38d58987d60b90e5790f29dabb3572"/>
+</record_update>

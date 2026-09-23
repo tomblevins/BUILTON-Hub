@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGHubAccess</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>I11 portal guard: engagement-request detail/comment actions. Requester (opened_by) or x_snc_ptag_engage.user/.admin. No data exposure; access=public only so validation can exercise the guard path cross-scope.</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGHubAccess</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGHubAccess = Class.create();
+PTAGHubAccess.prototype = {
+    initialize: function() {},
+
+    /* I11: portal action guard for engagement requests (detail read +
+       customer-visible comment append in ptag_myeng_w).
+       Allowed: the requester (opened_by == session user) OR holders of
+       x_snc_ptag_engage.user / x_snc_ptag_engage.admin (gs.hasRole -
+       platform admins pass by design, same posture as ptag_track_w).
+       Callers must treat false as not_authorized and answer identically
+       for missing records (no existence leak).
+       access=public exists so validation can exercise THIS code path from
+       a global-scope impersonation test; the class exposes no data. */
+    canAct: function(rec) {
+        try {
+            if (!rec || !rec.isValidRecord()) { return false; }
+            var me = String(gs.getUserID());
+            if (String(rec.getValue('opened_by')) === me) { return true; }
+            return gs.hasRole('x_snc_ptag_engage.user') || gs.hasRole('x_snc_ptag_engage.admin');
+        } catch (e) {
+            return false;
+        }
+    },
+
+    /* I33: the single definition of "this engagement cannot move forward".
+       3 Completed, 7 Unlikely to implement, 8 Duplicate, 9 Cancelled. Lives here
+       so the portal widget and both business rules can never disagree. */
+    TERMINAL: ['3', '7', '8', '9'],
+
+    /* I34: "Unlikely to implement" cannot move forward, but it is a judgement
+       rather than a full stop - the requester should still be able to argue the
+       case. So the lock has TWO axes, not one:
+           3 Completed             comments locked, attachments locked
+           7 Unlikely to implement comments OPEN,   attachments locked
+           8 Duplicate             comments locked, attachments locked
+           9 Cancelled             comments locked, attachments locked */
+    COMMENTS_STAY_OPEN: ['7'],
+
+    isLockedState: function(stateValue) {
+        return this.TERMINAL.indexOf(String(stateValue || '')) > -1;
+    },
+
+    /* attachments follow the terminal set exactly */
+    isAttachLocked: function(stateValue) {
+        return this.isLockedState(stateValue);
+    },
+
+    isCommentLocked: function(stateValue) {
+        return this.isLockedState(stateValue) &&
+               this.COMMENTS_STAY_OPEN.indexOf(String(stateValue || '')) === -1;
+    },
+
+    isLocked: function(rec) {
+        try {
+            return !!rec && this.isLockedState(rec.getValue('state'));
+        } catch (e) {
+            return false;
+        }
+    },
+
+    isCommentLockedRec: function(rec) {
+        try {
+            return !!rec && this.isCommentLocked(rec.getValue('state'));
+        } catch (e) {
+            return false;
+        }
+    },
+
+    /* PTAG staff, as opposed to the requester. Used ONLY by the business-rule
+       backstop: staff can still annotate a closed record from the workspace.
+       The portal deliberately does NOT use this - see the increment note. */
+    isStaff: function() {
+        return gs.hasRole('x_snc_ptag_engage.user') || gs.hasRole('x_snc_ptag_engage.admin');
+    },
+
+    type: 'PTAGHubAccess'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 22:31:14</sys_created_on>
+        <sys_id>b4ce464987924b90e5790f29dabb35cc</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAGHubAccess</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_b4ce464987924b90e5790f29dabb35cc</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 03:25:30</sys_updated_on>
+    </sys_script_include>
+</record_update>

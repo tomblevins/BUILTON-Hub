@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="par_dashboard_canvas">
+    <par_dashboard_canvas action="INSERT_OR_UPDATE">
+        <dashboard display_value="PTAG Engagement Hub">2aec60cd875ec790e5790f29dabb3595</dashboard>
+        <dashboard_tab display_value="Tab">7eec60cd875ec790e5790f29dabb35e0</dashboard_tab>
+        <layout>[]</layout>
+        <sys_class_name>par_dashboard_canvas</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 15:23:45</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>faec60cd875ec790e5790f29dabb35e5</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name/>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>par_dashboard_canvas_faec60cd875ec790e5790f29dabb35e5</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 15:23:48</sys_updated_on>
+    </par_dashboard_canvas>
+</record_update>

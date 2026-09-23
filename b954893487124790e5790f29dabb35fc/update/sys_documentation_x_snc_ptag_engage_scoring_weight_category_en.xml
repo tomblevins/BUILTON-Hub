@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="category" label="Category" language="en" table="x_snc_ptag_engage_scoring_weight">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>category</element>
+            <help/>
+            <hint/>
+            <label>Category</label>
+            <language>en</language>
+            <name>x_snc_ptag_engage_scoring_weight</name>
+            <plural>Categories</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 14:46:59</sys_created_on>
+            <sys_id>9084280d87dac790e5790f29dabb357b</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Category</sys_name>
+            <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+            <sys_update_name>sys_documentation_x_snc_ptag_engage_scoring_weight_category_en</sys_update_name>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 14:46:59</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+    </sys_documentation>
+</record_update>

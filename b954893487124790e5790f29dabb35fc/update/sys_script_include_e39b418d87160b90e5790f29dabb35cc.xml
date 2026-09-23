@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGApprovalEngine</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGApprovalEngine</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGApprovalEngine = Class.create();
+PTAGApprovalEngine.prototype = {
+    /* PTAG Engagement Hub I8: approval-on-accept + convert-to-engagement.
+       Acceptance (state -> In Backlog) is held until a real platform approval
+       (sysapproval_approver via document_id + source_table; our table is not
+       task-extended) is approved. On approval the request converts into
+       x_snc_ptag_engage_engagement (task-extended), one engagement per
+       request, and the score locks. */
+    initialize: function () {
+        this.REQUEST = 'x_snc_ptag_engage_engagement_request';
+        this.ENGAGEMENT = 'x_snc_ptag_engage_engagement';
+        this.APPROVAL = 'sysapproval_approver';
+    },
+
+    /* assignment_group manager, else the practice-name group's manager, else '' */
+    resolveApprover: function (req) {
+        if (!req.assignment_group.nil() && !req.assignment_group.manager.nil()) {
+            return String(req.assignment_group.manager);
+        }
+        if (!req.practice.nil()) {
+            var g = new GlideRecord('sys_user_group');
+            g.addQuery('name', String(req.practice.name));
+            g.addQuery('active', true);
+            g.addNotNullQuery('manager');
+            g.query();
+            if (g.next()) return String(g.getValue('manager'));
+        }
+        return '';
+    },
+
+    userName: function (sysId) {
+        var u = new GlideRecord('sys_user');
+        return (sysId && u.get(sysId)) ? String(u.getDisplayValue()) : '';
+    },
+
+    openApproval: function (reqSysId) {
+        var a = new GlideRecord(this.APPROVAL);
+        a.addQuery('source_table', this.REQUEST);
+        a.addQuery('document_id', reqSysId);
+        a.addQuery('state', 'requested');
+        a.query();
+        return a.next() ? a : null;
+    },
+
+    /* create (or approver-heal) the platform approval the approver sees in
+       My Approvals; document_id + source_table carry the standalone target */
+    requestApproval: function (req) {
+        var approver = String(req.getValue('approver') || '');
+        var open = this.openApproval(req.getUniqueValue());
+        if (open) {
+            if (approver && String(open.getValue('approver')) !== approver) {
+                open.setValue('approver', approver);
+                open.update();
+                return { created: false, healed: true, sys_id: open.getUniqueValue() };
+            }
+            return { created: false, sys_id: open.getUniqueValue(), note: 'already pending' };
+        }
+        if (!approver) {
+            gs.warn('[PTAGApprovalEngine] ' + req.getValue('number') +
+                    ': approval requested but no approver resolvable; record waits for manual approver.');
+            return { created: false, note: 'no approver' };
+        }
+        var a = new GlideRecord(this.APPROVAL);
+        a.newRecord();
+        a.setValue('approver', approver);
+        a.setValue('source_table', this.REQUEST);
+        a.setValue('document_id', req.getUniqueValue());
+        a.setValue('state', 'requested');
+        a.setValue('comments', 'PTAG Engagement Hub: acceptance of ' + req.getValue('number') +
+                   ' (' + req.getValue('short_description') + ') needs your approval.');
+        var id = a.insert();
+        if (!id) {
+            gs.error('[PTAGApprovalEngine] approval insert refused: ' + a.getLastErrorMessage());
+            return { created: false, err: String(a.getLastErrorMessage()) };
+        }
+        return { created: true, sys_id: id };
+    },
+
+    _stripHtml: function (s) {
+        return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ')
+            .replace(/\s+/g, ' ').trim();
+    },
+
+    execContext: function (req) {
+        var lines = [];
+        lines.push('Converted from engagement request ' + req.getValue('number') + ' on approval.');
+        lines.push('Partner: ' + (req.partner.nil() ? '-' : String(req.partner.getDisplayValue())));
+        lines.push('Practice: ' + (req.practice.nil() ? '-' : String(req.practice.getDisplayValue())));
+        lines.push('Score at acceptance: ' + String(req.getValue('score') || '-') + ' (' +
+                   String(req.getValue('score_band') || '-') + ', model v' +
+                   String(req.getValue('scoring_version') || '-') + ')');
+        var secs = [['Idea', 'idea_description'], ['Value proposition', 'value_prop'],
+                    ['Customer pain points', 'customer_pain_points']];
+        for (var i = 0; i < secs.length; i++) {
+            var txt = this._stripHtml(req.getValue(secs[i][1]));
+            if (txt) { lines.push(''); lines.push(secs[i][0] + ': ' + txt); }
+        }
+        return lines.join('\n');
+    },
+
+    engagementFor: function (reqSysId) {
+        var e = new GlideRecord(this.ENGAGEMENT);
+        e.addQuery('engagement_request', reqSysId);
+        e.query();
+        return e.next() ? e : null;
+    },
+
+    /* APPROVED: convert (once), lock score, advance to In Backlog. Idempotent. */
+    accept: function (req, approvalGr) {
+        var existing = this.engagementFor(req.getUniqueValue());
+        if (existing && String(req.getValue('approval')) === 'approved') {
+            gs.info('[PTAGApprovalEngine] ' + req.getValue('number') +
+                    ' re-approval ignored; engagement ' + existing.getValue('number') + ' already exists.');
+            return { engagement: existing.getUniqueValue(), number: existing.getValue('number'), created: false };
+        }
+        var engId, engNumber, created = false;
+        if (existing) {
+            engId = existing.getUniqueValue();
+            engNumber = String(existing.getValue('number'));
+        } else {
+            var e = new GlideRecord(this.ENGAGEMENT);
+            e.newRecord();
+            e.setValue('short_description', String(req.getValue('short_description') || ''));
+            e.setValue('description', this.execContext(req));
+            if (!req.assignment_group.nil()) e.setValue('assignment_group', String(req.getValue('assignment_group')));
+            if (!req.opened_by.nil()) e.setValue('opened_by', String(req.getValue('opened_by')));
+            e.setValue('state', 1);
+            e.setValue('engagement_request', req.getUniqueValue());
+            if (!req.partner.nil()) e.setValue('partner', String(req.getValue('partner')));
+            if (!req.practice.nil()) e.setValue('practice', String(req.getValue('practice')));
+            e.setValue('score_snapshot', parseInt(req.getValue('score'), 10) || 0);
+            e.setValue('score_band_snapshot', String(req.getValue('score_band') || ''));
+            engId = e.insert();
+            if (!engId) {
+                gs.error('[PTAGApprovalEngine] engagement insert refused: ' + e.getLastErrorMessage());
+            } else {
+                engNumber = String(e.getValue('number'));
+                created = true;
+            }
+        }
+        var who = approvalGr ? String(approvalGr.approver.getDisplayValue()) : 'approver';
+        req.setValue('approval', 'approved');
+        req.setValue('score_locked', true);
+        req.setValue('state', 2);
+        if (engId) req.setValue('engagement', engId);
+        req.work_notes = 'Acceptance approved by ' + who + '. ' +
+            (created ? ('Engagement ' + engNumber + ' created and linked; score locked at ' +
+                        String(req.getValue('score')) + ' (' + String(req.getValue('score_band')) + ').')
+                     : ('Engagement ' + (engNumber || '(missing)') + ' already linked (duplicate guard).'));
+        req.update();
+        return { engagement: engId, number: engNumber, created: created };
+    },
+
+    /* REJECTED: back to Under Review with the reason on the record */
+    reject: function (req, approvalGr) {
+        var who = approvalGr ? String(approvalGr.approver.getDisplayValue()) : 'approver';
+        var why = approvalGr ? this._stripHtml(approvalGr.getValue('comments')) : '';
+        req.setValue('approval', 'rejected');
+        req.setValue('state', -1);
+        req.work_notes = 'Acceptance rejected by ' + who + (why ? ('. Reason: ' + why) : '.') +
+            ' Request returned to Under Review; it can be re-accepted after rework.';
+        req.update();
+        return { rejected: true };
+    },
+
+    type: 'PTAGApprovalEngine'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 17:37:52</sys_created_on>
+        <sys_id>e39b418d87160b90e5790f29dabb35cc</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAGApprovalEngine</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_e39b418d87160b90e5790f29dabb35cc</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:37:52</sys_updated_on>
+    </sys_script_include>
+</record_update>

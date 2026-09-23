@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_policy_action">
+    <sys_ui_policy_action action="INSERT_OR_UPDATE">
+        <cleared>false</cleared>
+        <disabled>true</disabled>
+        <field>exec_summary_generated_on</field>
+        <field_message/>
+        <field_message_type>none</field_message_type>
+        <mandatory>leave_alone</mandatory>
+        <sys_class_name>sys_ui_policy_action</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:31:24</sys_created_on>
+        <sys_id>3fd715c987d60b90e5790f29dabb3508</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>exec_summary_generated_on</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ui_policy_action_3fd715c987d60b90e5790f29dabb3508</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:31:24</sys_updated_on>
+        <table>x_snc_ptag_engage_engagement_request</table>
+        <ui_policy display_value="PTAG I9 - exec summary timestamp read-only">73d715c987d60b90e5790f29dabb3503</ui_policy>
+        <value/>
+        <value_action>ignore</value_action>
+        <visible>leave_alone</visible>
+    </sys_ui_policy_action>
+</record_update>

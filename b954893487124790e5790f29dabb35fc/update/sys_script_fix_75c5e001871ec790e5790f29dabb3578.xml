@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_fix">
+    <sys_script_fix action="INSERT_OR_UPDATE">
+        <before>false</before>
+        <description>Seeds/restores PTAG scoring model v1 (19 rows: 15 weights, 3 bands, 1 gate). Idempotent - safe to run repeatedly.</description>
+        <name>PTAG Hub - Seed scoring model v1</name>
+        <record_for_rollback>true</record_for_rollback>
+        <script><![CDATA[/* PTAG Hub - Seed scoring model v1 (I7).
+   Idempotent: keyed on row_type + signal + signal_value + scoring_version.
+   - identical row -> untouched;  drifted row -> restored;  missing -> inserted.
+   setWorkflow(false): seeding defines model v1 - it must not fire the
+   weight-change tuning BR (version bump + debounced rescore) per row.
+   Ends with one explicit rescoreOpen() so any open records pick up the model.
+   App-repo note (blueprint): data rows do not travel with app-repo deploys;
+   this Fix Script is the sanctioned carrier for the v1 seed. */
+(function seedScoringModelV1() {
+    var T = 'x_snc_ptag_engage_scoring_weight';
+    var SEED = [
+    {
+        "row_type": "weight",
+        "category": "viability",
+        "rule": "boolean_true",
+        "signal": "business_owner",
+        "signal_value": "",
+        "weight": 10,
+        "label": "Business owner identified",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "viability",
+        "rule": "boolean_true",
+        "signal": "executive_sponsor",
+        "signal_value": "",
+        "weight": 10,
+        "label": "Executive sponsor",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "viability",
+        "rule": "boolean_true",
+        "signal": "corporate_alignment",
+        "signal_value": "",
+        "weight": 10,
+        "label": "Corporate goal / big-bet alignment",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "viability",
+        "rule": "boolean_true",
+        "signal": "budget",
+        "signal_value": "",
+        "weight": 10,
+        "label": "Budget identified",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "desirability",
+        "rule": "boolean_true",
+        "signal": "pipeline",
+        "signal_value": "",
+        "weight": 15,
+        "label": "Partner pipeline",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "desirability",
+        "rule": "numeric_band",
+        "signal": "tam",
+        "signal_value": "gte_50m",
+        "weight": 15,
+        "label": "TAM >= $50M",
+        "tmin": 50000000,
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "desirability",
+        "rule": "numeric_band",
+        "signal": "tam",
+        "signal_value": "gte_10m",
+        "weight": 10,
+        "label": "TAM >= $10M",
+        "tmin": 10000000,
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "desirability",
+        "rule": "numeric_band",
+        "signal": "tam",
+        "signal_value": "gte_1m",
+        "weight": 5,
+        "label": "TAM >= $1M",
+        "tmin": 1000000,
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "desirability",
+        "rule": "all_nonempty",
+        "signal": "customer_pain_points,value_prop",
+        "signal_value": "",
+        "weight": 5,
+        "label": "Pain points + value proposition narratives",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "value_match",
+        "signal": "in_market_status",
+        "signal_value": "Idea",
+        "weight": 4,
+        "label": "Maturity: Idea",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "value_match",
+        "signal": "in_market_status",
+        "signal_value": "prototype",
+        "weight": 8,
+        "label": "Maturity: Prototype",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "value_match",
+        "signal": "in_market_status",
+        "signal_value": "pilot",
+        "weight": 12,
+        "label": "Maturity: Pilot",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "value_match",
+        "signal": "in_market_status",
+        "signal_value": "in_market",
+        "weight": 16,
+        "label": "Maturity: In Market",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "value_match",
+        "signal": "in_market_status",
+        "signal_value": "ready_for_sale",
+        "weight": 20,
+        "label": "Maturity: Ready For Sale",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "weight",
+        "category": "feasibility",
+        "rule": "boolean_true",
+        "signal": "certified_resources",
+        "signal_value": "",
+        "weight": 5,
+        "label": "Certified resources",
+        "tmin": "",
+        "tmax": "",
+        "band": "",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "band",
+        "category": "",
+        "rule": "",
+        "signal": "score_band",
+        "signal_value": "fast_track",
+        "weight": "",
+        "label": "Fast Track: score 70-100",
+        "tmin": 70,
+        "tmax": 100,
+        "band": "fast_track",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "band",
+        "category": "",
+        "rule": "",
+        "signal": "score_band",
+        "signal_value": "standard",
+        "weight": "",
+        "label": "Standard: score 40-69",
+        "tmin": 40,
+        "tmax": 69,
+        "band": "standard",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "band",
+        "category": "",
+        "rule": "",
+        "signal": "score_band",
+        "signal_value": "needs_development",
+        "weight": "",
+        "label": "Needs Development: score 0-39",
+        "tmin": 0,
+        "tmax": 39,
+        "band": "needs_development",
+        "scoring_version": 1,
+        "active": true,
+        "notes": ""
+    },
+    {
+        "row_type": "gate",
+        "category": "",
+        "rule": "all_false",
+        "signal": "executive_sponsor,budget",
+        "signal_value": "",
+        "weight": "",
+        "label": "No executive sponsor and no budget caps the band at Standard",
+        "tmin": "",
+        "tmax": "",
+        "band": "standard",
+        "scoring_version": 1,
+        "active": true,
+        "notes": "Hard gate: a request with neither an executive sponsor nor budget cannot band above Standard regardless of raw score."
+    }
+];
+    var ins = 0, upd = 0, same = 0;
+    for (var i = 0; i < SEED.length; i++) {
+        var r = SEED[i];
+        var gr = new GlideRecord(T);
+        gr.addQuery('row_type', r.row_type);
+        gr.addQuery('signal', r.signal);
+        gr.addQuery('signal_value', r.signal_value);
+        gr.addQuery('scoring_version', r.scoring_version);
+        gr.query();
+        var fields = ['label', 'category', 'rule', 'weight', 'threshold_min',
+                      'threshold_max', 'band', 'active', 'notes'];
+        var vals = {label: r.label, category: r.category, rule: r.rule,
+                    weight: r.weight, threshold_min: r.tmin, threshold_max: r.tmax,
+                    band: r.band, active: r.active, notes: r.notes};
+        if (gr.next()) {
+            var drift = false;
+            for (var f = 0; f < fields.length; f++) {
+                var want = String(vals[fields[f]] === null || vals[fields[f]] === undefined ? '' : vals[fields[f]]);
+                var got = String(gr.getValue(fields[f]) === null ? '' : gr.getValue(fields[f]));
+                if (fields[f] === 'active') { got = String(gr.getElement('active')); }
+                if (got !== want) { drift = true; break; }
+            }
+            if (!drift) { same++; continue; }
+            gr.setWorkflow(false);
+            for (var f2 = 0; f2 < fields.length; f2++) gr.setValue(fields[f2], vals[fields[f2]]);
+            gr.update();
+            upd++;
+        } else {
+            var n = new GlideRecord(T);
+            n.newRecord();
+            n.setWorkflow(false);
+            n.setValue('row_type', r.row_type);
+            n.setValue('signal', r.signal);
+            n.setValue('signal_value', r.signal_value);
+            n.setValue('scoring_version', r.scoring_version);
+            for (var f3 = 0; f3 < fields.length; f3++) n.setValue(fields[f3], vals[fields[f3]]);
+            n.insert();
+            ins++;
+        }
+    }
+    var cnt = new GlideAggregate(T);
+    cnt.addAggregate('COUNT');
+    cnt.query();
+    var total = cnt.next() ? cnt.getAggregate('COUNT') : '?';
+    gs.info('[PTAG seed v1] inserted=' + ins + ' restored=' + upd + ' unchanged=' + same + ' total_rows=' + total);
+    new x_snc_ptag_engage.PTAGScoringEngine().rescoreOpen('post-seed');
+})();]]></script>
+        <sys_class_name>sys_script_fix</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:52:33</sys_created_on>
+        <sys_id>75c5e001871ec790e5790f29dabb3578</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Hub - Seed scoring model v1</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_fix_75c5e001871ec790e5790f29dabb3578</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 14:52:33</sys_updated_on>
+        <unloadable>false</unloadable>
+    </sys_script_fix>
+</record_update>

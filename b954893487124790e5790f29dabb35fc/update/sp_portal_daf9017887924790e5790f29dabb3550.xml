@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_portal">
+    <sp_portal action="INSERT_OR_UPDATE">
+        <alternate_portal/>
+        <communication_channels/>
+        <css_variables/>
+        <dark_theme/>
+        <default>false</default>
+        <embeddable_macroponents/>
+        <enable_ais>false</enable_ais>
+        <enable_certificate_based_authentication>false</enable_certificate_based_authentication>
+        <enable_embeddables>false</enable_embeddables>
+        <enable_favorites>false</enable_favorites>
+        <hide_portal_name>true</hide_portal_name>
+        <homepage display_value="ptag_home">71f9cd3887924790e5790f29dabb35f8</homepage>
+        <icon>6209bd09879e0b90e5790f29dabb35c8.iix</icon>
+        <inactive>false</inactive>
+        <kb_knowledge_base/>
+        <kb_knowledge_page/>
+        <login_page display_value="ptag_login">c5266396935e4f144639f8597bba104d</login_page>
+        <logo/>
+        <logo_alt_text/>
+        <notfound_page/>
+        <quick_start_config/>
+        <rtl_enabled>false</rtl_enabled>
+        <sc_catalog/>
+        <sc_catalog_page/>
+        <sc_category_page/>
+        <search_application/>
+        <search_results_configuration/>
+        <sp_chat_queue/>
+        <sp_rectangle_menu/>
+        <sys_class_name>sp_portal</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:52:12</sys_created_on>
+        <sys_id>daf9017887924790e5790f29dabb3550</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAG Engagement Hub</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_portal_daf9017887924790e5790f29dabb3550</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 02:05:29</sys_updated_on>
+        <theme display_value="PTAG Engage Dark">49f9cd3887924790e5790f29dabb358e</theme>
+        <title>PTAG Engagement Hub</title>
+        <ts_index_group/>
+        <url_suffix>ptag</url_suffix>
+    </sp_portal>
+    <sys_translated_text action="delete_multiple" query="documentkey=daf9017887924790e5790f29dabb3550"/>
+    <sys_attachment action="INSERT_OR_UPDATE">
+        <average_image_color/>
+        <chunk_size_bytes>700000</chunk_size_bytes>
+        <compressed>true</compressed>
+        <content_type>image/png</content_type>
+        <encryption_context/>
+        <file_name>icon</file_name>
+        <hash>81d5a7b7670b19ad28d670fa42ac476bc7c62152cc45528d78cbd3c63f6342df</hash>
+        <image_height>32</image_height>
+        <image_width>32</image_width>
+        <size_bytes>1554</size_bytes>
+        <size_compressed>1577</size_compressed>
+        <state>available</state>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:56:19</sys_created_on>
+        <sys_id>6209bd09879e0b90e5790f29dabb35c8</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:56:20</sys_updated_on>
+        <table_name>ZZ_YYsp_portal</table_name>
+        <table_sys_id>daf9017887924790e5790f29dabb3550</table_sys_id>
+    </sys_attachment>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>H4sIAAAAAAAA/w==</data>
+        <length>16</length>
+        <position>0</position>
+        <sys_attachment display_value="icon" sys_id="6209bd09879e0b90e5790f29dabb35c8">6209bd09879e0b90e5790f29dabb35c8</sys_attachment>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:56:19</sys_created_on>
+        <sys_id>2609bd09879e0b90e5790f29dabb35c8</sys_id>
+    </sys_attachment_doc>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>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</data>
+        <length>2092</length>
+        <position>1</position>
+        <sys_attachment display_value="icon" sys_id="6209bd09879e0b90e5790f29dabb35c8">6209bd09879e0b90e5790f29dabb35c8</sys_attachment>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:56:19</sys_created_on>
+        <sys_id>e609bd09879e0b90e5790f29dabb35c8</sys_id>
+    </sys_attachment_doc>
+</record_update>

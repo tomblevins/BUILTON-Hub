@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_team_member">
+    <sn_aia_team_member action="INSERT_OR_UPDATE">
+        <agent display_value="PTAG Triage Assist">6d15390d875e0b90e5790f29dabb35e8</agent>
+        <memory_scope>global</memory_scope>
+        <sys_class_name>sn_aia_team_member</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:03</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>ed15790d875e0b90e5790f29dabb352e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_team_member_ed15790d875e0b90e5790f29dabb352e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:03</sys_updated_on>
+        <team display_value="PTAG Triage Assist Team">2915790d875e0b90e5790f29dabb352a</team>
+    </sn_aia_team_member>
+</record_update>

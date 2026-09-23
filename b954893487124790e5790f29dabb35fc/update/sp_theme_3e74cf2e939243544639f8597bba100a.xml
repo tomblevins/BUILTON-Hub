@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_theme">
+    <sp_theme action="INSERT_OR_UPDATE">
+        <css_variables/>
+        <footer/>
+        <footer_fixed>true</footer_fixed>
+        <header/>
+        <icon/>
+        <logo/>
+        <logo_alt_text/>
+        <matching_now_experience_theme display_value="PTAG Hub Workspace Theme">4c504f2a87960fd0e5790f29dabb3539</matching_now_experience_theme>
+        <name>PTAG Embed Theme</name>
+        <navbar_fixed>true</navbar_fixed>
+        <sys_class_name>sp_theme</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 18:16:49</sys_created_on>
+        <sys_id>3e74cf2e939243544639f8597bba100a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Embed Theme</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_theme_3e74cf2e939243544639f8597bba100a</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 18:16:49</sys_updated_on>
+        <turn_off_scss_compilation>false</turn_off_scss_compilation>
+    </sp_theme>
+</record_update>

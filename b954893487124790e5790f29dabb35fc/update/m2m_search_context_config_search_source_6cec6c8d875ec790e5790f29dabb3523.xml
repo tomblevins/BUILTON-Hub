@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="m2m_search_context_config_search_source">
+    <m2m_search_context_config_search_source action="INSERT_OR_UPDATE">
+        <order>100</order>
+        <search_context_config display_value="PTAG Engagement Hub - Workspace Search">29dc288d3c5ec790aff2a271b10fa5fe</search_context_config>
+        <source display_value="PTAG Engagement Hub - x_snc_ptag_engage_engagement">d4ec6c8d875ec790e5790f29dabb3512</source>
+        <sys_class_name>m2m_search_context_config_search_source</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 15:23:35</sys_created_on>
+        <sys_id>6cec6c8d875ec790e5790f29dabb3523</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>m2m_search_context_config_search_source_6cec6c8d875ec790e5790f29dabb3523</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 15:23:35</sys_updated_on>
+    </m2m_search_context_config_search_source>
+</record_update>

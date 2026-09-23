@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_trigger_agent_usecase_m2m">
+    <sn_aia_trigger_agent_usecase_m2m action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <objective_template><![CDATA[Engagement request ${number} needs a triage rationale draft. Record sys_id: ${sys_id}. Read its D/V/F signals and narratives and append ONE work note (the write tool prefixes [AI Triage Draft]) with the per-axis read, the verbatim stamped assessment citation, and a band-consistent next step. Journal write only; change no fields; never rate.]]></objective_template>
+        <related_resource_record>a915790d875e0b90e5790f29dabb354d</related_resource_record>
+        <related_resource_table>sn_aia_usecase</related_resource_table>
+        <sys_class_name>sn_aia_trigger_agent_usecase_m2m</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:04</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>f515790d875e0b90e5790f29dabb355e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_trigger_agent_usecase_m2m_f515790d875e0b90e5790f29dabb355e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:04</sys_updated_on>
+        <trigger_configuration display_value="x_snc_ptag_engage_engagement_request">6d15790d875e0b90e5790f29dabb3558</trigger_configuration>
+    </sn_aia_trigger_agent_usecase_m2m>
+</record_update>

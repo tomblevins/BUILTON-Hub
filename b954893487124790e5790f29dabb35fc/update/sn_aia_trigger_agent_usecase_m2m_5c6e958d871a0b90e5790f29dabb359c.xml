@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_trigger_agent_usecase_m2m">
+    <sn_aia_trigger_agent_usecase_m2m action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <objective_template><![CDATA[Engagement request ${number} entered 'Need more information'. Record sys_id: ${sys_id}. Review it for missing or weak intake signals and append ONE work note draft (the write tool prefixes it with [AI Completeness Draft]) listing at most three specific gaps in requester-friendly wording. Journal write only; change no fields.]]></objective_template>
+        <related_resource_record>0c6e958d871a0b90e5790f29dabb357c</related_resource_record>
+        <related_resource_table>sn_aia_usecase</related_resource_table>
+        <sys_class_name>sn_aia_trigger_agent_usecase_m2m</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:59:50</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>5c6e958d871a0b90e5790f29dabb359c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_trigger_agent_usecase_m2m_5c6e958d871a0b90e5790f29dabb359c</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:59:50</sys_updated_on>
+        <trigger_configuration display_value="x_snc_ptag_engage_engagement_request">d46e958d871a0b90e5790f29dabb358a</trigger_configuration>
+    </sn_aia_trigger_agent_usecase_m2m>
+</record_update>

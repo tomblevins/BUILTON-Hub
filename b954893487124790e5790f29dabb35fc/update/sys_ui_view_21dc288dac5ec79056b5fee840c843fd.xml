@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_view">
+    <sys_ui_view action="INSERT_OR_UPDATE">
+        <group/>
+        <hidden>false</hidden>
+        <name>workspace-ptag-engagement-hub-0</name>
+        <roles/>
+        <sys_class_name>sys_ui_view</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 15:23:28</sys_created_on>
+        <sys_id>21dc288dac5ec79056b5fee840c843fd</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Workspace PTAG Engagement Hub 0</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ui_view_21dc288dac5ec79056b5fee840c843fd</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 15:23:28</sys_updated_on>
+        <title>Workspace PTAG Engagement Hub 0</title>
+        <user/>
+    </sys_ui_view>
+</record_update>

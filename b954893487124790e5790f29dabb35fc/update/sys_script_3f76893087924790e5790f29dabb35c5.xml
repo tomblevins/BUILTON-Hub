@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>true</action_insert>
+        <action_query>false</action_query>
+        <action_update>false</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>x_snc_ptag_engage_engagement_request</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition/>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PTAG Engagement - stamp on insert</name>
+        <order>100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous) {
+  if (current.opened_by.nil()) current.opened_by = gs.getUserID();
+  if (current.state.nil()) current.state = 1;
+  if (current.number.nil()) {
+    var seq = 1000;
+    var last = new GlideRecord('x_snc_ptag_engage_engagement_request');
+    last.orderByDesc('number'); last.setLimit(1); last.query();
+    if (last.next()) {
+      var s = last.number.toString();
+      if (s.indexOf('PTAG') === 0) { var n = parseInt(s.substring(4), 10); if (!isNaN(n)) seq = n; }
+    }
+    current.number = 'PTAG' + ('0000000' + (seq + 1)).slice(-7);
+  }
+  if (current.status_token.nil()) {
+    current.status_token = ('' + gs.generateGUID() + gs.generateGUID()).replace(/-/g, '').substring(0, 24);
+  }
+  if (current.assignment_group.nil() && !current.practice.nil()) {
+    /* I5: auto-assign by practice - keys are the intake app's 4 practice names.
+       Fallback preserved: unknown practice -> same-name group lookup; no
+       matching active group -> assignment_group stays empty. */
+    var PRACTICE_GROUPS = {
+      'AI Platform & Data': 'AI Platform & Data',
+      'Autonomous Workforce': 'Autonomous Workforce',
+      'CRM': 'CRM',
+      'Security Risk and Governance': 'Security Risk and Governance'
+    };
+    var pname = current.practice.getDisplayValue();
+    var gname = PRACTICE_GROUPS.hasOwnProperty(pname) ? PRACTICE_GROUPS[pname] : pname;
+    var grp = new GlideRecord('sys_user_group');
+    grp.addQuery('name', gname);
+    grp.addActiveQuery(); grp.query();
+    if (grp.next()) current.assignment_group = grp.getUniqueValue();
+  }
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:37:01</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>3f76893087924790e5790f29dabb35c5</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAG Engagement - stamp on insert</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_3f76893087924790e5790f29dabb35c5</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 04:06:06</sys_updated_on>
+        <template/>
+        <when>before</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=3f76893087924790e5790f29dabb35c5"/>
+</record_update>

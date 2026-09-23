@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_section caption="Assessment" section_id="e7fb640d875ec790e5790f29dabb351f" sys_domain="global" table="x_snc_ptag_engage_engagement_request" version="3" view="">
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>.begin_split</element>
+            <position>0</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>23fb640d875ec790e5790f29dabb3521</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type>.begin_split</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>score</element>
+            <position>1</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>ebfb640d875ec790e5790f29dabb3521</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>score_band</element>
+            <position>2</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>a7fb640d875ec790e5790f29dabb3522</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>scoring_version</element>
+            <position>3</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>63fb640d875ec790e5790f29dabb3523</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>score_locked</element>
+            <position>4</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>2ffb640d875ec790e5790f29dabb3523</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>in_market_status</element>
+            <position>5</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>e7fb640d875ec790e5790f29dabb3524</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>tam</element>
+            <position>6</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>a3fb640d875ec790e5790f29dabb3525</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>.split</element>
+            <position>7</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>6ffb640d875ec790e5790f29dabb3525</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type>.split</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>business_owner</element>
+            <position>8</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>2bfb640d875ec790e5790f29dabb3526</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>executive_sponsor</element>
+            <position>9</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>abfb640d875ec790e5790f29dabb3533</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>corporate_alignment</element>
+            <position>10</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>67fb640d875ec790e5790f29dabb3534</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>budget</element>
+            <position>11</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>23fb640d875ec790e5790f29dabb3535</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>pipeline</element>
+            <position>12</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>ebfb640d875ec790e5790f29dabb3535</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>certified_resources</element>
+            <position>13</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>a7fb640d875ec790e5790f29dabb3536</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>has_customers</element>
+            <position>14</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>63fb640d875ec790e5790f29dabb3537</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>.end_split</element>
+            <position>15</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>2ffb640d875ec790e5790f29dabb3537</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type>.end_split</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>customer_pain_points</element>
+            <position>16</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>e7fb640d875ec790e5790f29dabb3538</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>value_prop</element>
+            <position>17</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_id>a3fb640d875ec790e5790f29dabb3539</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>exec_summary</element>
+            <position>18</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 18:31:24</sys_created_on>
+            <sys_id>7fd715c987d60b90e5790f29dabb3500</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 18:31:24</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>exec_summary_generated_on</element>
+            <position>19</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 18:31:24</sys_created_on>
+            <sys_id>7fd715c987d60b90e5790f29dabb3501</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="Assessment" display_value="Assessment" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">e7fb640d875ec790e5790f29dabb351f</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 18:31:24</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_section action="INSERT_OR_UPDATE">
+            <caption>Assessment</caption>
+            <header>false</header>
+            <name>x_snc_ptag_engage_engagement_request</name>
+            <roles/>
+            <sys_class_name>sys_ui_section</sys_class_name>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-23 15:19:42</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>e7fb640d875ec790e5790f29dabb351f</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>x_snc_ptag_engage_engagement_request</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+            <sys_update_name>sys_ui_section_e7fb640d875ec790e5790f29dabb351f</sys_update_name>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-23 15:19:42</sys_updated_on>
+            <sys_user/>
+            <title>false</title>
+            <view display_value="Default view" name="NULL">Default view</view>
+            <view_name/>
+        </sys_ui_section>
+    </sys_ui_section>
+</record_update>

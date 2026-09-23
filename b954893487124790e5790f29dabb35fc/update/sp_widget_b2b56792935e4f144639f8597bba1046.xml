@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[api.controller=function() {  /* widget controller */  var c = this;};]]></client_script>
+        <controller_as>c</controller_as>
+        <css>.pt-help__h { margin: 0 0 10px; font-size: var(--pt-fs-md); color: var(--pt-text-hi); font-weight: 650; }
+.pt-help__legend { display: flex; flex-direction: column; gap: 16px; }
+.pt-help__row { display: flex; align-items: flex-start; gap: 16px; }
+.pt-help__demo { flex: 0 0 132px; display: flex; align-items: center; justify-content: flex-start; padding-top: 2px; }
+.pt-help__none { font-size: 11.5px; color: var(--pt-text-faint); font-style: italic; }
+.pt-help__t { font-size: 13.5px; font-weight: 600; color: var(--pt-text-hi); margin-bottom: 3px; }
+.pt-help__s { font-size: 13px; color: var(--pt-text-mute); line-height: 1.62; }
+.pt-help__steps { margin: 0; padding-left: 20px; color: var(--pt-text-mute); font-size: 13.5px; line-height: 1.68; }
+.pt-help__steps li { margin-bottom: 10px; }
+.pt-help__steps b, .pt-help__list b { color: var(--pt-text-hi); }
+.pt-help__list { margin: 0; padding-left: 20px; color: var(--pt-text-mute); font-size: 13.5px; line-height: 1.68; }
+.pt-help__list li { margin-bottom: 8px; }
+.pt-help__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pt-help__steps code, .pt-help__list code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; padding: 1px 6px; border-radius: 5px;
+  background: rgba(255,255,255,.06); color: var(--pt-text-hi);
+}
+@media (max-width: 620px) {
+  .pt-help__row { flex-direction: column; gap: 8px; }
+  .pt-help__demo { flex: none; }
+}</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description>Help page for the PTAG Engagement Hub. Explains the unread badge states, the header signal, comments and notifications.</description>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_help_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Help &amp; Guide</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {  /* populate the 'data' object */  /* e.g., data.table = $sp.getValue('table'); */})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 02:03:36</sys_created_on>
+        <sys_id>b2b56792935e4f144639f8597bba1046</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Help &amp; Guide</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_b2b56792935e4f144639f8597bba1046</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 02:03:36</sys_updated_on>
+        <template><![CDATA[<!-- I26: Help & guide. Renders the real components in a legend rather than
+     describing them, so people recognise what they have already seen. -->
+<section class="pt-section">
+  <div class="pt-shell pt-shell--form">
+
+    <header class="pt-reveal" style="margin-bottom: 30px;">
+      <span class="pt-eyebrow"><svg class="pt-i pt-i--sm"><use href="#ptag-i-sparkles"/></svg> Help &amp; guide</span>
+      <h2 style="margin: 10px 0 8px;">How the Engagement Hub works</h2>
+      <p class="pt-muted" style="margin: 0; max-width: 62ch;">A short tour of the things that are easy to miss: what the badges mean, how the conversation with PTAG works, and what lands in your inbox.</p>
+    </header>
+
+    <!-- ---------- the legend, the reason this page exists ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">Reading your engagements list</h3>
+      <p class="pt-muted" style="margin: 0 0 18px;">Each row carries a badge only when somebody else is waiting on you. It has two states, and they mean different things.</p>
+
+      <div class="pt-help__legend">
+        <div class="pt-help__row">
+          <div class="pt-help__demo">
+            <span class="pt-unread is-live">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-message-square"/></svg>
+              <span class="pt-unread__n">2</span>
+            </span>
+          </div>
+          <div>
+            <div class="pt-help__t">Green and gently pulsing &mdash; new, unread</div>
+            <div class="pt-help__s">Somebody from PTAG has replied and you have not opened the request since. The number is how many comments are waiting, counting only theirs. Your own replies never count towards it.</div>
+          </div>
+        </div>
+
+        <div class="pt-help__row">
+          <div class="pt-help__demo">
+            <span class="pt-unread">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-message-square"/></svg>
+              <span class="pt-unread__n">2</span>
+            </span>
+          </div>
+          <div>
+            <div class="pt-help__t">Grey and still &mdash; read, but they are still waiting</div>
+            <div class="pt-help__s">You have opened it, so the pulse stops. The badge stays because the last word was theirs. It clears the moment you reply.</div>
+          </div>
+        </div>
+
+        <div class="pt-help__row">
+          <div class="pt-help__demo"><span class="pt-help__none">no badge</span></div>
+          <div>
+            <div class="pt-help__t">Nothing at all &mdash; the ball is in their court</div>
+            <div class="pt-help__s">Either nobody has commented, or you replied last. There is nothing for you to do.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- the header signal ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">The counter in the top bar</h3>
+      <div class="pt-help__row">
+        <div class="pt-help__demo">
+          <span class="pt-signal" style="cursor: default;">
+            <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-message-square"/></svg>
+            <span class="pt-signal__n">5</span>
+          </span>
+        </div>
+        <div>
+          <div class="pt-help__t">Everything waiting on you, across every request</div>
+          <div class="pt-help__s">It only appears when something is actually outstanding, so an empty top bar means you are caught up. Click it to jump straight to just those requests. You can get back to everything with the <b>All</b> chip.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- submitting ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">Submitting a request</h3>
+      <ol class="pt-help__steps">
+        <li><b>Tell us about the opportunity.</b> The partner, the idea, and the customer problem behind it. Write the pain points plainly; that section carries real weight.</li>
+        <li><b>Add the commercial signals.</b> Addressable market, whether there is an executive sponsor, budget, and certified resources. These feed the score, so guessing high does not help you.</li>
+        <li><b>Submit.</b> You get a reference number immediately, an email to confirm, and the request is routed to the right practice automatically.</li>
+      </ol>
+      <p class="pt-help__s" style="margin: 14px 0 0;">You can submit from <a href="?id=ptag_submit">Submit an engagement</a> or the button on the home page.</p>
+    </div>
+
+    <!-- ---------- what happens next ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">What happens after you submit</h3>
+      <p class="pt-muted" style="margin: 0 0 16px;">Open any request to see its journey. The step you are on is highlighted, and every step carries a short note about what it means.</p>
+      <div class="pt-help__chips">
+        <span class="pt-chip" data-state="submitted">Submitted</span>
+        <span class="pt-chip" data-state="under_review">Under Review</span>
+        <span class="pt-chip" data-state="need_info">Need more information</span>
+        <span class="pt-chip" data-state="in_backlog">In Backlog</span>
+        <span class="pt-chip" data-state="planned">Planned</span>
+        <span class="pt-chip" data-state="in_development">In Development</span>
+        <span class="pt-chip" data-state="completed">Completed</span>
+      </div>
+      <p class="pt-help__s" style="margin: 16px 0 0;"><b>Need more information</b> is the one to watch for. It means PTAG cannot progress your request until you add something, and it is the state most likely to stall if nobody notices it.</p>
+    </div>
+
+    <!-- ---------- comments ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">Talking to PTAG</h3>
+      <p class="pt-muted" style="margin: 0 0 12px;">Open any request from <a href="?id=ptag_status">My engagements</a> and scroll to <b>Comments</b>. It is a normal two-way thread: what you write there goes to the assessor, and their replies come back to the same place.</p>
+      <ul class="pt-help__list">
+        <li>The whole conversation is visible to you and to PTAG. Internal working notes are kept separate and never appear here.</li>
+        <li>Opening a request marks it as read, which is what stops the badge pulsing.</li>
+        <li>Posting a reply clears the badge completely and brings your new comment into view.</li>
+      </ul>
+    </div>
+
+    <!-- ---------- email ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">What arrives by email</h3>
+      <p class="pt-muted" style="margin: 0 0 12px;">You do not have to watch the portal. You are emailed when:</p>
+      <ul class="pt-help__list">
+        <li>your request is received, with its reference number</li>
+        <li>it changes state, including when it is accepted or closed</li>
+        <li>PTAG needs more information from you</li>
+        <li>somebody comments on your request</li>
+      </ul>
+      <p class="pt-help__s" style="margin: 12px 0 0;">Every one of those emails links straight back to the request.</p>
+    </div>
+
+    <!-- ---------- finding things ---------- -->
+    <div class="pt-card pt-reveal" style="margin-bottom: 22px;">
+      <h3 class="pt-help__h">Finding a specific request</h3>
+      <ul class="pt-help__list">
+        <li>Filter by state with the chips at the top of <a href="?id=ptag_status">My engagements</a>. Each one shows how many you have in that state.</li>
+        <li>Search by number in the box beside them. Wildcards work, so <code>PTAG00010*</code> finds a range.</li>
+        <li>The same lookup sits on the home page, under your pipeline panel.</li>
+        <li>Every request has a shareable link. Use the copy icon on its row.</li>
+      </ul>
+    </div>
+
+    <div class="pt-card pt-reveal">
+      <h3 class="pt-help__h">Still stuck?</h3>
+      <p class="pt-muted" style="margin: 0;">Comment on the request itself &mdash; that reaches the assessor who owns it and keeps the question attached to the right context. For anything that is not about a specific request, contact the PTAG team directly.</p>
+    </div>
+
+  </div>
+</section>]]></template>
+    </sp_widget>
+</record_update>

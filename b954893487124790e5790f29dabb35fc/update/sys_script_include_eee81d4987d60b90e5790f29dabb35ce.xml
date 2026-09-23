@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGAiUtil</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>AI layer util (I9+I10): deterministic payload normalization; exec-summary execution/persistence (exec_summary fields only); I10 comparison skill execution - compareRequests is DISPLAY-ONLY (persists nothing), comparePeersAndDraft journals ONE [AI Comparison Draft] note on the invoking record only.</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGAiUtil</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGAiUtil = Class.create();
+PTAGAiUtil.prototype = {
+    initialize: function() {
+        this.TABLE = 'x_snc_ptag_engage_engagement_request';
+        this.CAPABILITY = '6b38d58987d60b90e5790f29dabb3572';
+        this.SKILL_CONFIG = '7338150d87d60b90e5790f29dabb358a';
+        this.SKILL_LABEL = 'PTAG Engagement Executive Summary';
+        this.COMPARE_CAPABILITY = 'df06f9cd875e0b90e5790f29dabb35fb';
+        this.COMPARE_SKILL_CONFIG = '7b063dcd875e0b90e5790f29dabb35c0';
+        this.COMPARE_LABEL = 'PTAG Engagement Comparison';
+        this.BAND_LABELS = {fast_track: 'Fast Track', standard: 'Standard',
+                            needs_development: 'Needs Development'};
+    },
+
+    /* ---- deterministic input normalization (the LLM only writes prose) ---- */
+    buildSummaryPayload: function(gr) {
+        var self = this;
+        function dv(f) {
+            var s = '' + gr.getDisplayValue(f);
+            return (s && s !== 'null' && s !== 'undefined') ? s : 'Not provided';
+        }
+        var SIGNALS = [
+            ['executive_sponsor', 'Executive sponsor'], ['business_owner', 'Business owner'],
+            ['budget', 'Budget'], ['pipeline', 'Pipeline'],
+            ['corporate_alignment', 'Corporate alignment'],
+            ['certified_resources', 'Certified resources'], ['has_customers', 'Existing customers']
+        ];
+        var met = [], unconfirmed = [];
+        SIGNALS.forEach(function(sg) {
+            (gr.getValue(sg[0]) === '1' ? met : unconfirmed).push(sg[1]);
+        });
+        var NARR = [
+            ['idea_description', 'Engagement description'],
+            ['customer_pain_points', 'Customer pain points'],
+            ['value_prop', 'Value proposition'],
+            ['what_is_the_partners_ai_strategy', 'Partner AI strategy']
+        ];
+        var narratives = NARR.map(function(n) {
+            return n[1] + ': ' + self._plain(gr.getValue(n[0]), 1800);
+        }).join('\n');
+        var band = gr.getValue('score_band') || '';
+        return {
+            number: dv('number'),
+            short_description: dv('short_description'),
+            partner: dv('partner'),
+            partner_manager: dv('partner_manager'),
+            requester: dv('opened_by'),
+            practice: dv('practice'),
+            geo: dv('target_geo'),
+            route: dv('route_to_market'),
+            maturity: dv('in_market_status'),
+            tam: dv('tam'),
+            score: gr.getValue('score') || 'not yet stamped',
+            band_label: this.BAND_LABELS[band] || band || 'not yet stamped',
+            scoring_version: gr.getValue('scoring_version') || '0',
+            signals_met: met.length ? met.join(', ') : '(none)',
+            signals_unconfirmed: unconfirmed.length ? unconfirmed.join(', ') : '(none)',
+            narratives: narratives
+        };
+    },
+
+    /* Execute the skill and persist. WRITES exec_summary + timestamp ONLY. */
+    generateExecSummary: function(sysId) {
+        var gr = new GlideRecord(this.TABLE);
+        if (!gr.get(sysId)) return {ok: false, error: 'record not found: ' + sysId};
+        var payload = this.buildSummaryPayload(gr);
+        var out = this.executeSkill(payload);
+        if (!out.ok) return out;
+        var html = this._renderSummaryHtml(out.text, payload);
+        gr.setValue('exec_summary', html);
+        gr.setValue('exec_summary_generated_on', new GlideDateTime());
+        if (!gr.update()) return {ok: false, error: 'persist failed: ' + gr.getLastErrorMessage()};
+        return {ok: true, chars: out.text.length, number: payload.number};
+    },
+
+    /* Bare exec-summary skill execution - also used by entitlement validation. */
+    executeSkill: function(payload) {
+        return this.executeCapability(this.CAPABILITY, this.SKILL_CONFIG, payload);
+    },
+
+    /* I10: generic OneExtend execution core (any of OUR capabilities). */
+    executeCapability: function(capId, cfgId, payload) {
+        var req = {executionRequests: [{
+            payload: payload,
+            capabilityId: capId,
+            meta: {skillConfigId: cfgId}
+        }], mode: 'sync'};
+        var res, mine;
+        try {
+            res = sn_one_extend.OneExtendUtil.execute(req);
+        } catch (e) {
+            return {ok: false, error: 'execute threw: ' + e};
+        }
+        mine = (res && res.capabilities) ? (res.capabilities[capId] || {}) : {};
+        var raw = '' + (mine.response || '');
+        if (mine.status !== 'success' || !raw) {
+            return {ok: false, error: 'status=' + mine.status + ' response=' + raw.substring(0, 400),
+                    message: '' + (res && res.message || '')};
+        }
+        var text = raw;
+        try {
+            var p = JSON.parse(raw);
+            if (p && p.model_output) text = '' + p.model_output;
+        } catch (ignore) {}
+        return {ok: true, text: text};
+    },
+
+    /* ---- I10 comparison (working aid; the compare call persists NOTHING) -- */
+    buildCompareFacts: function(gr) {
+        var p = this.buildSummaryPayload(gr);
+        return 'Request: ' + p.number + ' - ' + p.short_description +
+            '\nPartner: ' + p.partner + ' | Practice: ' + p.practice +
+            '\nGeography: ' + p.geo + ' | Route to market: ' + p.route +
+            '\nMaturity: ' + p.maturity + ' | TAM: ' + p.tam +
+            '\nSystem-stamped assessment: score ' + p.score + '/100, band ' + p.band_label +
+            ', scoring model v' + p.scoring_version +
+            '\nSignals confirmed at intake: ' + p.signals_met +
+            '\nSignals not confirmed at intake: ' + p.signals_unconfirmed +
+            '\nNarratives (HTML stripped, truncated):\n' + p.narratives;
+    },
+
+    /* Side-by-side contrast of 2-3 requests. DISPLAY-ONLY: returns
+       {ok, text, html, numbers}; writes nothing anywhere. */
+    compareRequests: function(idsCsv) {
+        var ids = ('' + (idsCsv || '')).split(',').map(function(s) { return s.trim(); })
+            .filter(function(s) { return s; });
+        if (ids.length < 2 || ids.length > 3)
+            return {ok: false, error: 'need 2-3 record sys_ids, got ' + ids.length};
+        var blocks = [], numbers = [];
+        for (var i = 0; i < ids.length; i++) {
+            var gr = new GlideRecord(this.TABLE);
+            if (!gr.get(ids[i])) return {ok: false, error: 'record not found: ' + ids[i]};
+            blocks.push(this.buildCompareFacts(gr));
+            numbers.push(gr.getValue('number'));
+        }
+        var payload = {
+            count: '' + ids.length,
+            record_a: blocks[0],
+            record_b: blocks[1],
+            record_c: blocks[2] || 'There is no third record in this comparison.'
+        };
+        var out = this.executeCapability(this.COMPARE_CAPABILITY, this.COMPARE_SKILL_CONFIG, payload);
+        if (!out.ok) return out;
+        return {ok: true, text: out.text, numbers: numbers,
+                html: this._renderCompareHtml(out.text, numbers)};
+    },
+
+    /* Journal-fallback surface for the workspace UI action: compares the
+       invoking record with up to 2 most recent OTHER pre-decision requests in
+       the SAME practice, and appends ONE [AI Comparison Draft] work note on
+       the INVOKING record only. The compared-against records are untouched.
+       (Documented deviation: display-only preferred; workspace multi-select
+       needs the UX declarative-action framework - Phase 2.) */
+    comparePeersAndDraft: function(sysId) {
+        var gr = new GlideRecord(this.TABLE);
+        if (!gr.get(sysId)) return {ok: false, error: 'record not found: ' + sysId};
+        var practice = gr.getValue('practice');
+        if (!practice) return {ok: false, error: 'record has no practice; nothing to compare against'};
+        var peers = [];
+        var q = new GlideRecord(this.TABLE);
+        q.addQuery('practice', practice);
+        q.addQuery('sys_id', '!=', sysId);
+        q.addQuery('state', 'IN', '1,-1,-2');
+        q.orderByDesc('sys_updated_on');
+        q.setLimit(2);
+        q.query();
+        while (q.next()) peers.push(q.getUniqueValue());
+        if (!peers.length)
+            return {ok: false, error: 'no other open requests in this practice to compare against'};
+        var res = this.compareRequests([sysId].concat(peers).join(','));
+        if (!res.ok) return res;
+        gr.work_notes = '[AI Comparison Draft] Working aid for the assessor - compared ' +
+            res.numbers.join(', ') + ' (same practice). Not persisted on the compared records. ' +
+            'No verdict: selection stays with the weights engine and humans.\n\n' + res.text;
+        gr.update();
+        return {ok: true, numbers: res.numbers, chars: res.text.length};
+    },
+
+    /* ---- helpers ---- */
+    _plain: function(html, max) {
+        if (!html) return 'Not provided';
+        var t = ('' + html)
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+            .replace(/&#39;/gi, "'").replace(/&quot;/gi, '"')
+            .replace(/\s+/g, ' ').trim();
+        if (!t) return 'Not provided';
+        return t.length > max ? t.substring(0, max) + ' [truncated]' : t;
+    },
+
+    _esc: function(s) {
+        return ('' + s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    },
+
+    _mdBody: function(text) {
+        return this._esc(text).split(/\r?\n/).map(function(line) {
+            var m = line.match(/^##\s+(.*)$/);
+            if (m) return '<h4 style="margin:12px 0 4px">' + m[1] + '</h4>';
+            return line ? '<p style="margin:4px 0">' + line + '</p>' : '';
+        }).join('');
+    },
+
+    _renderSummaryHtml: function(text, payload) {
+        var prov = '<p style="margin:0 0 8px"><strong>[AI]</strong> Draft generated by Now Assist skill "'
+            + this.SKILL_LABEL + '". Facts-only; cites the system-stamped assessment (score '
+            + this._esc(payload.score) + '/100, ' + this._esc(payload.band_label)
+            + ', model v' + this._esc(payload.scoring_version)
+            + '). The LLM does not rate; humans decide.</p>';
+        return '<div class="ptag-ai-summary">' + prov + this._mdBody(text) + '</div>';
+    },
+
+    _renderCompareHtml: function(text, numbers) {
+        var prov = '<p style="margin:0 0 8px"><strong>[AI]</strong> Working comparison of '
+            + this._esc(numbers.join(', ')) + ' by Now Assist skill "' + this.COMPARE_LABEL
+            + '". Facts-only contrast; no verdict, no ranking - selection stays with the '
+            + 'weights engine and the human assessor. Not persisted on the compared records.</p>';
+        return '<div class="ptag-ai-compare">' + prov + this._mdBody(text) + '</div>';
+    },
+
+    type: 'PTAGAiUtil'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:35:58</sys_created_on>
+        <sys_id>eee81d4987d60b90e5790f29dabb35ce</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PTAGAiUtil</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_eee81d4987d60b90e5790f29dabb35ce</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:43:25</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_nowassist_skill_config">
+    <sn_nowassist_skill_config action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <description><![CDATA[Board-ready executive summary draft for a PTAG engagement request. Journal-free field persistence to exec_summary &#43; exec_summary_generated_on only (via PTAGAiUtil). Cites the stamped score/band; never emits its own rating. Data posture: no web tools, no third-party data sharing.]]></description>
+        <edited_in_nask>false</edited_in_nask>
+        <in_product_active>false</in_product_active>
+        <in_product_roles/>
+        <internal_name>ptag_engagement_executive_summary.7338150d87d60b90e5790f29dabb358a</internal_name>
+        <is_template>false</is_template>
+        <name>PTAG Engagement Executive Summary</name>
+        <nap_skill_applicability/>
+        <order>100</order>
+        <parent/>
+        <skill_family display_value="Other">a5efaf1c93764210aa5730f16489186d</skill_family>
+        <skill_id>6b38d58987d60b90e5790f29dabb3572</skill_id>
+        <skill_table>sys_one_extend_capability</skill_table>
+        <state>1</state>
+        <success_message/>
+        <sys_class_name>sn_nowassist_skill_config</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:33:03</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>7338150d87d60b90e5790f29dabb358a</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PTAG Engagement Executive Summary</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_nowassist_skill_config_7338150d87d60b90e5790f29dabb358a</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:33:03</sys_updated_on>
+    </sn_nowassist_skill_config>
+    <sys_translated_text action="delete_multiple" query="documentkey=7338150d87d60b90e5790f29dabb358a"/>
+</record_update>

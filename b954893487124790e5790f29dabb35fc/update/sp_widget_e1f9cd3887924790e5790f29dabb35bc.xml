@@ -1,0 +1,1136 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($timeout, $scope) {
+  var c = this;
+  /* I6: Idea-lifecycle states (value -> chip slug). */
+  var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
+               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '9': 'cancelled', '8': 'duplicate'};
+
+  c.loading = false;
+
+  var base = window.location.origin + window.location.pathname;
+  function decorateItems() {
+    var items = (c.data && c.data.items) || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      it.slug = SLUGS[String(it.state)] || 'submitted';
+      it.created_d = String(it.created || '').split(' ')[0];
+      it.updated_d = String(it.updated || '').split(' ')[0];
+      /* I13 R3c: the standalone track page is retired -> the shareable
+         status link is the number filter on My Engagements itself. */
+      it.track_url = base + '?id=ptag_status&number=' + encodeURIComponent(it.number || '');
+    }
+  }
+  decorateItems();
+
+  /* ---- I14 R4: adaptive client-side pagination over the (<=200-row) fetch.
+     Page size 10/20/50/100 (default 10); any filter or size change resets to
+     page 1; exact range label; prev/next disable at the bounds. ---- */
+  c.sizes = [10, 20, 50, 100];
+  c.pageSize = 10;
+  c.page = 1;
+  c.pageItems = [];
+  c.total = 0; c.pageCount = 1; c.rangeStart = 0; c.rangeEnd = 0;
+  function recomputePage() {
+    var items = (c.data && c.data.items) || [];
+    c.total = items.length;
+    var size = parseInt(c.pageSize, 10) || 10;
+    c.pageCount = Math.max(1, Math.ceil(c.total / size));
+    if (c.page > c.pageCount) { c.page = c.pageCount; }
+    if (c.page < 1) { c.page = 1; }
+    var from = (c.page - 1) * size;
+    c.pageItems = items.slice(from, from + size);
+    c.rangeStart = c.total ? (from + 1) : 0;
+    c.rangeEnd = Math.min(from + size, c.total);
+  }
+  c.setSize = function() { c.pageSize = parseInt(c.pageSize, 10) || 10; c.page = 1; recomputePage(); };
+  c.prevPage = function() { if (c.page > 1) { c.page--; recomputePage(); } };
+  c.nextPage = function() { if (c.page < c.pageCount) { c.page++; recomputePage(); } };
+  recomputePage();
+
+  /* ---- I13 R4: static filter bar - state chips + number filter, no-reload
+     refilter (c.server.get) with a shareable history.replaceState URL sync.
+     state and number are mutually exclusive (each apply clears the other). ---- */
+  c.numInput = (c.data && c.data.number) || '';
+  c.numErr = false;
+  c.numTouch = function() { if (c.numErr) { c.numErr = false; } };
+
+  function syncUrl(state, number, awaiting) {
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.set('id', 'ptag_status');
+      u.searchParams.delete('state');
+      u.searchParams.delete('number');
+      u.searchParams.delete('awaiting');
+      if (number) { u.searchParams.set('number', number); }
+      else if (awaiting) { u.searchParams.set('awaiting', '1'); }   /* I21 */
+      else if (state) { u.searchParams.set('state', state); }
+      window.history.replaceState({}, '', u.toString());
+    } catch (e) {}
+  }
+
+  function refilter(state, number, awaiting) {
+    c.loading = true;
+    /* every key always sent (even '') so none bleeds back from the URL */
+    c.server.get({ state: state || '', number: number || '',
+                   awaiting: awaiting || '' }).then(function(r) {
+      var d = (r && r.data) || {};
+      c.data.items = d.items || [];
+      c.data.count = d.count || 0;
+      c.data.filter = d.filter || null;
+      c.data.number = d.number || null;
+      c.data.number_not_found = !!d.number_not_found;
+      c.data.awaiting = !!d.awaiting;                         /* I21 */
+      c.data.awaiting_records = d.awaiting_records || 0;
+      c.data.awaiting_comments = d.awaiting_comments || 0;
+      if (d.chips) { c.data.chips = d.chips; }
+      c.data.active = d.active;
+      c.numInput = c.data.number || '';
+      decorateItems();
+      c.page = 1;              /* I14 R4: any filter change resets to page 1 */
+      recomputePage();
+      c.loading = false;
+    }, function() { c.loading = false; });
+  }
+
+  c.pickChip = function(ch) {
+    if (ch && ch.awaiting) { c.applyAwaiting(); return; }   /* I21 */
+    c.applyState(ch && ch.all ? '' : (ch ? ch.slug : ''));
+  };
+  /* I21: the same view the header signal links to */
+  c.applyAwaiting = function() {
+    c.numInput = '';
+    c.numErr = false;
+    syncUrl('', '', '1');
+    refilter('', '', '1');
+  };
+  c.applyState = function(slug) {
+    c.numInput = '';
+    c.numErr = false;
+    syncUrl(slug, '', '');
+    refilter(slug, '', '');
+  };
+  /* I14 R6: accept real * wildcards - charset PTAG/digits/*, at least one
+     non-* fragment; ** collapses to *. No * -> exact (identical to I13); with
+     * the pattern is URL-synced and sent to the server LIKE-fragment translator. */
+  function _numShake() { c.numErr = false; $timeout(function() { c.numErr = true; }); }
+  c.applyNumber = function() {
+    var v = String(c.numInput || '').trim().toUpperCase();
+    c.numInput = v;
+    if (!/^[PTAG0-9*]+$/.test(v) || v.replace(/\*/g, '') === '') { _numShake(); return; }
+    v = v.replace(/\*{2,}/g, '*');
+    if (v.indexOf('*') === -1 && !/^PTAG\d{4,}$/.test(v)) { _numShake(); return; }
+    c.numInput = v;
+    c.numErr = false;
+    syncUrl('', v, '');
+    refilter('', v, '');
+  };
+  c.clearNumber = function() { c.applyState(''); };
+  c.showAll = function(ev) { if (ev && ev.preventDefault) { ev.preventDefault(); } c.applyState(''); };
+
+  /* ---- I11 detail modal + comment thread -------------------------------- */
+  function blankDm() {
+    return { open: false, busy: false, posting: false, detail: null, thread: [], text: '',
+             error: '', num: '', files: [], uploading: false, fileErr: '' };
+  }
+
+  /* ---- I30 attachments -------------------------------------------------- */
+  c.fileSize = function(n) {
+    n = parseInt(n, 10) || 0;
+    if (n < 1024) { return n + ' B'; }
+    if (n < 1048576) { return Math.round(n / 1024) + ' KB'; }
+    return (Math.round(n / 104857.6) / 10) + ' MB';
+  };
+
+  function allowed(name) {
+    var acc = String((c.data && c.data.attach && c.data.attach.accept) || '').split(',');
+    var dot = String(name || '').lastIndexOf('.');
+    if (dot < 0) { return false; }
+    var ext = String(name).substring(dot).toLowerCase();
+    for (var i = 0; i < acc.length; i++) {
+      if (acc[i].trim().toLowerCase() === ext) { return true; }
+    }
+    return false;
+  }
+
+  c.pickFile = function() {
+    var el = document.getElementById('pt-file-input');
+    if (!el) { return; }
+    /* Bind here rather than with an inline onchange in the template: the inline
+       form needs angular.element(this).scope(), which only exists while Angular
+       debug info is enabled. That is a documented performance switch, and if it
+       is ever turned off the attach button would silently stop working. Bound
+       once, guarded against double-binding. */
+    if (!el.getAttribute('data-pt-bound')) {
+      el.setAttribute('data-pt-bound', '1');
+      el.addEventListener('change', function() { c.onFiles(el.files); });
+    }
+    el.value = '';
+    el.click();
+  };
+
+  /* Uploads go browser -> /api/now/attachment/file, so the platform's own
+     write-ACL on the request is what authorises them. X-UserToken is the session
+     CSRF token; without it ServiceNow rejects a non-GET from the browser. */
+  function uploadOne(file, sysId) {
+    var tok = '';
+    try { tok = window.g_ck || (window.NOW && window.NOW.user_token) || ''; } catch (e) {}
+    var url = '/api/now/attachment/file?table_name=x_snc_ptag_engage_engagement_request' +
+              '&table_sys_id=' + encodeURIComponent(sysId) +
+              '&file_name=' + encodeURIComponent(file.name);
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'X-UserToken': tok,
+        'Accept': 'application/json'
+      },
+      body: file
+    }).then(function(res) {
+      if (!res.ok) { throw new Error('upload failed (' + res.status + ')'); }
+      return res;
+    });
+  }
+
+  c.onFiles = function(fileList) {
+    if (!c.dm.detail) { return; }
+    var maxMb = (c.data && c.data.attach && c.data.attach.max_mb) || 10;
+    var files = [], i;
+    for (i = 0; i < fileList.length; i++) { files.push(fileList[i]); }
+    if (!files.length) { return; }
+
+    for (i = 0; i < files.length; i++) {
+      if (!allowed(files[i].name)) {
+        $timeout(function() { c.dm.fileErr = 'That file type is not accepted.'; });
+        return;
+      }
+      if (files[i].size > maxMb * 1048576) {
+        $timeout(function() { c.dm.fileErr = 'Files must be under ' + maxMb + ' MB.'; });
+        return;
+      }
+    }
+
+    $timeout(function() { c.dm.uploading = true; c.dm.fileErr = ''; });
+    var sysId = c.dm.detail.id;
+    var chain = Promise.resolve();
+    files.forEach(function(f) {
+      chain = chain.then(function() { return uploadOne(f, sysId); });
+    });
+    chain.then(function() {
+      /* re-read through the widget so the list is server-truth, not optimistic */
+      return c.server.get({ action: 'attach_list', sys_id: sysId });
+    }).then(function(r) {
+      $timeout(function() {
+        c.dm.files = ((r && r.data) || {}).attachments || c.dm.files;
+        c.dm.uploading = false;
+      });
+    })['catch'](function(err) {
+      $timeout(function() {
+        c.dm.uploading = false;
+        c.dm.fileErr = 'Could not upload that file. ' +
+                       (String(err && err.message || '').indexOf('403') > -1
+                        ? 'You may not have permission.' : 'Please try again.');
+      });
+    });
+  };
+
+  c.removeFile = function(f) {
+    if (!c.dm.detail || c.dm.uploading) { return; }
+    c.dm.uploading = true;
+    c.server.get({ action: 'attach_delete', sys_id: c.dm.detail.id,
+                   attachment_id: f.id }).then(function(r) {
+      var d = (r && r.data) || {};
+      c.dm.uploading = false;
+      if (d.error) {
+        c.dm.fileErr = (d.error === 'locked')
+          ? 'This engagement is closed and can no longer be changed.'
+          : 'Could not remove that file.';
+        if (d.attachments) { c.dm.files = d.attachments; }
+        return;
+      }
+      c.dm.files = d.attachments || [];
+      c.dm.fileErr = '';
+    }, function() {
+      c.dm.uploading = false;
+      c.dm.fileErr = 'Could not remove that file.';
+    });
+  };
+  c.dm = blankDm();
+
+  function lock(on) {
+    try { document.body.classList[on ? 'add' : 'remove']('pt-modal-open'); } catch (e) {}
+  }
+
+  function decorate(d) {
+    if (!d) { return d; }
+    d.slug = SLUGS[String(d.state)] || 'submitted';
+    d.submitted_d = String(d.submitted || '').split(' ')[0];
+    return d;
+  }
+
+  /* I19: the modal body is the ONLY scroll surface now (the thread no longer
+     carries its own overflow), so "jump to newest" has to move the modal rather
+     than the list. Measured with bounding rects so it does not care which
+     element happens to be the offsetParent. */
+  function revealNewest() {
+    $timeout(function() {
+      var thread = document.querySelector('.pt-modal--eng .pt-thread');
+      var body = document.querySelector('.pt-modal--eng .pt-modal__body');
+      if (!thread || !body) { return; }
+      var last = thread.lastElementChild;
+      if (!last) { return; }
+      var br = body.getBoundingClientRect();
+      var lr = last.getBoundingClientRect();
+      var delta = (lr.bottom - br.bottom) + 16;
+      if (delta > 0) { body.scrollTop = body.scrollTop + delta; }
+    }, 60);
+  }
+
+  c.open = function(it) {
+    c.dm = blankDm();
+    c.dm.open = true;
+    c.dm.busy = true;
+    c.dm.num = it.number;
+    lock(true);
+    c.server.get({ action: 'detail', sys_id: it.id }).then(function(r) {
+      if (!c.dm.open) { return; }
+      var d = (r && r.data) || {};
+      if (d.error || !d.detail) {
+        c.dm.error = 'Could not load this engagement.';
+        c.dm.busy = false;
+        return;
+      }
+      c.dm.detail = decorate(d.detail);
+      c.dm.thread = d.thread || [];
+      c.dm.files = d.attachments || [];        /* I30 */
+      c.dm.busy = false;
+      /* I20: the server just recorded the read receipt, so stop this row pulsing
+         now rather than at the next fetch. reply_pending deliberately stays -
+         you have seen it, you still owe an answer. */
+      it.unread = false;
+    }, function() {
+      c.dm.error = 'Could not load this engagement.';
+      c.dm.busy = false;
+    });
+  };
+
+  c.close = function() {
+    lock(false);
+    c.dm = blankDm();
+  };
+
+  c.dmKeydown = function(ev) {
+    if (ev.keyCode === 27) { ev.preventDefault(); ev.stopPropagation(); c.close(); }
+  };
+
+  c.cardKey = function(ev, it) {
+    if (ev.keyCode === 13 || ev.keyCode === 32) { ev.preventDefault(); c.open(it); }
+  };
+
+  c.post = function() {
+    var txt = String(c.dm.text || '').trim();
+    if (!txt || c.dm.posting || !c.dm.detail) { return; }
+    c.dm.posting = true;
+    c.dm.error = '';
+    c.server.get({ action: 'comment', sys_id: c.dm.detail.id, text: txt }).then(function(r) {
+      var d = (r && r.data) || {};
+      c.dm.posting = false;
+      if (d.error || !d.posted) {
+        c.dm.error = (d.error === 'empty_comment') ? 'Write a comment first.'
+                   : (d.error === 'locked') ? 'This engagement is closed and can no longer be changed.'
+                   : 'Could not post your comment.';
+        if (d.error === 'locked' && d.detail) { c.dm.detail = decorate(d.detail); }
+        return;
+      }
+      c.dm.detail = decorate(d.detail || c.dm.detail);
+      c.dm.thread = d.thread || c.dm.thread;
+      c.dm.files = d.attachments || c.dm.files;   /* I30 */
+      c.dm.text = '';
+      /* I20: you answered, so the row owes nothing and the badge clears */
+      var mine = (c.data && c.data.items) || [];
+      for (var mi = 0; mi < mine.length; mi++) {
+        if (mine[mi].id === c.dm.detail.id) {
+          mine[mi].reply_pending = false;
+          mine[mi].unread = false;
+          mine[mi].unanswered = 0;                    /* I21: you just answered */
+          mine[mi].comments = (mine[mi].comments || 0) + 1;
+          break;
+        }
+      }
+      revealNewest();
+    }, function() {
+      c.dm.posting = false;
+      c.dm.error = 'Could not post your comment.';
+    });
+  };
+
+  c.copy = function(it) {
+    copyText(it.track_url, function(ok) {
+      $timeout(function() { it.copied = ok; });
+      $timeout(function() { it.copied = false; }, 2200);
+    });
+  };
+
+  function copyText(txt, done) {
+    function fallback() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(!!ok);
+      } catch (e) { done(false); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() { done(true); }, fallback);
+    } else { fallback(); }
+  }
+
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>/* I11 DETAIL: ptag_myeng_w - all styling via pt-* classes from ptag_global (design-tokens.css + global.css). The detail modal + thread system lives in ptag_global css field, SKIN:GLOBAL-COMPONENTS section, I11-ENGMODAL block. */
+</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_myeng_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG My Engagements</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* I11: My Engagements list + detail modal + customer-visible comments.
+     Contract:
+       (no input)           -> data.items = requests opened by the session
+                               user, newest first (sys_id included to drive
+                               the modal - guarded actions only from there).
+                               I12: optional ?state=<slug> page param =
+                               whitelisted list filter; when active,
+                               data.filter = { slug, value, label }.
+                               I13: + ?number=<PTAG..> exact filter (mutually
+                               exclusive w/ state, number precedence); data.chips
+                               = viewer state counts; input.<param> (client
+                               refilter) overrides the URL. detail branch also
+                               returns the journey timeline (see detailOf).
+       action === 'detail'  -> guard -> data.detail (WHITELIST) + data.thread.
+       action === 'comment' -> guard -> append to the customer-visible
+                               'comments' journal ONLY -> refreshed thread.
+     VISIBILITY RULE (I7): score / score_band / scoring_version and
+     work_notes (AI drafts) are NEVER part of any payload here.
+     Guard: x_snc_ptag_engage.PTAGHubAccess.canAct - requester (opened_by)
+     or app user/admin roles. Missing record and unauthorized answer the
+     SAME not_authorized (no existence leak). */
+  var TABLE = 'x_snc_ptag_engage_engagement_request';
+
+  /* I6 state copy register (one app-wide register; the journey copy in
+     detailOf's timeline speaks the same lines) */
+  var CONTEXT = {
+    '1':  'Request received and queued for triage.',
+    '-1': 'PTAG is validating scope and fit.',
+    '-2': 'Review is paused until you add the requested details.',
+    '2':  'Accepted and waiting for capacity.',
+    '4':  'Scheduled with an owner and a timeline.',
+    '5':  'Work in flight with the assigned team.',
+    '3':  'Engagement delivered and closed.',
+    '7':  'Not moving forward after PTAG review.',
+    '8':  'Already tracked under another request.',
+    '9':  'Withdrawn before completion.'
+  };
+
+  /* I12: ?state=<slug> whitelist - slug->value+label, hardcoded. The label
+     comes from this local map so the filter bar / filtered empty state stay
+     deterministic even when the state holds zero rows. */
+  var STATES = {
+    'submitted':      { value: '1',  label: 'Submitted' },
+    'under_review':   { value: '-1', label: 'Under Review' },
+    'in_backlog':     { value: '2',  label: 'In Backlog' },
+    'planned':        { value: '4',  label: 'Planned' },
+    'in_development': { value: '5',  label: 'In Development' },
+    'completed':      { value: '3',  label: 'Completed' },
+    'need_info':      { value: '-2', label: 'Need more information' },
+    'unlikely':       { value: '7',  label: 'Unlikely to implement' },
+    'cancelled':      { value: '9',  label: 'Cancelled' },
+    'duplicate':      { value: '8',  label: 'Duplicate' }
+  };
+
+  data.items = [];
+  data.count = 0;
+  data.is_guest = !gs.getSession().isLoggedIn();
+  if (data.is_guest) { return; }
+  /* session identity (the viewer's own user_name only - validation surface) */
+  data.viewer = String(gs.getUserName());
+  /* I30: the UI states these limits up front rather than letting an upload fail
+     silently. Enforced in the browser; see the increment note about why hard
+     server-side extension enforcement is a separate decision. */
+  data.attach = { max_mb: 10, accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.csv,.msg,.eml' };
+
+  /* I20: per-user read receipts backing the unread-reply signal (see the list
+     block at the bottom for why these live in preferences, not on the record). */
+  var READ_PREF = 'ptag.hub.read.';
+  function markRead(sid) {
+    try { gs.getUser().savePreference(READ_PREF + sid, new GlideDateTime().getValue()); }
+    catch (e) { /* a receipt is a nicety - never fail a read over one */ }
+  }
+
+  /* I30: files on a request. The upload itself goes browser -> platform
+     Attachment API, so the platform's write-ACL on the request is the authority;
+     this only reads back what is there and marks which ones the viewer owns. */
+  function attachmentsOf(sid) {
+    var out = [], names = {};
+    var a = new GlideRecord('sys_attachment');
+    a.addQuery('table_name', TABLE);
+    a.addQuery('table_sys_id', sid);
+    a.orderByDesc('sys_created_on');
+    a.setLimit(50);
+    a.query();
+    var me = String(gs.getUserName());
+    while (a.next()) {
+      var by = String(a.getValue('sys_created_by') || '');
+      names[by] = true;
+      out.push({
+        id: a.getUniqueValue(),
+        name: String(a.getValue('file_name') || ''),
+        size: parseInt(a.getValue('size_bytes'), 10) || 0,
+        type: String(a.getValue('content_type') || ''),
+        by: by,
+        when: a.getDisplayValue('sys_created_on'),
+        mine: by === me
+      });
+    }
+    var resolved = new x_snc_ptag_engage.PTAGCommentSignal().displayNames(Object.keys(names));
+    for (var i = 0; i < out.length; i++) {
+      out[i].by = resolved[out[i].by] || out[i].by;
+    }
+    return out;
+  }
+
+  function guardedGet(sid) {
+    if (!sid || !/^[0-9a-f]{32}$/.test(String(sid))) { return null; }
+    var gr = new GlideRecord(TABLE);
+    if (!gr.get(String(sid))) { return null; }
+    if (!new x_snc_ptag_engage.PTAGHubAccess().canAct(gr)) { return null; }
+    return gr;
+  }
+
+  function thread(sid) {
+    /* customer-visible journal ONLY: element=comments (work_notes excluded
+       by query - that is where AI drafts live). Chronological. */
+    var out = [];
+    var authors = {};
+    var j = new GlideRecord('sys_journal_field');
+    j.addQuery('name', TABLE);
+    j.addQuery('element_id', sid);
+    j.addQuery('element', 'comments');
+    j.orderBy('sys_created_on');
+    j.setLimit(200);
+    j.query();
+    while (j.next()) {
+      var by = String(j.getValue('sys_created_by') || '');
+      out.push({ author: by, when: j.getDisplayValue('sys_created_on'),
+                 text: String(j.getValue('value') || '') });
+      authors[by] = true;
+    }
+    var keys = Object.keys(authors);
+    var names = {};
+    if (keys.length) {
+      var u = new GlideRecord('sys_user');
+      u.addQuery('user_name', 'IN', keys.join(','));
+      u.query();
+      while (u.next()) { names[String(u.getValue('user_name'))] = String(u.getValue('name') || ''); }
+    }
+    var me = String(gs.getUserName());
+    /* I29: flag which entries are new. Runs BEFORE the display-name swap below,
+       because the rule keys off user_name. Same rule as the row badge, from the
+       same script include, so the chip count and the badge count always agree. */
+    new x_snc_ptag_engage.PTAGCommentSignal().markUnanswered(out);
+    for (var i = 0; i < out.length; i++) {
+      out[i].mine = out[i].author === me;
+      out[i].author = names[out[i].author] || out[i].author;
+    }
+    return out;
+  }
+
+  /* ---- I13 R5: journey timeline builder - ported VERBATIM from the retired
+     track widget (the state-flow graphic Jon loves). Pure function of state; same copy +
+     same pt-tl classes -> identical visual, now on ptag_status. Happy ladder
+     1->-1->2->4->5->3 (done/current/future); -2 renders an attention node;
+     7/8/9 render a terminal branch over a convention-based history (the pred
+     steps shown done - the record carries no per-state history). No dates:
+     the source graphic carries none (exact-visual fidelity). ---- */
+  var TL_STEPS = [
+    { v: '1',  t: 'Submitted',      s: 'Request received and queued for triage.' },
+    { v: '-1', t: 'Under Review',   s: 'PTAG is validating scope and fit.' },
+    { v: '2',  t: 'In Backlog',     s: 'Accepted and waiting for capacity.' },
+    { v: '4',  t: 'Planned',        s: 'Scheduled with an owner and a timeline.' },
+    { v: '5',  t: 'In Development', s: 'Work in flight with the assigned team.' },
+    { v: '3',  t: 'Completed',      s: 'Engagement delivered and closed.' }
+  ];
+  var TL_TERMINAL = {
+    '7': { t: 'Unlikely to implement', s: 'Not moving forward after PTAG review.', pred: 2 },
+    '8': { t: 'Duplicate',             s: 'Already tracked under another request.', pred: 2 },
+    '9': { t: 'Cancelled',             s: 'Withdrawn before completion.', pred: 1 }
+  };
+  function buildTimeline(st) {
+    var nodes = [], i;
+    if (TL_TERMINAL[st]) {
+      for (i = 0; i < TL_TERMINAL[st].pred; i++) {
+        nodes.push({ t: TL_STEPS[i].t, s: TL_STEPS[i].s, cls: 'is-done', neg: false, attn: false });
+      }
+      nodes.push({ t: TL_TERMINAL[st].t, s: TL_TERMINAL[st].s, cls: 'is-negative', neg: true, attn: false });
+      return nodes;
+    }
+    if (st === '-2') {
+      nodes.push({ t: TL_STEPS[0].t, s: TL_STEPS[0].s, cls: 'is-done', neg: false, attn: false });
+      nodes.push({ t: TL_STEPS[1].t, s: TL_STEPS[1].s, cls: 'is-done', neg: false, attn: false });
+      nodes.push({ t: 'Need more information', s: 'PTAG is waiting on you - check your email and update the request.', cls: 'is-attn', neg: false, attn: true });
+      for (i = 2; i < TL_STEPS.length; i++) {
+        nodes.push({ t: TL_STEPS[i].t, s: TL_STEPS[i].s, cls: 'is-future', neg: false, attn: false });
+      }
+      return nodes;
+    }
+    var pos = 0;
+    for (i = 0; i < TL_STEPS.length; i++) { if (TL_STEPS[i].v === st) { pos = i; break; } }
+    for (i = 0; i < TL_STEPS.length; i++) {
+      var cls = (i < pos) ? 'is-done' : ((i === pos) ? 'is-current' : 'is-future');
+      if (st === '3') { cls = 'is-done'; }
+      nodes.push({ t: TL_STEPS[i].t, s: TL_STEPS[i].s, cls: cls, neg: false, attn: false });
+    }
+    return nodes;
+  }
+
+  function detailOf(gr) {
+    /* WHITELIST ONLY - never widen without a security review.
+       No score, no score_band, no scoring_version, no work_notes.
+       I13 R5: + timeline (ladder/done/current/future/terminal - derived
+       purely from the already-whitelisted state; no new record fields). */
+    var st = String(gr.getValue('state') || '1');
+    return {
+      id: gr.getUniqueValue(),
+      number: gr.getValue('number'),
+      short_description: gr.getValue('short_description'),
+      state: st,
+      state_label: gr.getDisplayValue('state'),
+      state_context: CONTEXT[st] || '',
+      practice: gr.getDisplayValue('practice'),
+      partner: gr.getDisplayValue('partner'),
+      submitted: gr.getDisplayValue('sys_created_on'),
+      updated: gr.getDisplayValue('sys_updated_on'),
+      timeline: buildTimeline(st),
+      /* I33: closed records are read-only on the portal, for everyone. The portal
+         is the requester surface; staff work the record in the workspace. */
+      locked: new x_snc_ptag_engage.PTAGHubAccess().isLockedState(st),
+      /* I34: comments stay open on "Unlikely to implement" - see the two-axis
+         note on PTAGHubAccess. */
+      comments_locked: new x_snc_ptag_engage.PTAGHubAccess().isCommentLocked(st)
+    };
+  }
+
+  if (input && input.action === 'detail') {
+    var g1 = guardedGet(input.sys_id);
+    if (!g1) { data.error = 'not_authorized'; return; }
+    data.detail = detailOf(g1);
+    data.thread = thread(g1.getUniqueValue());
+    data.attachments = attachmentsOf(g1.getUniqueValue());   /* I30 */
+    /* I20: opening it stops the pulse. Gated on the thread the branch already
+       built, so a record with no conversation never leaves a receipt behind. */
+    if (data.thread.length) { markRead(g1.getUniqueValue()); }
+    return;
+  }
+
+  if (input && input.action === 'attach_list') {
+    /* I30: refresh after a browser-side upload */
+    var g4 = guardedGet(input.sys_id);
+    if (!g4) { data.error = 'not_authorized'; return; }
+    data.attachments = attachmentsOf(g4.getUniqueValue());
+    return;
+  }
+
+  if (input && input.action === 'attach_delete') {
+    /* I30: three guards, because an attachment sys_id on its own proves nothing.
+       (1) the caller must pass canAct on the request, (2) the attachment must
+       actually hang off THAT request, (3) it must be one the caller uploaded.
+       Any failure answers the same not_authorized - no existence leak. */
+    var g5 = guardedGet(input.sys_id);
+    if (!g5) { data.error = 'not_authorized'; return; }
+    if (new x_snc_ptag_engage.PTAGHubAccess().isLocked(g5)) {
+      data.error = 'locked';                       /* I33: no removals either */
+      data.attachments = attachmentsOf(g5.getUniqueValue());
+      return;
+    }
+    var aid = String(input.attachment_id || '');
+    if (!/^[0-9a-f]{32}$/.test(aid)) { data.error = 'not_authorized'; return; }
+    var ar = new GlideRecord('sys_attachment');
+    if (!ar.get(aid) ||
+        String(ar.getValue('table_name')) !== TABLE ||
+        String(ar.getValue('table_sys_id')) !== g5.getUniqueValue() ||
+        String(ar.getValue('sys_created_by')) !== String(gs.getUserName())) {
+      data.error = 'not_authorized';
+      return;
+    }
+    ar.deleteRecord();
+    data.deleted = true;
+    data.attachments = attachmentsOf(g5.getUniqueValue());
+    return;
+  }
+
+  if (input && input.action === 'comment') {
+    var g2 = guardedGet(input.sys_id);
+    if (!g2) { data.error = 'not_authorized'; return; }
+    /* I33: refuse before doing anything else */
+    if (new x_snc_ptag_engage.PTAGHubAccess().isCommentLockedRec(g2)) {
+      data.error = 'locked';
+      data.detail = detailOf(g2);
+      data.thread = thread(g2.getUniqueValue());
+      data.attachments = attachmentsOf(g2.getUniqueValue());
+      return;
+    }
+    var txt = String(input.text || '').trim();
+    if (!txt) { data.error = 'empty_comment'; return; }
+    if (txt.length > 4000) { txt = txt.substring(0, 4000); }
+    /* journal append via the GlideElement journal setter (direct assignment).
+       NOTE (GlideRecord footgun): setValue('comments', ...) returns a truthy
+       update() but does NOT register a sys_journal_field entry for a
+       journal_input field - the journaling machinery is only triggered by the
+       element setter. Direct assignment is the scoped-safe append. */
+    g2.comments = txt;
+    if (!g2.update()) { data.error = 'save_failed'; return; }
+    data.posted = true;
+    data.detail = detailOf(g2);
+    data.thread = thread(g2.getUniqueValue());
+    data.attachments = attachmentsOf(g2.getUniqueValue());   /* I30 */
+    markRead(g2.getUniqueValue());          /* I20: you just answered, so by
+                                               definition there is a thread */
+    return;
+  }
+
+  /* ---- I13 R4: filter source = client input (no-reload refilter via
+     c.server.get) OR the URL param (on-load deep link; I12 ?state= contract +
+     R2/R3c ?number= landing). input.<key> present (even '') WINS so the client
+     can positively CLEAR a filter without the URL bleeding back in. state and
+     number are MUTUALLY EXCLUSIVE (number takes precedence). ---- */
+  function param(k) {
+    return String((input && input[k] != null) ? input[k] : ($sp.getParameter(k) || ''));
+  }
+  var numRaw = param('number').toUpperCase().replace(/\s+/g, '');
+  var stateRaw = param('state');
+  var awaitRaw = param('awaiting');
+
+  /* I21: ONE analysis, three consumers - the awaiting filter just below, the row
+     badges, and the chip count. Computed before the query because the filter
+     needs the id set to constrain on. */
+  var signal = new x_snc_ptag_engage.PTAGCommentSignal();
+  var sig = signal.analyzeMine();
+
+  var gr = new GlideRecord(TABLE);
+  gr.addQuery('opened_by', gs.getUserID());   // viewer scoping ALWAYS (no existence leak)
+  if (numRaw) {
+    /* I14 R6: real * wildcards. charset PTAG/digits/*, >=1 non-* fragment;
+       ** collapses to *. No * -> exact (identical to I13's whitelist). With *
+       -> split on *, drop empties, AND the fragments; the FIRST fragment is
+       anchored STARTSWITH unless the input began with *, the LAST ENDSWITH
+       unless it ended with *, middles CONTAINS (the I11 picker mechanic).
+       opened_by stays on the query, so a hit under another user OR a
+       non-existent pattern both return zero rows - identical not-found. */
+    var collapsed = numRaw.replace(/\*{2,}/g, '*');
+    var charsetOk = /^[PTAG0-9*]+$/.test(collapsed);
+    var hasFrag = collapsed.replace(/\*/g, '').length > 0;
+    if (!charsetOk || !hasFrag) {
+      data.number = numRaw; data.number_invalid = true;
+      gr.addQuery('sys_id', 'invalid');        // force zero rows, clean not-found
+    } else if (collapsed.indexOf('*') === -1) {
+      if (/^PTAG\d+$/.test(collapsed)) { gr.addQuery('number', collapsed); }
+      else { data.number_invalid = true; gr.addQuery('sys_id', 'invalid'); }
+      data.number = collapsed;
+    } else {
+      var beginStar = collapsed.charAt(0) === '*';
+      var endStar = collapsed.charAt(collapsed.length - 1) === '*';
+      var frags = collapsed.split('*').filter(function(f) { return f.length > 0; });
+      for (var fi = 0; fi < frags.length; fi++) {
+        var op = 'CONTAINS';
+        if (fi === 0 && !beginStar) { op = 'STARTSWITH'; }
+        else if (fi === frags.length - 1 && !endStar) { op = 'ENDSWITH'; }
+        gr.addQuery('number', op, frags[fi]);
+      }
+      data.number = collapsed;
+    }
+  } else if (awaitRaw && awaitRaw !== '0' && awaitRaw !== 'false') {
+    /* I21: "just the ones I haven't responded to". Exact rather than a
+       page-local filter - the id set covers every request the viewer owns, so
+       the count in the header always matches what lands here. */
+    data.awaiting = true;
+    if (sig.ids.length) { gr.addQuery('sys_id', 'IN', sig.ids.join(',')); }
+    else { gr.addQuery('sys_id', 'invalid'); }
+  } else if (stateRaw && STATES.hasOwnProperty(stateRaw)) {
+    gr.addQuery('state', STATES[stateRaw].value);
+    data.filter = { slug: stateRaw, value: STATES[stateRaw].value, label: STATES[stateRaw].label };
+  }
+  gr.orderByDesc('sys_created_on');
+  gr.setLimit(200);
+  gr.query();
+  while (gr.next()) {
+    data.items.push({
+      id: gr.getUniqueValue(),
+      number: gr.getValue('number'),
+      short_description: gr.getValue('short_description'),
+      state: String(gr.getValue('state') || '1'),
+      state_label: gr.getDisplayValue('state'),
+      practice: gr.getDisplayValue('practice'),
+      created: gr.getDisplayValue('sys_created_on'),
+      updated: gr.getDisplayValue('sys_updated_on')
+    });
+  }
+  data.count = data.items.length;
+  if (data.number && data.count === 0) { data.number_not_found = true; }
+
+  /* ---- I21: viewer-relative comment signal --------------------------------
+     Supersedes the inline I20 block. Two corrections Jon caught:
+       (a) the badge counted the WHOLE thread, so his own replies inflated it.
+           It now counts only what other people have left since his last word.
+       (b) the same figures drive the header indicator, so both surfaces read
+           from PTAGCommentSignal and cannot drift apart.
+     The analysis already ran above (the awaiting filter needed it), so this is
+     pure projection onto the rows - no extra queries. ---- */
+  (function() {
+    var names = {}, pend = [], i;
+    for (i = 0; i < data.items.length; i++) {
+      var it = data.items[i];
+      var st = sig.map[it.id];
+      it.comments = st ? st.total : 0;          /* whole thread, for the tooltip */
+      it.unanswered = st ? st.unanswered : 0;   /* what the badge actually shows */
+      it.reply_pending = !!(st && st.pending);
+      it.unread = !!(st && st.unread);
+      if (it.reply_pending) {
+        it.last_by = st.last_by;
+        names[st.last_by] = true;
+        pend.push(it);
+      }
+    }
+    var resolved = signal.displayNames(Object.keys(names));
+    for (i = 0; i < pend.length; i++) {
+      pend[i].last_by = resolved[pend[i].last_by] || pend[i].last_by;
+    }
+  })();
+  data.awaiting_records = sig.records;
+  data.awaiting_comments = sig.comments;
+
+  /* ---- I13 R4: viewer-scoped state chip counts (GlideAggregate, opened_by -
+     the landing-panel semantics). Always computed: six happy chips (zero-
+     filled) + branch chips only where the viewer holds records + an All chip;
+     each chip carries its own viewer count. ---- */
+  (function() {
+    var counts = {}, total = 0;
+    var ga = new GlideAggregate(TABLE);
+    ga.addQuery('opened_by', gs.getUserID());
+    ga.addAggregate('COUNT');
+    ga.groupBy('state');
+    ga.query();
+    while (ga.next()) {
+      var n = parseInt(ga.getAggregate('COUNT'), 10) || 0;
+      counts[String(ga.getValue('state'))] = n;
+      total += n;
+    }
+    var HAPPY = ['submitted', 'under_review', 'in_backlog', 'planned', 'in_development', 'completed'];
+    var BRANCH = ['need_info', 'unlikely', 'duplicate', 'cancelled'];
+    data.chips = [{ slug: '', label: 'All', count: total, all: true }];
+    /* I21: only offered when something is actually waiting, so the bar stays
+       clean once you are caught up */
+    if (sig.records) {
+      data.chips.push({ slug: '__awaiting__', label: 'Awaiting your reply',
+                        count: sig.records, awaiting: true });
+    }
+    var i, s;
+    for (i = 0; i < HAPPY.length; i++) {
+      s = HAPPY[i];
+      data.chips.push({ slug: s, value: STATES[s].value, label: STATES[s].label, count: counts[STATES[s].value] || 0 });
+    }
+    for (i = 0; i < BRANCH.length; i++) {
+      s = BRANCH[i];
+      if (counts[STATES[s].value]) {
+        data.chips.push({ slug: s, value: STATES[s].value, label: STATES[s].label, count: counts[STATES[s].value], branch: true });
+      }
+    }
+  })();
+  data.active = data.number ? '__num__'
+             : (data.awaiting ? '__awaiting__'
+             : (data.filter ? data.filter.slug : ''));
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:52:09</sys_created_on>
+        <sys_id>e1f9cd3887924790e5790f29dabb35bc</sys_id>
+        <sys_mod_count>22</sys_mod_count>
+        <sys_name>PTAG My Engagements</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_e1f9cd3887924790e5790f29dabb35bc</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 03:25:31</sys_updated_on>
+        <template><![CDATA[<!-- I11 DETAIL: ptag_myeng_w - clickable row cards + engagement detail modal with customer-visible comments (I6 copy register; I5 .pt-modal system) -->
+<section class="pt-section">
+  <div class="pt-shell pt-shell--form">
+
+    <header class="pt-reveal" style="margin-bottom: 28px;">
+      <h2 style="margin-bottom: 6px;">My engagements</h2>
+      <p class="pt-muted" style="margin: 0;">Requests you opened, newest first &mdash; open one for live status and the conversation with PTAG.</p>
+    </header>
+
+    <div ng-if="c.loading && !data.items.length" aria-hidden="true">
+      <div class="pt-skel" style="height: 76px; margin-bottom: 12px;"></div>
+      <div class="pt-skel" style="height: 76px; margin-bottom: 12px;"></div>
+      <div class="pt-skel" style="height: 76px; margin-bottom: 12px;"></div>
+    </div>
+
+    <div class="pt-empty pt-reveal" ng-if="data.is_guest && !c.loading">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-log-in"/></svg></span>
+      <div class="pt-empty__t">Sign in to see your engagements</div>
+      <p class="pt-empty__s">Your submitted requests and their live status are tied to your account.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--pill" style="margin-top: 20px;" href="/login.do?sysparm_goto_url=%2Fptag%3Fid%3Dptag_status"><svg class="pt-i pt-i--sm"><use href="#ptag-i-log-in"/></svg> Sign in</a>
+    </div>
+
+    <!-- I13 R4: permanent filter bar - state chips (viewer counts) + number filter -->
+    <div class="pt-filterbar pt-filterbar--static pt-reveal" ng-if="!data.is_guest && data.chips.length">
+      <div class="pt-chipset" role="group" aria-label="Filter by state">
+        <button type="button" class="pt-fchip" ng-repeat="ch in data.chips"
+                ng-class="{'is-active': ch.slug === data.active}" data-state="{{ch.slug}}"
+                ng-click="c.pickChip(ch)" ng-attr-aria-pressed="{{ch.slug === data.active ? 'true' : 'false'}}">
+          <svg class="pt-i pt-i--sm pt-fchip__i" ng-if="ch.awaiting" aria-hidden="true"><use href="#ptag-i-message-square"/></svg><span class="pt-fchip__label">{{ch.label}}</span><span class="pt-fchip__n">{{ch.count}}</span>
+        </button>
+      </div>
+      <form class="pt-numfilter" ng-class="{'is-invalid': c.numErr}" ng-submit="c.applyNumber()" novalidate>
+        <svg class="pt-i pt-i--sm pt-numfilter__icon" aria-hidden="true"><use href="#ptag-i-search"/></svg>
+        <input class="pt-numfilter__input" type="text" ng-model="c.numInput" ng-change="c.numTouch()"
+               placeholder="PTAG0001234" autocomplete="off" maxlength="20" aria-label="Filter by request number">
+        <button type="submit" class="pt-numfilter__go" aria-label="Filter by this number"><svg class="pt-i pt-i--sm"><use href="#ptag-i-arrow-right"/></svg></button>
+        <button type="button" class="pt-numfilter__clear" ng-if="data.number" ng-click="c.clearNumber()" aria-label="Clear number filter"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+      </form>
+    </div>
+
+    <div class="pt-empty pt-reveal" ng-if="!data.is_guest && !c.loading && !data.items.length && !data.filter && !data.number && !data.awaiting">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-radar"/></svg></span>
+      <div class="pt-empty__t">Nothing here yet</div>
+      <p class="pt-empty__s">Engagements you submit will land here with live status and email updates at every stage.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--pill" style="margin-top: 20px;" href="?id=ptag_submit"><svg class="pt-i pt-i--sm"><use href="#ptag-i-send"/></svg> Submit your first</a>
+    </div>
+
+    <!-- I21: caught-up empty state. Without this, clicking the header signal
+         with nothing outstanding would land on "Submit your first", which is the
+         wrong message entirely. -->
+    <div class="pt-empty pt-reveal" ng-if="!data.is_guest && !c.loading && !data.items.length && data.awaiting">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-circle-check-big"/></svg></span>
+      <div class="pt-empty__t">You're all caught up</div>
+      <p class="pt-empty__s">Nothing is waiting on a reply from you right now.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--pill" style="margin-top: 20px;" href="?id=ptag_status" ng-click="c.showAll($event)">Show all engagements</a>
+    </div>
+
+    <!-- I12: filtered empty state (state filter) -->
+    <div class="pt-empty pt-reveal" ng-if="!data.is_guest && !c.loading && !data.items.length && data.filter">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-radar"/></svg></span>
+      <div class="pt-empty__t">No requests in {{data.filter.label}}.</div>
+      <p class="pt-empty__s">Requests move between states as the PTAG team works the queue.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--pill" style="margin-top: 20px;" href="?id=ptag_status" ng-click="c.showAll($event)">Show all</a>
+    </div>
+
+    <!-- I13 R4: number filter not-found (same message whether the number exists under another user or not at all - no existence leak) -->
+    <div class="pt-empty pt-reveal" ng-if="!data.is_guest && !c.loading && !data.items.length && data.number">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-radar"/></svg></span>
+      <div class="pt-empty__t">No requests matching {{data.number}}.</div>
+      <p class="pt-empty__s">Check the number, or show everything you've submitted.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--pill" style="margin-top: 20px;" href="?id=ptag_status" ng-click="c.showAll($event)">Show all</a>
+    </div>
+
+    <div class="pt-reveal" ng-class="{'is-refetching': c.loading}" ng-if="!data.is_guest && data.items.length">
+      <div class="pt-rowcard pt-rowcard--click" ng-repeat="it in c.pageItems track by it.id" role="button" tabindex="0"
+           ng-click="c.open(it)" ng-keydown="c.cardKey($event, it)"
+           aria-label="Open {{it.number}} - details and comments">
+        <div>
+          <div class="pt-rowcard__num">{{it.number}}</div>
+          <div class="pt-rowcard__t">{{it.short_description}}</div>
+          <div class="pt-rowcard__meta">{{it.practice || 'No practice'}} &middot; Submitted {{it.created_d}}</div>
+        </div>
+        <div class="pt-rowcard__right">
+          <!-- I20: someone else spoke last. Pulses while unread; goes quiet once
+               you have opened it, but stays until you actually reply. -->
+          <span class="pt-unread" ng-if="it.reply_pending" ng-class="{'is-live': it.unread}"
+                title="{{it.unanswered}} unanswered from {{it.last_by}}{{it.unread ? ' - not read yet' : ''}}"
+                aria-label="{{it.unanswered}} unanswered comment{{it.unanswered == 1 ? '' : 's'}} from {{it.last_by}}. {{it.unread ? 'Not read yet.' : 'Read, but you have not replied.'}}">
+            <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-message-square"/></svg>
+            <span class="pt-unread__n">{{it.unanswered}}</span>
+          </span>
+          <span class="pt-chip" data-state="{{it.slug}}">{{it.state_label}}</span>
+          <span class="pt-rowcard__meta">Updated {{it.updated_d}}</span>
+          <button class="pt-iconbtn" type="button" ng-click="c.copy(it); $event.stopPropagation()" title="Copy status link" aria-label="Copy status link for {{it.number}}">
+            <svg class="pt-i pt-i--sm" ng-if="!it.copied"><use href="#ptag-i-copy"/></svg>
+            <svg class="pt-i pt-i--sm" ng-if="it.copied" style="color: var(--pt-green);"><use href="#ptag-i-check"/></svg>
+          </button>
+          <svg class="pt-i pt-i--sm pt-rowcard__go" aria-hidden="true"><use href="#ptag-i-arrow-up-right"/></svg>
+        </div>
+      </div>
+
+      <!-- I14 R4: adaptive pagination - page size + prev/next + exact range; whole bar hidden by ng-if when no items, buttons disable cleanly at the bounds / single page -->
+      <div class="pt-pager" ng-if="data.items.length">
+        <div class="pt-pager__size">
+          <label class="pt-pager__lbl" for="pt-pgsize">Show</label>
+          <span class="pt-pager__selwrap">
+            <select id="pt-pgsize" class="pt-pager__select" ng-model="c.pageSize" ng-change="c.setSize()" ng-options="n for n in c.sizes" aria-label="Results per page"></select>
+            <svg class="pt-i pt-i--sm pt-pager__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+          </span>
+          <span class="pt-pager__lbl">per page</span>
+        </div>
+        <div class="pt-pager__nav">
+          <span class="pt-pager__range" aria-live="polite">Showing {{c.rangeStart}}&ndash;{{c.rangeEnd}} of {{c.total}}</span>
+          <div class="pt-pager__btns">
+            <button type="button" class="pt-pager__btn pt-pager__btn--prev" ng-click="c.prevPage()" ng-disabled="c.page <= 1" aria-label="Previous page">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-arrow-right"/></svg>
+            </button>
+            <span class="pt-pager__pos" aria-hidden="true">Page {{c.page}} of {{c.pageCount}}</span>
+            <button type="button" class="pt-pager__btn" ng-click="c.nextPage()" ng-disabled="c.page >= c.pageCount" aria-label="Next page">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-arrow-right"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I11 engagement detail modal: whitelisted payload; comments journal only -->
+    <div class="pt-modal-backdrop" ng-if="c.dm.open" ng-click="c.close()" ng-keydown="c.dmKeydown($event)" role="presentation">
+      <div class="pt-modal pt-modal--eng" role="dialog" aria-modal="true" aria-labelledby="pt-dm-title" ng-click="$event.stopPropagation()">
+        <div class="pt-modal__head">
+          <h3 id="pt-dm-title" class="pt-modal__title">{{(c.dm.detail && c.dm.detail.number) || c.dm.num}}</h3>
+          <button type="button" class="pt-iconbtn pt-modal__close" ng-click="c.close()" aria-label="Close"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
+        </div>
+
+        <input type="file" id="pt-file-input" class="pt-files__input" multiple
+               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.csv,.msg,.eml">
+        <div class="pt-modal__body">
+          <div ng-if="c.dm.busy" aria-hidden="true">
+            <div class="pt-skel" style="height: 68px; margin-bottom: 10px;"></div>
+            <div class="pt-skel" style="height: 130px;"></div>
+          </div>
+          <div class="pt-alert" ng-if="c.dm.error && !c.dm.detail && !c.dm.busy" role="alert"><p>{{c.dm.error}}</p></div>
+
+          <div ng-if="c.dm.detail">
+            <div class="pt-dm__top">
+              <h4 class="pt-dm__t">{{c.dm.detail.short_description}}</h4>
+              <span class="pt-chip" data-state="{{c.dm.detail.slug}}">{{c.dm.detail.state_label}}</span>
+            </div>
+            <p class="pt-dm__ctx">{{c.dm.detail.state_context}}</p>
+            <div class="pt-dm__meta">
+              <div class="pt-dm__cell"><div class="pt-dm__k">Practice</div><div class="pt-dm__v">{{c.dm.detail.practice || '—'}}</div></div>
+              <div class="pt-dm__cell"><div class="pt-dm__k">Partner</div><div class="pt-dm__v">{{c.dm.detail.partner || '—'}}</div></div>
+              <div class="pt-dm__cell"><div class="pt-dm__k">Submitted</div><div class="pt-dm__v">{{c.dm.detail.submitted_d}}</div></div>
+            </div>
+
+            <!-- I13 R5a: journey timeline (server-built; between the meta grid and the comments thread) -->
+            <div class="pt-dm__timeline" ng-if="c.dm.detail.timeline.length">
+              <div class="pt-dm__sec">Journey</div>
+              <div class="pt-timeline pt-timeline--compact">
+                <div class="pt-tl-item" ng-repeat="n in c.dm.detail.timeline" ng-class="n.cls">
+                  <div class="pt-tl-node">
+                    <svg class="pt-i pt-i--sm" ng-if="!n.neg && !n.attn"><use href="#ptag-i-check"/></svg>
+                    <svg class="pt-i pt-i--sm" ng-if="n.attn"><use href="#ptag-i-triangle-alert"/></svg>
+                    <svg class="pt-i pt-i--sm" ng-if="n.neg"><use href="#ptag-i-x"/></svg>
+                  </div>
+                  <div>
+                    <div class="pt-tl-title">{{n.t}}</div>
+                    <div class="pt-tl-sub">{{n.s}}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- I30: attachments. Upload posts straight to the platform
+                 Attachment API so the request's own write-ACL authorises it. -->
+            <div class="pt-dm__sec" id="pt-dm-files">Attachments</div>
+            <ul class="pt-files" ng-if="c.dm.files.length" aria-labelledby="pt-dm-files">
+              <li class="pt-files__item" ng-repeat="f in c.dm.files track by f.id">
+                <svg class="pt-i pt-i--sm pt-files__ico" aria-hidden="true"><use href="#ptag-i-file-text"/></svg>
+                <a class="pt-files__name" ng-href="/sys_attachment.do?sys_id={{f.id}}"
+                   target="_blank" rel="noopener" title="Download {{f.name}}">{{f.name}}</a>
+                <span class="pt-files__meta">{{c.fileSize(f.size)}} &middot; {{f.by}} &middot; {{f.when}}</span>
+                <button class="pt-iconbtn pt-files__rm" type="button" ng-if="f.mine && !c.dm.detail.locked"
+                        ng-click="c.removeFile(f)" ng-disabled="c.dm.uploading"
+                        aria-label="Remove {{f.name}}" title="Remove">
+                  <svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg>
+                </button>
+              </li>
+            </ul>
+            <div class="pt-files__empty" ng-if="!c.dm.files.length && !c.dm.uploading">No files attached yet.</div>
+            <div class="pt-files__bar" ng-if="!c.dm.detail.locked">
+              <button class="pt-btn pt-btn--subtle pt-btn--sm" type="button"
+                      ng-click="c.pickFile()" ng-disabled="c.dm.uploading">
+                <svg class="pt-i pt-i--sm pt-spin" ng-if="c.dm.uploading"><use href="#ptag-i-loader-circle"/></svg>
+                <svg class="pt-i pt-i--sm" ng-if="!c.dm.uploading"><use href="#ptag-i-paperclip"/></svg>
+                {{c.dm.uploading ? 'Uploading\u2026' : 'Attach a file'}}
+              </button>
+              <span class="pt-files__hint">Up to {{data.attach.max_mb}} MB each</span>
+            </div>
+            <p class="pt-field__err" ng-if="c.dm.fileErr" role="alert">{{c.dm.fileErr}}</p>
+            <!-- I34: attachments are closed but the conversation is not. Say so
+                 plainly, rather than just removing the button and leaving people
+                 to wonder where it went. -->
+            <div class="pt-locked pt-locked--soft"
+                 ng-if="c.dm.detail.locked && !c.dm.detail.comments_locked">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-lock"/></svg>
+              <div>
+                <div class="pt-locked__t">No new attachments</div>
+                <div class="pt-locked__s">This engagement is marked <b>{{c.dm.detail.state_label}}</b>, so files are closed. You can still comment below if you want to make the case for it.</div>
+              </div>
+            </div>
+
+            <div class="pt-dm__sec" id="pt-dm-comments">Comments</div>
+            <ul class="pt-thread" ng-if="c.dm.thread.length" aria-labelledby="pt-dm-comments">
+              <li class="pt-thread__item" ng-class="{'is-mine': en.mine, 'is-new': en.is_new}" ng-repeat="en in c.dm.thread track by $index">
+                <div class="pt-thread__meta"><span class="pt-thread__who">{{en.author}}</span><span class="pt-thread__when">{{en.when}}</span><span class="pt-thread__new" ng-if="en.is_new" title="Posted since your last reply">New</span></div>
+                <div class="pt-thread__text">{{en.text}}</div>
+              </li>
+            </ul>
+            <div class="pt-thread__empty" ng-if="!c.dm.thread.length">No comments yet &mdash; questions and updates from the PTAG team land here.</div>
+
+            <!-- I33: a closed engagement is read-only here. The record and its
+                 whole history stay visible; only the inputs go away. -->
+            <div class="pt-locked" ng-if="c.dm.detail.comments_locked">
+              <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-lock"/></svg>
+              <div>
+                <div class="pt-locked__t">This engagement is closed</div>
+                <div class="pt-locked__s">It is marked <b>{{c.dm.detail.state_label}}</b>, so comments and attachments are no longer accepted. Everything above stays available to read.</div>
+              </div>
+            </div>
+
+            <div class="pt-composer" ng-if="!c.dm.detail.comments_locked">
+              <textarea class="pt-textarea" rows="3" maxlength="4000" ng-model="c.dm.text"
+                        placeholder="Write a comment for the PTAG team&hellip;" aria-label="Write a comment"
+                        ng-disabled="c.dm.posting"></textarea>
+              <div class="pt-composer__row">
+                <span class="pt-field__err" ng-if="c.dm.error && c.dm.detail" role="alert">{{c.dm.error}}</span>
+                <button class="pt-btn pt-btn--primary pt-btn--sm" type="button" ng-click="c.post()"
+                        ng-disabled="c.dm.posting || !(c.dm.text || '').trim().length">
+                  <svg class="pt-i pt-i--sm pt-spin" ng-if="c.dm.posting"><use href="#ptag-i-loader-circle"/></svg>
+                  <svg class="pt-i pt-i--sm" ng-if="!c.dm.posting"><use href="#ptag-i-send"/></svg>
+                  {{c.dm.posting ? 'Posting…' : 'Post comment'}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>]]></template>
+    </sp_widget>
+</record_update>

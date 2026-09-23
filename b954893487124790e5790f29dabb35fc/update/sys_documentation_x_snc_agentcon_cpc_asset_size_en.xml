@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="size" label="Size" language="en" table="x_snc_agentcon_cpc_asset">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>size</element>
+            <help/>
+            <hint/>
+            <label>Size</label>
+            <language>en</language>
+            <name>x_snc_agentcon_cpc_asset</name>
+            <plural>Sizes</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-07-29 01:51:15</sys_created_on>
+            <sys_id>6b7ce4b2871e4fd0e5790f29dabb35b4</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Size</sys_name>
+            <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+            <sys_update_name>sys_documentation_x_snc_agentcon_cpc_asset_size_en</sys_update_name>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-07-29 01:51:15</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+    </sys_documentation>
+</record_update>

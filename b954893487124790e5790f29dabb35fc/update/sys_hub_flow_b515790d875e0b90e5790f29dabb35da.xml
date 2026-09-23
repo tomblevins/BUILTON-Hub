@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_hub_flow">
+    <sys_hub_flow action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <acls/>
+        <active>false</active>
+        <allow_high_security_roles>false</allow_high_security_roles>
+        <annotation/>
+        <attributes>intermediateFlowVersion=0.4,labelCacheCleanUpExecuted=true</attributes>
+        <authored_on_release_version>29000</authored_on_release_version>
+        <callable_by_client_api>false</callable_by_client_api>
+        <category/>
+        <compiler_build/>
+        <copied_from/>
+        <copied_from_name/>
+        <description/>
+        <display_name_after_preview/>
+        <flow_priority>MEDIUM</flow_priority>
+        <generation_source>agentic_ai</generation_source>
+        <internal_name>engagement_request__use_case_ptag_triage_assist__3115790d875e0b90e5790f29dabb35d8</internal_name>
+        <label_cache>[{"name":"Updated_1.current","label":"Trigger - Record Updated➛Engagement Request Record","reference":"x_snc_ptag_engage_engagement_request","reference_display":"Engagement Request","type":"reference","base_type":"reference","usedInstances":{"4a15b90d-005e-0b90-dd50-2de9c413013c":["target_record"]},"attributes":{"element_mapping_provider":"com.glide.flow_design.action.data.FlowDesignVariableMapper"}}]</label_cache>
+        <latest_snapshot/>
+        <master_snapshot/>
+        <master_snapshot_digest/>
+        <name>Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8</name>
+        <natlang/>
+        <outputs/>
+        <pre_compiled>false</pre_compiled>
+        <remote_trigger_id/>
+        <run_as>user</run_as>
+        <run_with_roles/>
+        <sc_callable>false</sc_callable>
+        <show_draft_actions>false</show_draft_actions>
+        <show_triggered_flows>false</show_triggered_flows>
+        <status>draft</status>
+        <substatus/>
+        <sys_class_name>sys_hub_flow</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>b515790d875e0b90e5790f29dabb35da</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_hub_flow_b515790d875e0b90e5790f29dabb35da</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:07</sys_updated_on>
+        <type>flow</type>
+        <updation_source/>
+        <version>1</version>
+        <version_record>6215f90d875e0b90e5790f29dabb3550</version_record>
+    </sys_hub_flow>
+    <sys_translated_text action="delete_multiple" query="documentkey=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_variable_value action="delete_multiple" query="document_key=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_flow_stage action="delete_multiple" query="flow=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_flow_cat_variable_model action="delete_multiple" query="id=b515790d875e0b90e5790f29dabb35da^sys_idNOT INbd15790d875e0b90e5790f29dabb35dc"/>
+    <sys_flow_cat_variable_model action="INSERT_OR_UPDATE">
+        <id>b515790d875e0b90e5790f29dabb35da</id>
+        <name>Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8</name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>bd15790d875e0b90e5790f29dabb35dc</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_scope/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+    </sys_flow_cat_variable_model>
+    <sys_flow_cat_variable action="delete_multiple" query="flow_catalog_model=bd15790d875e0b90e5790f29dabb35dc"/>
+    <sys_hub_flow_input action="delete_multiple" query="model=b515790d875e0b90e5790f29dabb35da^sys_idNOT IN0215b90d875e0b90e5790f29dabb3589,8615b90d875e0b90e5790f29dabb355b,8a15b90d875e0b90e5790f29dabb3582"/>
+    <sys_hub_flow_input action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <array>false</array>
+        <array_denormalized>false</array_denormalized>
+        <attributes>child_label=FDChangeDetails,child_name=FDChangeDetails,child_type=object,child_type_label=Object,co_type_name=FDCollection,element_mapping_provider=com.glide.flow_design.action.data.FlowDesignVariableMapper,pwd2droppable=true,uiType=array.object,uiTypeLabel=Array.Object</attributes>
+        <audit>false</audit>
+        <calculation><![CDATA[(function calculatedFieldValue(current) {
+
+	// Add your code here
+	return '';  // return the calculated value
+
+})(current);]]></calculation>
+        <choice/>
+        <choice_field/>
+        <choice_table/>
+        <column_label/>
+        <comments/>
+        <create_roles/>
+        <default_value/>
+        <defaultsort/>
+        <delete_roles/>
+        <dependent/>
+        <dependent_on_field/>
+        <display>false</display>
+        <dynamic_creation>false</dynamic_creation>
+        <dynamic_creation_script/>
+        <dynamic_default_value/>
+        <dynamic_ref_qual/>
+        <element>changed_fields</element>
+        <element_reference>false</element_reference>
+        <foreign_database/>
+        <formula/>
+        <function_definition/>
+        <function_field>false</function_field>
+        <help/>
+        <hint/>
+        <internal_type display_value="String">string</internal_type>
+        <label>Changed Fields</label>
+        <mandatory>false</mandatory>
+        <max_length>4000</max_length>
+        <model display_value="Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8">b515790d875e0b90e5790f29dabb35da</model>
+        <model_id>b515790d875e0b90e5790f29dabb35da</model_id>
+        <model_table>sys_hub_flow</model_table>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <next_element/>
+        <order>100</order>
+        <primary>false</primary>
+        <read_only>false</read_only>
+        <read_only_option/>
+        <read_roles/>
+        <reference/>
+        <reference_cascade_rule/>
+        <reference_floats>false</reference_floats>
+        <reference_key/>
+        <reference_qual/>
+        <reference_qual_condition/>
+        <reference_type/>
+        <sizeclass/>
+        <spell_check>false</spell_check>
+        <staged>false</staged>
+        <sys_class_name>sys_hub_flow_input</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>0215b90d875e0b90e5790f29dabb3589</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <table_reference>false</table_reference>
+        <text_index>false</text_index>
+        <unique>false</unique>
+        <use_dependent_field>false</use_dependent_field>
+        <use_dynamic_default>false</use_dynamic_default>
+        <use_reference_qualifier>simple</use_reference_qualifier>
+        <virtual>false</virtual>
+        <virtual_type>script</virtual_type>
+        <widget/>
+        <write_roles/>
+        <xml_view>false</xml_view>
+    </sys_hub_flow_input>
+    <sys_hub_action_input_action_instance action="delete_multiple" query="action_input=0215b90d875e0b90e5790f29dabb3589"/>
+    <sys_hub_flow_input action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <array>false</array>
+        <array_denormalized>false</array_denormalized>
+        <attributes>element_mapping_provider=com.glide.flow_design.action.data.FlowDesignVariableMapper,test_input_hidden=true,uiType=table_name</attributes>
+        <audit>false</audit>
+        <calculation><![CDATA[(function calculatedFieldValue(current) {
+
+	// Add your code here
+	return '';  // return the calculated value
+
+})(current);]]></calculation>
+        <choice/>
+        <choice_field/>
+        <choice_table/>
+        <column_label/>
+        <comments/>
+        <create_roles/>
+        <default_value/>
+        <defaultsort/>
+        <delete_roles/>
+        <dependent/>
+        <dependent_on_field/>
+        <display>false</display>
+        <dynamic_creation>false</dynamic_creation>
+        <dynamic_creation_script/>
+        <dynamic_default_value/>
+        <dynamic_ref_qual/>
+        <element>table_name</element>
+        <element_reference>false</element_reference>
+        <foreign_database/>
+        <formula/>
+        <function_definition/>
+        <function_field>false</function_field>
+        <help/>
+        <hint/>
+        <internal_type display_value="">table_name</internal_type>
+        <label>Table Name</label>
+        <mandatory>false</mandatory>
+        <max_length>200</max_length>
+        <model display_value="Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8">b515790d875e0b90e5790f29dabb35da</model>
+        <model_id>b515790d875e0b90e5790f29dabb35da</model_id>
+        <model_table>sys_hub_flow</model_table>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <next_element/>
+        <order>101</order>
+        <primary>false</primary>
+        <read_only>false</read_only>
+        <read_only_option/>
+        <read_roles/>
+        <reference/>
+        <reference_cascade_rule/>
+        <reference_floats>false</reference_floats>
+        <reference_key/>
+        <reference_qual/>
+        <reference_qual_condition/>
+        <reference_type/>
+        <sizeclass/>
+        <spell_check>false</spell_check>
+        <staged>false</staged>
+        <sys_class_name>sys_hub_flow_input</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>8615b90d875e0b90e5790f29dabb355b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+        <table_reference>false</table_reference>
+        <text_index>false</text_index>
+        <unique>false</unique>
+        <use_dependent_field>false</use_dependent_field>
+        <use_dynamic_default>false</use_dynamic_default>
+        <use_reference_qualifier>simple</use_reference_qualifier>
+        <virtual>false</virtual>
+        <virtual_type>script</virtual_type>
+        <widget/>
+        <write_roles/>
+        <xml_view>false</xml_view>
+    </sys_hub_flow_input>
+    <sys_hub_action_input_action_instance action="delete_multiple" query="action_input=8615b90d875e0b90e5790f29dabb355b"/>
+    <sys_hub_flow_input action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <array>false</array>
+        <array_denormalized>false</array_denormalized>
+        <attributes>element_mapping_provider=com.glide.flow_design.action.data.FlowDesignVariableMapper,uiType=document_id</attributes>
+        <audit>false</audit>
+        <calculation><![CDATA[(function calculatedFieldValue(current) {
+
+	// Add your code here
+	return '';  // return the calculated value
+
+})(current);]]></calculation>
+        <choice/>
+        <choice_field/>
+        <choice_table/>
+        <column_label/>
+        <comments/>
+        <create_roles/>
+        <default_value/>
+        <defaultsort/>
+        <delete_roles/>
+        <dependent>table_name</dependent>
+        <dependent_on_field>table_name</dependent_on_field>
+        <display>false</display>
+        <dynamic_creation>false</dynamic_creation>
+        <dynamic_creation_script/>
+        <dynamic_default_value/>
+        <dynamic_ref_qual/>
+        <element>current</element>
+        <element_reference>false</element_reference>
+        <foreign_database/>
+        <formula/>
+        <function_definition/>
+        <function_field>false</function_field>
+        <help/>
+        <hint/>
+        <internal_type display_value="">document_id</internal_type>
+        <label>Record</label>
+        <mandatory>true</mandatory>
+        <max_length>200</max_length>
+        <model display_value="Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8">b515790d875e0b90e5790f29dabb35da</model>
+        <model_id>b515790d875e0b90e5790f29dabb35da</model_id>
+        <model_table>sys_hub_flow</model_table>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <next_element/>
+        <order>100</order>
+        <primary>false</primary>
+        <read_only>false</read_only>
+        <read_only_option/>
+        <read_roles/>
+        <reference/>
+        <reference_cascade_rule/>
+        <reference_floats>false</reference_floats>
+        <reference_key/>
+        <reference_qual/>
+        <reference_qual_condition/>
+        <reference_type/>
+        <sizeclass/>
+        <spell_check>false</spell_check>
+        <staged>false</staged>
+        <sys_class_name>sys_hub_flow_input</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>8a15b90d875e0b90e5790f29dabb3582</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <table_reference>false</table_reference>
+        <text_index>false</text_index>
+        <unique>false</unique>
+        <use_dependent_field>true</use_dependent_field>
+        <use_dynamic_default>false</use_dynamic_default>
+        <use_reference_qualifier>simple</use_reference_qualifier>
+        <virtual>false</virtual>
+        <virtual_type>script</virtual_type>
+        <widget/>
+        <write_roles/>
+        <xml_view>false</xml_view>
+    </sys_hub_flow_input>
+    <sys_hub_action_input_action_instance action="delete_multiple" query="action_input=8a15b90d875e0b90e5790f29dabb3582"/>
+    <sys_hub_flow_output action="delete_multiple" query="model=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_alias_mapping action="delete_multiple" query="source_id=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_trigger_instance action="delete_multiple" query="flow=b515790d875e0b90e5790f29dabb35da^sys_idNOT IN0a15b90d875e0b90e5790f29dabb3542"/>
+    <sys_hub_trigger_instance action="INSERT_OR_UPDATE">
+        <comment/>
+        <display_text/>
+        <flow display_value="Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8">b515790d875e0b90e5790f29dabb35da</flow>
+        <generation_source>agentic_ai</generation_source>
+        <name>Updated</name>
+        <remote_sys_id/>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>0a15b90d875e0b90e5790f29dabb3542</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_scope/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <trigger_definition display_value="Updated">bb695e60c31322002841b63b12d3aea5</trigger_definition>
+        <trigger_inputs/>
+        <trigger_outputs/>
+        <trigger_type>record_update</trigger_type>
+        <updation_source/>
+    </sys_hub_trigger_instance>
+    <sys_variable_value action="delete_multiple" query="document_key=0a15b90d875e0b90e5790f29dabb3542"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_hub_trigger_instance</document>
+        <document_key>0a15b90d875e0b90e5790f29dabb3542</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>4615b90d875e0b90e5790f29dabb3552</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+        <value>state=-1^EQ</value>
+        <variable display_value="Condition">bb9adea0c31322002841b63b12d3ae67</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_hub_trigger_instance</document>
+        <document_key>0a15b90d875e0b90e5790f29dabb3542</document_key>
+        <order>1</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>4e15b90d875e0b90e5790f29dabb3552</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+        <value>x_snc_ptag_engage_engagement_request</value>
+        <variable display_value="Table">1dda12e0c31322002841b63b12d3aea8</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_hub_trigger_instance</document>
+        <document_key>0a15b90d875e0b90e5790f29dabb3542</document_key>
+        <order>101</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>8a15b90d875e0b90e5790f29dabb3544</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+        <value>unique_changes</value>
+        <variable display_value="Run Trigger">c19523d8c31932002841b63b12d3aea1</variable>
+    </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_sys_hub_trigger_output_bb695e60c31322002841b63b12d3aea5^id=0a15b90d875e0b90e5790f29dabb3542"/>
+    <sys_hub_action_instance action="delete_multiple" query="flow=b515790d875e0b90e5790f29dabb35da^sys_idNOT IN5a15b90d875e0b90e5790f29dabb35e3"/>
+    <sys_hub_action_instance action="INSERT_OR_UPDATE">
+        <action_inputs/>
+        <action_inputs/>
+        <action_type display_value="AIA Trigger Use Case">0b63e51a53c7121059e0ddeeff7b12b5</action_type>
+        <action_type_parent/>
+        <attributes/>
+        <comment/>
+        <compiled_snapshot/>
+        <display_text/>
+        <flow display_value="Engagement Request - Use case: PTAG Triage Assist - 3115790d875e0b90e5790f29dabb35d8">b515790d875e0b90e5790f29dabb35da</flow>
+        <generation_source>agentic_ai</generation_source>
+        <order>1</order>
+        <parent_ui_id/>
+        <sys_class_name>sys_hub_action_instance</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>5a15b90d875e0b90e5790f29dabb35e3</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <ui_id>4a15b90d-005e-0b90-dd50-2de9c413013c</ui_id>
+        <updation_source/>
+    </sys_hub_action_instance>
+    <sys_variable_value action="delete_multiple" query="document_key=5a15b90d875e0b90e5790f29dabb35e3"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_hub_action_instance</document>
+        <document_key>5a15b90d875e0b90e5790f29dabb35e3</document_key>
+        <order>1</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>5e15b90d875e0b90e5790f29dabb35e8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <value>6d15790d875e0b90e5790f29dabb3558</value>
+        <variable display_value="Trigger Configuration Id">8f63e51a53c7121059e0ddeeff7b12b8</variable>
+    </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="id=5a15b90d875e0b90e5790f29dabb35e3"/>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>target_record</field>
+        <id>5a15b90d875e0b90e5790f29dabb35e3</id>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>9a15b90d875e0b90e5790f29dabb35e8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <table>var__m_sys_hub_action_input_0b63e51a53c7121059e0ddeeff7b12b5</table>
+        <value>{{Updated_1.current}}</value>
+    </sys_element_mapping>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>trigger_configuration_id</field>
+        <id>5a15b90d875e0b90e5790f29dabb35e3</id>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>da15b90d875e0b90e5790f29dabb35e7</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <table>var__m_sys_hub_action_input_0b63e51a53c7121059e0ddeeff7b12b5</table>
+        <value/>
+    </sys_element_mapping>
+    <sys_hub_input_scripts action="delete_multiple" query="instance=5a15b90d875e0b90e5790f29dabb35e3"/>
+    <sys_hub_alias_mapping action="delete_multiple" query="source_id=5a15b90d875e0b90e5790f29dabb35e3"/>
+    <sys_hub_flow_logic action="delete_multiple" query="flow=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_sub_flow_instance action="delete_multiple" query="flow=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_pill_compound action="delete_multiple" query="attached_to=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_hub_flow_variable action="delete_multiple" query="model=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_choice action="delete_multiple" query="name=var__m_sys_hub_flow_variable_b515790d875e0b90e5790f29dabb35da"/>
+    <sys_documentation action="INSERT_OR_UPDATE">
+        <element>changed_fields</element>
+        <help/>
+        <hint/>
+        <label>Changed Fields</label>
+        <language>en</language>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <plural/>
+        <sys_class_name>sys_documentation</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>0215b90d875e0b90e5790f29dabb358e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <url/>
+        <url_target/>
+    </sys_documentation>
+    <sys_documentation action="INSERT_OR_UPDATE">
+        <element>table_name</element>
+        <help/>
+        <hint/>
+        <label>Table Name</label>
+        <language>en</language>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <plural/>
+        <sys_class_name>sys_documentation</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:05</sys_created_on>
+        <sys_id>0615b90d875e0b90e5790f29dabb357f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:05</sys_updated_on>
+        <url/>
+        <url_target/>
+    </sys_documentation>
+    <sys_documentation action="INSERT_OR_UPDATE">
+        <element>current</element>
+        <help/>
+        <hint/>
+        <label>Record</label>
+        <language>en</language>
+        <name>var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da</name>
+        <plural/>
+        <sys_class_name>sys_documentation</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:06</sys_created_on>
+        <sys_id>ca15b90d875e0b90e5790f29dabb3586</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name/>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:06</sys_updated_on>
+        <url/>
+        <url_target/>
+    </sys_documentation>
+    <sys_choice action="delete_multiple" query="name=var__m_sys_hub_flow_input_b515790d875e0b90e5790f29dabb35da"/>
+    <sys_choice action="delete_multiple" query="name=var__m_sys_hub_flow_output_b515790d875e0b90e5790f29dabb35da"/>
+    <sys_flow_trigger_plan action="delete_multiple" query="plan_id=b515790d875e0b90e5790f29dabb35da"/>
+    <sys_flow_subflow_plan action="delete_multiple" query="plan_id=b515790d875e0b90e5790f29dabb35da"/>
+</record_update>

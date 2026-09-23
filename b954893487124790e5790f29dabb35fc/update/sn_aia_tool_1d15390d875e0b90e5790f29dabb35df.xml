@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_tool">
+    <sn_aia_tool action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Appends EXACTLY ONE internal work note to the engagement request. Journal-only by construction: the script can only write the work_notes journal and mechanically enforces the [AI Triage Draft] prefix. Inputs: request_sys_id, draft_text.</description>
+        <input_schema>[{"name":"request_sys_id","description":"sys_id of the engagement request record (from the objective text)","mandatory":true},{"name":"draft_text","description":"The triage draft note (no prefix; the tool adds [AI Triage Draft])","mandatory":true}]</input_schema>
+        <name>PTAG - Append triage work note</name>
+        <record_type>custom</record_type>
+        <script><![CDATA[(function(inputs) {
+    var T = 'x_snc_ptag_engage_engagement_request';
+    var gr = new GlideRecord(T);
+    if (!inputs || !inputs.request_sys_id || !gr.get(inputs.request_sys_id)) {
+        return JSON.stringify({ok: false, error: 'record not found'});
+    }
+    var txt = ('' + (inputs.draft_text || '')).trim();
+    txt = txt.replace(/^\s*\[AI Triage Draft\]\s*/i, '');
+    if (!txt) return JSON.stringify({ok: false, error: 'empty draft'});
+    /* JOURNAL-ONLY BY CONSTRUCTION: the only assignment is the work_notes
+       journal field. No state, assignment, scoring or any other field. */
+    gr.work_notes = '[AI Triage Draft] ' + txt;
+    gr.update();
+    return JSON.stringify({ok: true, number: gr.getValue('number')});
+})(inputs);]]></script>
+        <sys_class_name>sn_aia_tool</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:03</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>1d15390d875e0b90e5790f29dabb35df</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG - Append triage work note</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_tool_1d15390d875e0b90e5790f29dabb35df</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:03</sys_updated_on>
+        <target_document/>
+        <target_document_table/>
+        <type>script</type>
+    </sn_aia_tool>
+</record_update>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_agent_tool_m2m">
+    <sn_aia_agent_tool_m2m action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <agent display_value="PTAG Triage Assist">6d15390d875e0b90e5790f29dabb35e8</agent>
+        <description>Fetch the per-axis triage signals and the stamped assessment</description>
+        <display_mode>inline</display_mode>
+        <display_output>true</display_output>
+        <document_status/>
+        <entity/>
+        <entity_id/>
+        <execution_mode>autopilot</execution_mode>
+        <inputs>[{"name":"request_sys_id","description":"sys_id of the engagement request record (from the objective text)","mandatory":true}]</inputs>
+        <max_auto_executions>10</max_auto_executions>
+        <name>PTAG - Get triage signals</name>
+        <output_transformation_strategy>none</output_transformation_strategy>
+        <post_message/>
+        <post_processing_script/>
+        <pre_message/>
+        <pre_run>false</pre_run>
+        <requires_text_refined_message>false</requires_text_refined_message>
+        <requires_widget_transformation>true</requires_widget_transformation>
+        <should_display_refined_message>false</should_display_refined_message>
+        <sys_class_name>sn_aia_agent_tool_m2m</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:03</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>2915790d875e0b90e5790f29dabb3508</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG - Get triage signals</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_agent_tool_m2m_2915790d875e0b90e5790f29dabb3508</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:03</sys_updated_on>
+        <timeout/>
+        <tool display_value="PTAG - Get triage signals">9915390d875e0b90e5790f29dabb35ba</tool>
+        <tool_attributes>{}</tool_attributes>
+        <transformation_instructions/>
+        <widgets/>
+    </sn_aia_agent_tool_m2m>
+</record_update>

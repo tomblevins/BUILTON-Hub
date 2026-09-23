@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <advanced>false</advanced>
+        <business_calendar/>
+        <condition/>
+        <conditional>false</conditional>
+        <entered_run_end/>
+        <entered_run_start/>
+        <entered_time/>
+        <max_drift/>
+        <name>PTAG Hub - daily aging</name>
+        <offset/>
+        <offset_type>0</offset_type>
+        <repeat_every/>
+        <run_as display_value="Jon DeLuna">3494c6283be9be90c9c355f726e45afc</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek/>
+        <run_daysofweek/>
+        <run_end/>
+        <run_month/>
+        <run_period/>
+        <run_start>2026-07-23 17:37:53</run_start>
+        <run_time>1970-01-01 03:00:00</run_time>
+        <run_type>daily</run_type>
+        <run_weekinmonth/>
+        <script><![CDATA[/* PTAG Hub I8: recompute age_days = whole days since state_entered_on for
+   open (non-terminal) requests. Pure stamp: no workflow, no audit churn. */
+var TERMINAL = '3,7,8,9';
+var now = new GlideDateTime();
+var n = 0;
+var gr = new GlideRecord('x_snc_ptag_engage_engagement_request');
+gr.addQuery('state', 'NOT IN', TERMINAL);
+gr.addNotNullQuery('state_entered_on');
+gr.query();
+while (gr.next()) {
+    var entered = new GlideDateTime(gr.getValue('state_entered_on'));
+    var days = Math.floor((now.getNumericValue() - entered.getNumericValue()) / 86400000);
+    if (days < 0) days = 0;
+    if (parseInt(gr.getValue('age_days'), 10) !== days) {
+        gr.setValue('age_days', days);
+        gr.setWorkflow(false);
+        gr.autoSysFields(false);
+        gr.update();
+        n++;
+    }
+}
+gs.info('[PTAG aging] age_days stamped on ' + n + ' record(s)');]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 17:37:53</sys_created_on>
+        <sys_id>eb9b818d87160b90e5790f29dabb3521</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Hub - daily aging</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sysauto_script_eb9b818d87160b90e5790f29dabb3521</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:37:53</sys_updated_on>
+        <time_zone/>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>

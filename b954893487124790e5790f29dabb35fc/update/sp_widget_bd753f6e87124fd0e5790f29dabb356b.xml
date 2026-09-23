@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($scope) {
+  /* PTAG Shell Control - page-wide script slot.
+     I66: strip SP's section.sp-scroll wrapper.
+     I72: scrollbar hide, hardened. Lessons: scrollbar-width does NOT inherit
+     (scrollbar-color does), so blanket rules never reach shadow scrollers -
+     INLINE per-scroller is the only reliable channel; and walks must descend
+     into same-origin iframes. Route-scoped to the Pulse page, instant
+     re-apply on resize, self-cleaning elsewhere. Wheel scrolling untouched. */
+  function paint() {
+    try {
+      if (!window.frameElement) { return; }
+      var sec = document.querySelector('section.sp-scroll');
+      if (sec) {
+        sec.classList.remove('sp-scroll', 'flex-grow', 'flex-column', 'page');
+        sec.style.setProperty('overflow', 'visible', 'important');
+      }
+      /* I73 (Jon's root-cause #2): SP's flex-row on the row wrapper changes
+         the narrow-width geometry and CREATES the overflow that drew the bar.
+         His hand fix, made permanent: flex-row -> row. */
+      var rows = document.querySelectorAll('.sp-na-root-container.flex-row, .sp-row-content.flex-row');
+      for (var ri = 0; ri < rows.length; ri++) {
+        rows[ri].classList.remove('flex-row');
+        rows[ri].classList.add('row');
+      }
+      var t = window.top;
+      var onPulse = false;
+      try { onPulse = t.location.pathname.indexOf('engagement-pulse') > -1; } catch (e) {}
+
+      function ensureTag(doc) {
+        try {
+          var st = doc.getElementById('ptag-scrollbar-hide');
+          if (onPulse && !st) {
+            st = doc.createElement('style');
+            st.id = 'ptag-scrollbar-hide';
+            st.textContent = 'html { scrollbar-width: none; }' +
+              '::-webkit-scrollbar { width: 0; height: 0; display: none; }';
+            (doc.head || doc.documentElement).appendChild(st);
+          } else if (!onPulse && st && st.parentNode) {
+            st.parentNode.removeChild(st);
+          }
+        } catch (e) {}
+      }
+      function walk(node, depth) {
+        if (!node || depth > 70) { return; }
+        if (node.nodeType === 1) {
+          try {
+            if (onPulse) {
+              if (node.scrollHeight > node.clientHeight + 4 && node.clientHeight > 40) {
+                node.style.scrollbarWidth = 'none';
+                node.style.scrollbarColor = 'transparent transparent';
+              }
+            } else if (node.style && node.style.scrollbarWidth === 'none') {
+              node.style.scrollbarWidth = '';
+              node.style.scrollbarColor = '';
+            }
+          } catch (e) {}
+          if (node.shadowRoot) { walk(node.shadowRoot, depth + 1); }
+          if (node.tagName === 'IFRAME') {
+            try {
+              if (node.contentDocument) {
+                ensureTag(node.contentDocument);
+                walk(node.contentDocument.documentElement, depth + 1);
+              }
+            } catch (e) {}
+          }
+        }
+        var kids = node.children || node.childNodes || [];
+        for (var i = 0; i < kids.length; i++) { walk(kids[i], depth + 1); }
+      }
+      ensureTag(t.document);
+      walk(t.document.documentElement, 0);
+      if (!t.__ptResizeHooked) {
+        t.__ptResizeHooked = true;
+        try { t.addEventListener('resize', function() { setTimeout(paint, 50); setTimeout(paint, 400); }); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  paint();
+  try { setInterval(paint, 1500); } catch (e) {}
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css/>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description>Page-wide script slot. I66 sp-scroll strip; I72 hardened route-scoped scrollbar hide (inline per-scroller, iframe descent, resize re-apply, self-cleaning).</description>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_shell_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Shell Control</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() { /* no server work */ })();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 21:50:50</sys_created_on>
+        <sys_id>bd753f6e87124fd0e5790f29dabb356b</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>PTAG Shell Control</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_bd753f6e87124fd0e5790f29dabb356b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 22:43:32</sys_updated_on>
+        <template><![CDATA[<div class="pt-shell-ctl" style="display:none" aria-hidden="true"></div>]]></template>
+    </sp_widget>
+</record_update>

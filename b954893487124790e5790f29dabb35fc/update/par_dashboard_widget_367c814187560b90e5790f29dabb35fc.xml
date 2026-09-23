@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="par_dashboard_widget">
+    <par_dashboard_widget action="INSERT_OR_UPDATE">
+        <canvas display_value="">3a7c814187560b90e5790f29dabb35df</canvas>
+        <component display_value="Vertical bar">23051643b7e03010097cb81cde11a910</component>
+        <component_props>{"enableRealTimeUpdate": true, "showZero": true, "colorConfig": {"type": "default"}, "showHeader": true, "showTotalAggregate": false, "showSubAggregate": false, "showFirstGroupAggregate": false, "showSecondGroupAggregate": false, "wrapTitle": false, "showHeaderSeparator": false, "showBorder": true, "bareBorder": false, "showDataPassthrough": false, "dataPassthrough": null, "sortBy": "value", "sortByOrder": "desc", "trendBy": null, "followFilters": true, "showFilterIcon": true, "enableDrilldown": true, "applyDateRange": false, "newReporting": false, "filterConfigurations": [], "noDebounce": "", "contextMenuActions": [], "headerTitle": "Open volume by state", "dataSources": [{"isDatabaseView": false, "allowRealTime": true, "label": "Open volume by state", "sourceType": "table", "tableOrViewName": "x_snc_ptag_engage_engagement_request", "filterQuery": "stateNOT IN3,7,8,9", "id": "tablex_snc_ptag_engage_engagement_request178489000002", "dataCategories": ["trend", "group", "simple"]}], "metrics": [{"dataSource": "tablex_snc_ptag_engage_engagement_request178489000002", "id": "tablex_snc_ptag_engage_engagement_request17848900000292", "aggregateFunction": "COUNT", "numberFormat": {"customFormat": false}, "axisId": "primary"}], "groupBy": [{"maxNumberOfGroups": "12", "showOthers": false, "groupBy": [{"dataSource": "tablex_snc_ptag_engage_engagement_request178489000002", "groupByField": "state"}]}]}</component_props>
+        <h>9</h>
+        <name/>
+        <required_translations>[{"comment":"","message":"Open volume by state","code":"PAR_DASHBOARD.2aec60cd875ec790e5790f29dabb3595.367c814187560b90e5790f29dabb35fc"},{"comment":"","message":"Open volume by state","code":"PAR_DASHBOARD.2aec60cd875ec790e5790f29dabb3595.367c814187560b90e5790f29dabb35fc"}]</required_translations>
+        <stored_component/>
+        <sys_class_name>par_dashboard_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 17:41:39</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>367c814187560b90e5790f29dabb35fc</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name/>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>par_dashboard_widget_367c814187560b90e5790f29dabb35fc</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:41:39</sys_updated_on>
+        <visualization/>
+        <w>16</w>
+        <widget_props/>
+        <x>16</x>
+        <y>3</y>
+    </par_dashboard_widget>
+</record_update>

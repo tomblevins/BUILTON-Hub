@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_tool">
+    <sn_aia_tool action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Read-only lookup of one PTAG engagement request: identity, requester first name, mechanical completeness gaps (missing TAM, unconfirmed signals, narrative character counts) and narrative heads for substance judgment. Input: request_sys_id.</description>
+        <input_schema>[{"name":"request_sys_id","description":"sys_id of the engagement request record","mandatory":true}]</input_schema>
+        <name>PTAG - Get engagement request</name>
+        <record_type>custom</record_type>
+        <script><![CDATA[(function(inputs) {
+    var T = 'x_snc_ptag_engage_engagement_request';
+    var gr = new GlideRecord(T);
+    if (!inputs || !inputs.request_sys_id || !gr.get(inputs.request_sys_id)) {
+        return JSON.stringify({error: 'record not found: ' + (inputs && inputs.request_sys_id)});
+    }
+    function plain(v, max) {
+        var t = ('' + (v || '')).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
+        return t.length > max ? t.substring(0, max) + '...' : t;
+    }
+    var SIGNALS = [['executive_sponsor', 'Executive sponsor'], ['business_owner', 'Business owner'],
+                   ['budget', 'Budget'], ['pipeline', 'Pipeline'],
+                   ['corporate_alignment', 'Corporate alignment'],
+                   ['certified_resources', 'Certified resources'], ['has_customers', 'Existing customers']];
+    var signalsFalse = [];
+    for (var i = 0; i < SIGNALS.length; i++) {
+        if (gr.getValue(SIGNALS[i][0]) !== '1') signalsFalse.push(SIGNALS[i][1]);
+    }
+    var NARR = [['idea_description', 'Engagement description'],
+                ['customer_pain_points', 'Customer pain points'],
+                ['value_prop', 'Value proposition'],
+                ['what_is_the_partners_ai_strategy', 'Partner AI strategy']];
+    var narratives = {};
+    for (var j = 0; j < NARR.length; j++) {
+        var txt = plain(gr.getValue(NARR[j][0]), 400);
+        narratives[NARR[j][1]] = {chars: txt.length, head: txt || '(empty)'};
+    }
+    var out = {
+        number: gr.getValue('number'),
+        short_description: gr.getValue('short_description') || '(empty)',
+        state: gr.getDisplayValue('state'),
+        requester_first_name: ('' + gr.opened_by.first_name) || 'there',
+        partner: gr.getDisplayValue('partner') || '(empty)',
+        practice: gr.getDisplayValue('practice') || '(empty)',
+        tam_missing: !gr.getValue('tam'),
+        signals_not_confirmed: signalsFalse,
+        narratives: narratives
+    };
+    return JSON.stringify(out);
+})(inputs);]]></script>
+        <sys_class_name>sn_aia_tool</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:59:47</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>6b5e118d871a0b90e5790f29dabb3516</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG - Get engagement request</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_tool_6b5e118d871a0b90e5790f29dabb3516</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:59:47</sys_updated_on>
+        <target_document/>
+        <target_document_table/>
+        <type>script</type>
+    </sn_aia_tool>
+</record_update>

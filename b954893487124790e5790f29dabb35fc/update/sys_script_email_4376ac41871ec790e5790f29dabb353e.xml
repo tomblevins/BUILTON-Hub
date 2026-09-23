@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_email">
+    <sys_script_email action="INSERT_OR_UPDATE">
+        <name>ptag_portal_base</name>
+        <new_lines_to_html>false</new_lines_to_html>
+        <script><![CDATA[(function runMailScript(current, template, email, email_action, event) {
+    /* PTAG Hub: base URL for every notification link. Property-driven so
+       the template set survives instance moves (I6 carry-over fix). */
+    template.print(gs.getProperty('x_snc_ptag_engage.portal_base_url', 'https://astrodev.service-now.com'));
+})(current, template, email, email_action, event);]]></script>
+        <sys_class_name>sys_script_email</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:55:39</sys_created_on>
+        <sys_id>4376ac41871ec790e5790f29dabb353e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>ptag_portal_base</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_email_4376ac41871ec790e5790f29dabb353e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 14:55:39</sys_updated_on>
+    </sys_script_email>
+</record_update>

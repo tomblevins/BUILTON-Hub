@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGAttachmentSweep</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Removes attachments added to an engagement AFTER it entered a terminal state, by non-staff. Keeps anything attached before closure. Cleanup, not prevention.</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGAttachmentSweep</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGAttachmentSweep = Class.create();
+PTAGAttachmentSweep.prototype = {
+  TABLE: 'x_snc_ptag_engage_engagement_request',
+  MAX_PER_RUN: 200,
+
+  initialize: function () {},
+
+  /* Remove attachments added to an engagement AFTER it entered a terminal state,
+     by someone who is not PTAG staff.
+
+     WHY THIS EXISTS: the portal hides the attach control on closed engagements,
+     but uploads go browser -> platform Attachment API and never pass through our
+     widget. A business rule cannot stop them either - setAbortAction is ignored
+     by the attachment writer, and deleteRecord/deleteAttachment both fail in the
+     uploader's own security context. So this is cleanup after the fact, running
+     with enough privilege to actually remove them. It is NOT prevention: there
+     is a window between upload and sweep.
+
+     THE SAFETY RULE, and it is the whole point: state_entered_on marks when the
+     record entered its current state. A file created at or BEFORE that moment was
+     attached while the engagement was still open - legitimate history - and is
+     left alone. Only files created strictly after it are removed. Ties keep the
+     file; the tiebreak deliberately favours preserving data.
+
+     Staff uploads are always kept, so PTAG can attach closure documents from the
+     workspace. */
+  run: function (dryRun) {
+    var out = { dry_run: !!dryRun, scanned: 0, removed: 0, kept_before_closure: 0,
+                kept_staff: 0, capped: false, files: [] };
+
+    var closed = {}, ids = [];
+    var acc = new x_snc_ptag_engage.PTAGHubAccess();
+    var gr = new GlideRecord(this.TABLE);
+    gr.addQuery('state', 'IN', acc.TERMINAL.join(','));
+    gr.setLimit(2000);
+    gr.query();
+    while (gr.next()) {
+      var rid = gr.getUniqueValue();
+      ids.push(rid);
+      closed[rid] = { number: String(gr.getValue('number') || ''),
+                      entered: String(gr.getValue('state_entered_on') || '') };
+    }
+    if (!ids.length) { return out; }
+
+    var sa = new GlideSysAttachment();
+    var a = new GlideRecord('sys_attachment');
+    a.addQuery('table_name', this.TABLE);
+    a.addQuery('table_sys_id', 'IN', ids.join(','));
+    a.orderBy('sys_created_on');
+    a.setLimit(1000);
+    a.query();
+    while (a.next()) {
+      out.scanned++;
+      var parent = closed[String(a.getValue('table_sys_id'))] || {};
+      var created = String(a.getValue('sys_created_on') || '');
+
+      /* no boundary recorded -> cannot prove it arrived after closure -> keep */
+      if (!parent.entered) { out.kept_before_closure++; continue; }
+      if (created <= parent.entered) { out.kept_before_closure++; continue; }
+
+      var by = String(a.getValue('sys_created_by') || '');
+      if (this.isStaffUser(by)) { out.kept_staff++; continue; }
+
+      if (out.removed >= this.MAX_PER_RUN) { out.capped = true; break; }
+
+      var rec = { file: String(a.getValue('file_name') || ''), on: parent.number,
+                  by: by, at: created, closed_at: parent.entered };
+      if (!dryRun) { sa.deleteAttachment(a.getUniqueValue()); }
+      out.files.push(rec);
+      out.removed++;
+    }
+
+    if (!dryRun && out.removed) {
+      gs.info('[PTAG attachment sweep] removed ' + out.removed +
+              ' attachment(s) added after closure: ' + JSON.stringify(out.files));
+    }
+    return out;
+  },
+
+  /* role check for an ARBITRARY user - gs.hasRole only answers for the caller.
+     sys_user_has_role carries inherited rows too, so group-granted roles count. */
+  isStaffUser: function (userName) {
+    if (!userName) { return false; }
+    var r = new GlideRecord('sys_user_has_role');
+    r.addQuery('user.user_name', String(userName));
+    r.addQuery('role.name', 'IN', 'admin,x_snc_ptag_engage.user,x_snc_ptag_engage.admin');
+    r.setLimit(1);
+    r.query();
+    return r.hasNext();
+  },
+
+  type: 'PTAGAttachmentSweep'
+};
+]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 03:50:52</sys_created_on>
+        <sys_id>f54efb5a879e4bd0e5790f29dabb35f6</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAGAttachmentSweep</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_f54efb5a879e4bd0e5790f29dabb35f6</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 03:50:52</sys_updated_on>
+    </sys_script_include>
+</record_update>

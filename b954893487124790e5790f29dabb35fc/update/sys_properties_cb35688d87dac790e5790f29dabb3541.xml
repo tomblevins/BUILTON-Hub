@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>Debounce stamp for the event-fallback rescore path. Managed by PTAGScoringEngine.</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_snc_ptag_engage.last_weight_change</name>
+        <read_roles/>
+        <suffix>last_weight_change</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:50:11</sys_created_on>
+        <sys_id>cb35688d87dac790e5790f29dabb3541</sys_id>
+        <sys_mod_count>8</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.last_weight_change</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_properties_cb35688d87dac790e5790f29dabb3541</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:49:30</sys_updated_on>
+        <type>string</type>
+        <value>1784828970942</value>
+        <write_roles/>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=cb35688d87dac790e5790f29dabb3541"/>
+</record_update>

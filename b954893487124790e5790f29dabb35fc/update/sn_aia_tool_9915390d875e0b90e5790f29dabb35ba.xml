@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_tool">
+    <sn_aia_tool action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Read-only lookup of one PTAG engagement request for triage: per-axis Desirability/Viability/Feasibility signal rollup (confirmed vs not confirmed at intake), narrative heads with character counts, and the SYSTEM-STAMPED assessment (score, band label, scoring model version) as citable facts. Input: request_sys_id.</description>
+        <input_schema>[{"name":"request_sys_id","description":"sys_id of the engagement request record (from the objective text)","mandatory":true}]</input_schema>
+        <name>PTAG - Get triage signals</name>
+        <record_type>custom</record_type>
+        <script><![CDATA[(function(inputs) {
+    var T = 'x_snc_ptag_engage_engagement_request';
+    var gr = new GlideRecord(T);
+    if (!inputs || !inputs.request_sys_id || !gr.get(inputs.request_sys_id)) {
+        return JSON.stringify({error: 'record not found: ' + (inputs && inputs.request_sys_id)});
+    }
+    function plain(v, max) {
+        var t = ('' + (v || '')).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
+        return t.length > max ? t.substring(0, max) + '...' : t;
+    }
+    function yn(f) { return gr.getValue(f) === '1' ? 'confirmed' : 'not confirmed at intake'; }
+    function dv(f) {
+        var s = '' + gr.getDisplayValue(f);
+        return (s && s !== 'null' && s !== 'undefined') ? s : 'Not provided';
+    }
+    var BAND = {fast_track: 'Fast Track', standard: 'Standard', needs_development: 'Needs Development'};
+    var band = gr.getValue('score_band') || '';
+    var pain = plain(gr.getValue('customer_pain_points'), 500);
+    var vprop = plain(gr.getValue('value_prop'), 500);
+    var strat = plain(gr.getValue('what_is_the_partners_ai_strategy'), 500);
+    var idea = plain(gr.getValue('idea_description'), 500);
+    var out = {
+        number: gr.getValue('number'),
+        short_description: gr.getValue('short_description') || '(empty)',
+        partner: dv('partner'), practice: dv('practice'),
+        geo: dv('target_geo'), route: dv('route_to_market'),
+        stamped_assessment: {
+            score: gr.getValue('score') || 'not yet stamped',
+            band_label: BAND[band] || band || 'not yet stamped',
+            scoring_version: gr.getValue('scoring_version') || '0'
+        },
+        desirability: {
+            customer_pain_points: {chars: pain === 'Not provided' ? 0 : pain.length, head: pain || '(empty)'},
+            value_proposition: {chars: vprop === 'Not provided' ? 0 : vprop.length, head: vprop || '(empty)'},
+            existing_customers: yn('has_customers')
+        },
+        viability: {
+            tam: dv('tam'), budget: yn('budget'), pipeline: yn('pipeline'),
+            executive_sponsor: yn('executive_sponsor'), business_owner: yn('business_owner'),
+            corporate_alignment: yn('corporate_alignment')
+        },
+        feasibility: {
+            maturity: dv('in_market_status'), certified_resources: yn('certified_resources'),
+            partner_ai_strategy: {chars: strat === 'Not provided' ? 0 : strat.length, head: strat || '(empty)'},
+            primary_product: dv('primary_product')
+        },
+        engagement_description: {chars: idea === 'Not provided' ? 0 : idea.length, head: idea || '(empty)'}
+    };
+    return JSON.stringify(out);
+})(inputs);]]></script>
+        <sys_class_name>sn_aia_tool</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:02</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>9915390d875e0b90e5790f29dabb35ba</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG - Get triage signals</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_tool_9915390d875e0b90e5790f29dabb35ba</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:02</sys_updated_on>
+        <target_document/>
+        <target_document_table/>
+        <type>script</type>
+    </sn_aia_tool>
+</record_update>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ux_form_action_layout_item">
+    <sys_ux_form_action_layout_item action="INSERT_OR_UPDATE">
+        <action display_value="Generate executive summary">76e8dd4d87d60b90e5790f29dabb351c</action>
+        <active>true</active>
+        <animate_icon>false</animate_icon>
+        <color>secondary</color>
+        <description/>
+        <icon/>
+        <item_type>action</item_type>
+        <label>Generate executive summary</label>
+        <layout_group/>
+        <name>Generate executive summary</name>
+        <order>100</order>
+        <overflow>false</overflow>
+        <sys_class_name>sys_ux_form_action_layout_item</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:35:59</sys_created_on>
+        <sys_id>bae8dd4d87d60b90e5790f29dabb3553</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Generate executive summary</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ux_form_action_layout_item_bae8dd4d87d60b90e5790f29dabb3553</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:35:59</sys_updated_on>
+        <table>x_snc_ptag_engage_engagement_request</table>
+    </sys_ux_form_action_layout_item>
+</record_update>

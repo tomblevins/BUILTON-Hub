@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_agent_tool_m2m">
+    <sn_aia_agent_tool_m2m action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <agent display_value="PTAG Completeness Chaser">3b5e558d871a0b90e5790f29dabb35d3</agent>
+        <description>Fetch the request and its completeness gaps</description>
+        <display_mode>inline</display_mode>
+        <display_output>true</display_output>
+        <document_status/>
+        <entity/>
+        <entity_id/>
+        <execution_mode>autopilot</execution_mode>
+        <inputs>[{"name":"request_sys_id","description":"sys_id of the engagement request record (from the objective text)","mandatory":true}]</inputs>
+        <max_auto_executions>10</max_auto_executions>
+        <name>PTAG - Get engagement request</name>
+        <output_transformation_strategy>none</output_transformation_strategy>
+        <post_message/>
+        <post_processing_script/>
+        <pre_message/>
+        <pre_run>false</pre_run>
+        <requires_text_refined_message>false</requires_text_refined_message>
+        <requires_widget_transformation>true</requires_widget_transformation>
+        <should_display_refined_message>false</should_display_refined_message>
+        <sys_class_name>sn_aia_agent_tool_m2m</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:59:49</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>0c6e958d871a0b90e5790f29dabb3527</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAG - Get engagement request</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_agent_tool_m2m_0c6e958d871a0b90e5790f29dabb3527</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:02:00</sys_updated_on>
+        <timeout/>
+        <tool display_value="PTAG - Get engagement request">6b5e118d871a0b90e5790f29dabb3516</tool>
+        <tool_attributes>{}</tool_attributes>
+        <transformation_instructions/>
+        <widgets/>
+    </sn_aia_agent_tool_m2m>
+</record_update>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ux_lib_asset">
+    <sys_ux_lib_asset action="INSERT_OR_UPDATE">
+        <bundled_asset>false</bundled_asset>
+        <category>component</category>
+        <checksum>a14cdd3b08d6f58a5dba34e34dfbb870</checksum>
+        <config_option/>
+        <content>import*as e from"/uxasset/externals/@servicenow/ui-renderer-snabbdom/index.jsdbx";
+import*as t from"/uxasset/externals/@servicenow/ui-core/index.jsdbx";
+/*__ESM_BODY_START__*/
+var r={105:(e,t,r)=&gt;{r.r(t),r.d(t,{default:()=&gt;d});var a=r(68),n=r.n(a),o=r(301),l=r.n(o)()(n());l.push([e.id,':host{box-sizing:border-box;font-family:var(--now-font-family,"Source Sans Pro",sans-serif);line-height:var(--now-line-height,1.25)}:host([hidden]){display:none}*,:after,:before{box-sizing:border-box}#portalPage,#portalPage iframe{height:100%;width:100%}',""]);const d=l},301:e=&gt;{e.exports=function(e){var t=[];return t.toString=function(){return this.map((function(t){var r="",a=void 0!==t[5];return t[4]&amp;&amp;(r+="@supports (".concat(t[4],") {")),t[2]&amp;&amp;(r+="@media ".concat(t[2]," {")),a&amp;&amp;(r+="@layer".concat(t[5].length&gt;0?" ".concat(t[5]):""," {")),r+=e(t),a&amp;&amp;(r+="}"),t[2]&amp;&amp;(r+="}"),t[4]&amp;&amp;(r+="}"),r})).join("")},t.i=function(e,r,a,n,o){"string"==typeof e&amp;&amp;(e=[[null,e,void 0]]);var l={};if(a)for(var d=0;d&lt;this.length;d++){var u=this[d][0];null!=u&amp;&amp;(l[u]=!0)}for(var i=0;i&lt;e.length;i++){var s=[].concat(e[i]);a&amp;&amp;l[s[0]]||(void 0!==o&amp;&amp;(void 0===s[5]||(s[1]="@layer".concat(s[5].length&gt;0?" ".concat(s[5]):""," {").concat(s[1],"}")),s[5]=o),r&amp;&amp;(s[2]?(s[1]="@media ".concat(s[2]," {").concat(s[1],"}"),s[2]=r):s[2]=r),n&amp;&amp;(s[4]?(s[1]="@supports (".concat(s[4],") {").concat(s[1],"}"),s[4]=n):s[4]="".concat(n)),t.push(s))}},t}},68:e=&gt;{e.exports=function(e){return e[1]}},869:(e,t,r)=&gt;{var a=r(105);a&amp;&amp;a.__esModule&amp;&amp;(a=a.default),e.exports="string"==typeof a?a:a.toString()}},a={};function n(e){var t=a[e];if(void 0!==t)return t.exports;var o=a[e]={id:e,exports:{}};return r[e](o,o.exports,n),o.exports}n.n=e=&gt;{var t=e&amp;&amp;e.__esModule?()=&gt;e.default:()=&gt;e;return n.d(t,{a:t}),t},n.d=(e,t)=&gt;{for(var r in t)n.o(t,r)&amp;&amp;!n.o(e,r)&amp;&amp;Object.defineProperty(e,r,{enumerable:!0,get:t[r]})},n.o=(e,t)=&gt;Object.prototype.hasOwnProperty.call(e,t),n.r=e=&gt;{"undefined"!=typeof Symbol&amp;&amp;Symbol.toStringTag&amp;&amp;Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})};var o={};n.r(o);const l=(e=&gt;{var t={};return n.d(t,e),t})({createElement:()=&gt;{const t=e.default&amp;&amp;e.__esModule;return t?e.default.createElement:e.createElement||e.default&amp;&amp;e.default.createElement},default:()=&gt;{const t=e.default&amp;&amp;e.__esModule;return t?e.default&amp;&amp;e.default.default?e.default.default:e.default:t?e.default.default:e.default?e.default.default?e.default.default:e.default:e}});const d=(e=&gt;{var t={};return n.d(t,e),t})({createCustomElement:()=&gt;{const e=t.default&amp;&amp;t.__esModule;return e?t.default.createCustomElement:t.createCustomElement||t.default&amp;&amp;t.default.createCustomElement}});var u=n(869),i=n.n(u);(0,d.createCustomElement)("marslanding-lumen",{renderer:{type:l.default},view:(e,t)=&gt;{let{updateState:r}=t;const a=e.properties;var n=a.frameUrl+("&amp;table="+a.frameTable)+("&amp;record="+a.frameRecord);return a.paramJSON&amp;&amp;(n+="&amp;paramjson="+a.paramJSON),(0,l.createElement)("div",{id:"portalPage"},(0,l.createElement)("iframe",{id:"portal-page",src:n,title:""}))},properties:{frameUrl:{default:"URL &amp; Parameters"},frameRecord:{default:""},frameTable:{default:""},paramJSON:{default:""}},styles:i()}),window.__TECTONIC__marslanding_lumen=o;
+/*__ESM_BODY_END__*/
+//# sourceMappingURL=/uxasset/externals/marslanding-lumen/index.min.js.map.jsdbx</content>
+        <content_meta>{"tectonicVersion":"27.4.1","imports":[{"kind":"import-statement","path":"/uxasset/externals/@servicenow/ui-core/index.jsdbx"},{"kind":"import-statement","path":"/uxasset/externals/@servicenow/ui-renderer-snabbdom/index.jsdbx"}],"exports":[]}</content_meta>
+        <dependencies/>
+        <device_type/>
+        <es_module>true</es_module>
+        <is_attachment>false</is_attachment>
+        <mime_type>application/javascript</mime_type>
+        <name>marslanding-lumen/index</name>
+        <sys_class_name>sys_ux_lib_asset</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 18:22:23</sys_created_on>
+        <sys_id>9bb385d766e504efd1732f4660b998f0</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>marslanding-lumen/index</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ux_lib_asset_9bb385d766e504efd1732f4660b998f0</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 18:22:23</sys_updated_on>
+    </sys_ux_lib_asset>
+</record_update>

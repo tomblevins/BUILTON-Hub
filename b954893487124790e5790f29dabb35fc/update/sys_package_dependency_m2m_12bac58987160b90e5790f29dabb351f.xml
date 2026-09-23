@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_package_dependency_m2m">
+    <sys_package_dependency_m2m action="INSERT_OR_UPDATE">
+        <dependency display_value="Task table schema" source="com.glide.task">d3ae5eb61b020110d8c25313604bcbd7</dependency>
+        <min_version>1.0.0</min_version>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 17:33:58</sys_created_on>
+        <sys_id>12bac58987160b90e5790f29dabb351f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:33:58</sys_updated_on>
+    </sys_package_dependency_m2m>
+</record_update>

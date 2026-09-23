@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>true</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>x_snc_ptag_engage_engagement_request</collection>
+        <condition/>
+        <description>I9 runtime: starts the PTAG Completeness Chase use case (journal-only drafts) when a request enters Need more information. Uses the proven usecase-shape startAiAgentConversation call; the AIA trigger row d46e958d... stays as the declarative registration (its flow path NPEs in the conversation service on this instance - evidence in data/ptag_hub_i9_build.json).</description>
+        <execute_function>false</execute_function>
+        <filter_condition table="x_snc_ptag_engage_engagement_request">stateCHANGESTO-2^EQ<item display_value="Need more information" endquery="false" field="state" goto="false" newquery="false" operator="CHANGESTO" or="false" value="-2"/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PTAG I9 - Chaser on need more info</name>
+        <order>250</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous) {
+    try {
+        var obj = "Engagement request " + current.getValue('number') +
+            " entered 'Need more information'. Record sys_id: " + current.getUniqueValue() +
+            ". Review it for missing or weak intake signals and append ONE work note draft " +
+            "(the write tool prefixes it with [AI Completeness Draft]) listing at most three " +
+            "specific gaps in requester-friendly wording. Journal write only; change no fields.";
+        var resp = new sn_aia.AiAgentRuntimeUtil().startAiAgentConversation({
+            targetRecordId: current.getUniqueValue(),
+            targetTable: 'x_snc_ptag_engage_engagement_request',
+            objective: obj,
+            usecaseId: '0c6e958d871a0b90e5790f29dabb357c',
+            conversationUser: gs.getUserID()
+        });
+        gs.info('[PTAG chaser] start: ' + JSON.stringify(resp));
+    } catch (e) {
+        gs.warn('[PTAG chaser] failed to start: ' + e);
+    }
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 19:53:19</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>6f9ae54d87da0b90e5790f29dabb35b7</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG I9 - Chaser on need more info</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_6f9ae54d87da0b90e5790f29dabb35b7</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 19:53:19</sys_updated_on>
+        <template/>
+        <when>after</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=6f9ae54d87da0b90e5790f29dabb35b7"/>
+</record_update>

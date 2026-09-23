@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($scope, $timeout) {
+  var c = this;
+  /* I6: Idea-lifecycle states (value -> chip slug). */
+  var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
+               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '9': 'cancelled', '8': 'duplicate'};
+  /* I12: state-context sub-notes - the I6 register VERBATIM (same copy
+     ptag_myeng_w's CONTEXT speaks; one register app-wide). */
+  var NOTES = {
+    '1':  'Request received and queued for triage.',
+    '-1': 'PTAG is validating scope and fit.',
+    '2':  'Accepted and waiting for capacity.',
+    '4':  'Scheduled with an owner and a timeline.',
+    '5':  'Work in flight with the assigned team.',
+    '3':  'Engagement delivered and closed.',
+    '-2': 'Review is paused until you add the requested details.',
+    '7':  'Not moving forward after PTAG review.',
+    '8':  'Already tracked under another request.',
+    '9':  'Withdrawn before completion.'
+  };
+
+  var stats = (c.data && c.data.stats) || { total: 0, by_state: [] };
+  var counts = {}, labels = {};
+  var i, row;
+  for (i = 0; i < (stats.by_state || []).length; i++) {
+    row = stats.by_state[i];
+    counts[String(row.state)] = row.count || 0;
+    labels[String(row.state)] = row.label || '';
+  }
+
+  c.total = stats.total || 0;
+  c.practices = stats.practices || 0;
+  c.routes = stats.routes || 0;
+  c.active = 0;
+  var activeKeys = ['1', '-2', '-1', '2', '4', '5'];
+  for (i = 0; i < activeKeys.length; i++) { c.active += counts[activeKeys[i]] || 0; }
+
+  /* Live pipeline rows: the six happy-path lifecycle states always (zero-
+     filled); attention + terminal branches only when they hold records. */
+  c.pipe = [];
+  var happy = ['1', '-1', '2', '4', '5', '3'];
+  for (i = 0; i < happy.length; i++) {
+    c.pipe.push({ slug: SLUGS[happy[i]], label: labels[happy[i]], count: counts[happy[i]] || 0,
+                  note: NOTES[happy[i]] || '' });
+  }
+  var branch = ['-2', '7', '9', '8'];
+  for (i = 0; i < branch.length; i++) {
+    if (counts[branch[i]]) {
+      c.pipe.push({ slug: SLUGS[branch[i]], label: labels[branch[i]], count: counts[branch[i]],
+                    note: NOTES[branch[i]] || '' });
+    }
+  }
+
+  /* ===== I13 R1: scroll navigation - dot-rail active tracking + hero scroll cue ===== */
+  c.rail = [
+    { id: 'pt-sec-top',  label: 'Top' },
+    { id: 'pt-sec-how',  label: 'How it works' },
+    { id: 'pt-sec-what', label: 'What you get' },
+    { id: 'pt-sec-cta',  label: 'Submit' }
+  ];
+  c.activeSec = 'pt-sec-top';
+  /* I16d: TWO static Explore controls. cueUp / cueDown are pure "is travel in
+     this direction possible" flags, recomputed from real scroll position, so a
+     control is only ever on screen when it has somewhere to go. */
+  c.cueUp = false;
+  c.cueDown = false;
+  c.cueGo = function(dir) {
+    var i, idx = 0;
+    for (i = 0; i < c.rail.length; i++) {
+      if (c.rail[i].id === c.activeSec) { idx = i; break; }
+    }
+    var next = (dir === 'up') ? Math.max(idx - 1, 0)
+                              : Math.min(idx + 1, c.rail.length - 1);
+    c.scrollTo(c.rail[next].id);
+  };
+  function _scrollerFor(node) {
+    /* the SP portal scrolls an inner container (section.sp-scroll), NOT window */
+    var n = node ? node.parentElement : null;
+    while (n) {
+      var s; try { s = window.getComputedStyle(n); } catch (e) { s = null; }
+      if (s && /(auto|scroll)/.test(s.overflowY) && n.scrollHeight > n.clientHeight + 4) { return n; }
+      n = n.parentElement;
+    }
+    return null;
+  }
+  function _cueScroller() {
+    return document.querySelector('.sp-scroll')
+        || _scrollerFor(document.getElementById('pt-sec-top') || document.body)
+        || document.scrollingElement || document.documentElement;
+  }
+  function _syncCue() {
+    var sc = _cueScroller();
+    if (!sc) { return; }
+    var st = sc.scrollTop || 0;
+    var max = (sc.scrollHeight || 0) - (sc.clientHeight || 0);
+    var up = false, down = false;
+    if (max >= 40) {                 /* a page that cannot scroll gets neither */
+      up = st > 8;                   /* page above  -> offer the top control */
+      down = st < max - 12;          /* page below  -> offer the bottom control */
+    }
+    if (up !== c.cueUp || down !== c.cueDown) {
+      $timeout(function() { c.cueUp = up; c.cueDown = down; });
+    }
+  }
+  c.scrollTo = function(id) {
+    /* I14 R1: the first rail item ("Top") goes to the ABSOLUTE top (scrollTop 0
+       - hero + fixed header fully visible), not the section offset that
+       scroll-margin-top leaves. The SP portal scrolls an inner .sp-scroll
+       container, so zero THAT (plus window/scrollingElement fallbacks). */
+    if (id === (c.rail[0] && c.rail[0].id)) {
+      var targets = [document.querySelector('.sp-scroll'), _scrollerFor(document.getElementById(id) || document.body)];
+      for (var t = 0; t < targets.length; t++) {
+        if (targets[t]) { try { targets[t].scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch (e) { targets[t].scrollTop = 0; } }
+      }
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch (e2) {}
+      try { if (document.scrollingElement) { document.scrollingElement.scrollTop = 0; } } catch (e3) {}
+      return;
+    }
+    var el = document.getElementById(id);
+    if (el && el.scrollIntoView) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  };
+  var _io = null, _onScroll = null;
+  $timeout(function() {
+    try {
+      if (window.IntersectionObserver) {
+        _io = new IntersectionObserver(function(entries) {
+          var best = null;
+          for (var k = 0; k < entries.length; k++) { if (entries[k].isIntersecting) { best = entries[k].target.id; } }
+          if (best) {
+            $timeout(function() { c.activeSec = best; });
+          }
+        }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+        for (var j = 0; j < c.rail.length; j++) {
+          var s = document.getElementById(c.rail[j].id);
+          if (s) { _io.observe(s); }
+        }
+      }
+      /* I16: the SP portal scrolls an inner section.sp-scroll container, NOT
+         window, so the sync MUST be bound to that element or it never fires. */
+      _onScroll = function() { _syncCue(); };
+      var _sc = _cueScroller();
+      if (_sc && _sc.addEventListener) { _sc.addEventListener('scroll', _onScroll, { passive: true }); }
+      window.addEventListener('scroll', _onScroll, { passive: true });
+      window.addEventListener('resize', _onScroll, { passive: true });
+      _syncCue();
+    } catch (e) {}
+  }, 0);
+  if ($scope && $scope.$on) {
+    $scope.$on('$destroy', function() {
+      try { if (_io) { _io.disconnect(); } } catch (e) {}
+      try { if (_onScroll) { var _s2 = _cueScroller(); if (_s2 && _s2.removeEventListener) { _s2.removeEventListener('scroll', _onScroll); } window.removeEventListener('scroll', _onScroll); window.removeEventListener('resize', _onScroll); } } catch (e2) {}
+    });
+  }
+
+  /* ===== I13 R2: track by number -> ?id=ptag_status&number= (client-side validate + shake) ===== */
+  c.num = '';
+  c.numErr = false;
+  c.numTouch = function() { if (c.numErr) { c.numErr = false; } };
+  c.goNumber = function() {
+    var v = String(c.num || '').trim().toUpperCase();
+    c.num = v;
+    /* I14 R6: accept real * wildcards - charset PTAG/digits/*, must hold at
+       least one non-* fragment; ** collapses to *. No * -> exact (identical to
+       I13). The pattern rides ?number= to My Engagements, which translates it
+       to the LIKE-fragment query and renders a filtered list. */
+    if (!/^[PTAG0-9*]+$/.test(v) || v.replace(/\*/g, '') === '') {
+      c.numErr = false;                       /* reset to retrigger the shake */
+      $timeout(function() { c.numErr = true; });
+      return;
+    }
+    v = v.replace(/\*{2,}/g, '*');
+    if (v.indexOf('*') === -1 && !/^PTAG\d{4,}$/.test(v)) {
+      c.numErr = false;
+      $timeout(function() { c.numErr = true; });
+      return;
+    }
+    c.num = v;
+    c.numErr = false;
+    window.location.assign('?id=ptag_status&number=' + encodeURIComponent(v));
+  };
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>/* I3 SKIN: ptag_landing - all styling via pt-* classes from ptag_global (design-tokens.css + global.css). Shared additions live in ptag_global css field, SKIN:GLOBAL-COMPONENTS. */
+</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_landing</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Landing</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* Stats strip + live pipeline: counts by state via GlideAggregate.
+     I6: state set = the intake app's Idea-lifecycle choices (mapped in i6_03;
+     labels mirror the live sys_choice set). */
+  var LABELS = {'1':'Submitted','-2':'Need more information','-1':'Under Review',
+                '2':'In Backlog','4':'Planned','5':'In Development','3':'Completed',
+                '7':'Unlikely to implement','9':'Cancelled','8':'Duplicate'};
+  var ORDER = ['1','-2','-1','2','4','5','3','7','9','8'];
+  data.stats = { total: 0, by_state: [] }; // stats strip removed I11; by_state feeds the pipeline panel only
+  var counts = {};
+  var ga = new GlideAggregate('x_snc_ptag_engage_engagement_request');
+  ga.addQuery('opened_by', gs.getUserID()); // I11: viewer-scoped per Jon
+  ga.addAggregate('COUNT');
+  ga.groupBy('state');
+  ga.query();
+  while (ga.next()) {
+    var st = String(ga.getValue('state') || '');
+    var n = parseInt(ga.getAggregate('COUNT'), 10) || 0;
+    data.stats.total += n;
+    counts[st] = n;
+  }
+  for (var i = 0; i < ORDER.length; i++) {
+    var v = ORDER[i];
+    data.stats.by_state.push({ state: v, label: LABELS[v] || ('State ' + v), count: counts[v] || 0 });
+  }
+
+  /* I5: coverage stats count the intake app lookup tables (read-only) */
+  function refCount(t) {
+    try {
+      var ga2 = new GlideAggregate(t);
+      ga2.addAggregate('COUNT');
+      ga2.query();
+      return ga2.next() ? (parseInt(ga2.getAggregate('COUNT'), 10) || 0) : 0;
+    } catch (e) { return 0; }
+  }
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 22:52:08</sys_created_on>
+        <sys_id>d1f9cd3887924790e5790f29dabb35b2</sys_id>
+        <sys_mod_count>18</sys_mod_count>
+        <sys_name>PTAG Landing</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_d1f9cd3887924790e5790f29dabb35b2</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 17:08:04</sys_updated_on>
+        <template><![CDATA[<!-- I6 COPY: ptag_landing - internal register (GPC staff); structure unchanged from I3/I5 -->
+<div>
+
+  <!-- I13 R1a: fixed section dot-rail (right gutter, >1100px only, keyboard-focusable) -->
+  <nav class="pt-dotrail" aria-label="On this page" ng-if="c.rail.length">
+    <ul class="pt-dotrail__list">
+      <li class="pt-dotrail__item" ng-repeat="s in c.rail">
+        <button type="button" class="pt-dotrail__dot" ng-class="{'is-active': c.activeSec === s.id}"
+                ng-click="c.scrollTo(s.id)" ng-attr-aria-current="{{c.activeSec === s.id ? 'true' : undefined}}"
+                aria-label="{{s.label}}">
+          <span class="pt-dotrail__label">{{s.label}}</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- I16d: two STATIC page navigators in the right gutter. Each is shown only
+       when travel in that direction exists, so mid-page you get both, at the very
+       top only Downstream, and at the very end only Upstream. The chevron always leads
+       in the direction of travel. -->
+  <button type="button" class="pt-scrollcue pt-scrollcue--up"
+          ng-class="{'is-on': c.cueUp}" ng-click="c.cueGo('up')"
+          aria-label="Upstream: scroll back to the previous section"
+          tabindex="{{c.cueUp ? 0 : -1}}" aria-hidden="{{c.cueUp ? 'false' : 'true'}}">
+    <span class="pt-scrollcue__chevwrap">
+      <svg class="pt-i pt-i--sm pt-scrollcue__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+    </span>
+    <span class="pt-scrollcue__t">Upstream</span>
+  </button>
+  <button type="button" class="pt-scrollcue pt-scrollcue--down"
+          ng-class="{'is-on': c.cueDown}" ng-click="c.cueGo('down')"
+          aria-label="Downstream: scroll to the next section"
+          tabindex="{{c.cueDown ? 0 : -1}}" aria-hidden="{{c.cueDown ? 'false' : 'true'}}">
+    <span class="pt-scrollcue__t">Downstream</span>
+    <span class="pt-scrollcue__chevwrap">
+      <svg class="pt-i pt-i--sm pt-scrollcue__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
+    </span>
+  </button>
+<section class="pt-hero" id="pt-sec-top">
+    <div class="pt-atmo"></div>
+    <div class="pt-gridlines"></div>
+<div class="pt-shell">
+      <div class="pt-hero__grid">
+
+        <div class="pt-reveal" data-delay="0">
+          <span class="pt-eyebrow"><svg class="pt-i pt-i--sm"><use href="#ptag-i-sparkles"/></svg> Partner Technology Acceleration Group</span>
+          <h1 class="pt-hero__title">Partner engagements,<br><span class="pt-grad-text">from idea to delivery.</span></h1>
+          <p class="pt-hero__sub">Guided intake and transparent status for every request &mdash; the GPC front door for bringing partner engagement ideas to the PTAG team.</p>
+          <div class="pt-hero__cta">
+            <a class="pt-btn pt-btn--primary pt-btn--lg pt-btn--pill" href="?id=ptag_submit"><svg class="pt-i"><use href="#ptag-i-send"/></svg> Submit an engagement</a>
+            <a class="pt-btn pt-btn--ghost pt-btn--lg pt-btn--pill" href="?id=ptag_status">My engagements</a>
+          </div>
+          <p class="pt-hero__note">Every request is tied to your ServiceNow account, with an email update at each stage &mdash; from first triage to delivery.</p>
+        </div>
+
+        <div class="pt-hero__panel pt-reveal" data-delay="160">
+          <div class="pt-card pt-card--glass">
+            <h4 style="margin: 0 0 10px;">Where your requests stand</h4>
+            <div>
+              <a class="pt-pipe__row" ng-repeat="row in c.pipe"
+                 ng-href="?id=ptag_status&amp;state={{row.slug}}"
+                 aria-label="View your {{row.label}} requests ({{row.count}}). {{row.note}}">
+                <div class="pt-pipe__main">
+                  <span class="pt-chip" data-state="{{row.slug}}">{{row.label}}</span>
+                  <span class="pt-pipe__right"><span class="pt-pipe__n">{{row.count}}</span><svg class="pt-i pt-i--sm pt-pipe__go" aria-hidden="true"><use href="#ptag-i-arrow-up-right"/></svg></span>
+                </div>
+                <div class="pt-pipe__peek" aria-hidden="true">{{row.note}}</div>
+              </a>
+            </div>
+            <!-- I13 R2: jump straight to a request by number (append-only; rows above byte-identical) -->
+            <div class="pt-tracknum">
+              <form class="pt-tracknum__form" ng-class="{'is-invalid': c.numErr}" ng-submit="c.goNumber()" novalidate>
+                <input class="pt-input pt-tracknum__input" type="text" ng-model="c.num" ng-change="c.numTouch()"
+                       placeholder="PTAG0001234" autocomplete="off" maxlength="20"
+                       aria-label="Track a request by its number" aria-invalid="{{c.numErr ? 'true' : 'false'}}">
+                <button class="pt-btn pt-btn--subtle pt-btn--sm pt-tracknum__go" type="submit" aria-label="Track this request">
+                  <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-arrow-up-right"/></svg><span>Track</span>
+                </button>
+              </form>
+              <p class="pt-tracknum__help" ng-class="{'is-err': c.numErr}">{{c.numErr ? 'Enter a request number like PTAG0001234.' : 'Have a request number? Jump straight to it.'}}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-section" id="pt-sec-how">
+    <div class="pt-shell">
+      <div class="pt-center pt-reveal" style="margin-bottom: 40px;">
+        <h2 style="margin-bottom: 8px;">How it works</h2>
+        <p class="pt-muted" style="margin: 0;">Three steps, zero mystery &mdash; every request follows the same visible path.</p>
+      </div>
+      <div class="pt-bento">
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="0">
+          <div class="pt-flex pt-flex--between">
+            <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-send"/></svg></span>
+            <span class="pt-step__k">01</span>
+          </div>
+          <h4>Submit</h4>
+          <p class="pt-muted" style="margin: 0;">A guided three-step form captures the engagement, the market picture, and the assessment signals &mdash; complete enough to act on.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="80">
+          <div class="pt-flex pt-flex--between">
+            <span class="pt-icon-tile pt-icon-tile--cyan"><svg class="pt-i"><use href="#ptag-i-radar"/></svg></span>
+            <span class="pt-step__k">02</span>
+          </div>
+          <h4>Assess</h4>
+          <p class="pt-muted" style="margin: 0;">The PTAG team scores desirability, viability and feasibility, then routes the request to the right owner.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="160">
+          <div class="pt-flex pt-flex--between">
+            <span class="pt-icon-tile pt-icon-tile--violet"><svg class="pt-i"><use href="#ptag-i-circle-check-big"/></svg></span>
+            <span class="pt-step__k">03</span>
+          </div>
+          <h4>Track &amp; deliver</h4>
+          <p class="pt-muted" style="margin: 0;">Live status on the record, an owner you can name, and email updates to the requester at every stage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-section pt-section--tight" id="pt-sec-what">
+    <div class="pt-shell">
+      <div class="pt-center pt-reveal" style="margin-bottom: 40px;">
+        <h2 style="margin-bottom: 8px;">Built for partner velocity</h2>
+        <p class="pt-muted" style="margin: 0;">Everything the old chat-thread workflow lost, on the record by default.</p>
+      </div>
+      <div class="pt-bento">
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="0">
+          <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-list-checks"/></svg></span>
+          <h4>Guided intake</h4>
+          <p class="pt-muted" style="margin: 0;">Structured questions replace tribal knowledge &mdash; every request arrives ready to assess.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="80">
+          <span class="pt-icon-tile pt-icon-tile--cyan"><svg class="pt-i"><use href="#ptag-i-link"/></svg></span>
+          <h4>Status by request number</h4>
+          <p class="pt-muted" style="margin: 0;">Look up any request by its PTAG number &mdash; requesters see their own; the PTAG team sees the whole queue.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="160">
+          <span class="pt-icon-tile pt-icon-tile--violet"><svg class="pt-i"><use href="#ptag-i-users"/></svg></span>
+          <h4>Ownership &amp; routing</h4>
+          <p class="pt-muted" style="margin: 0;">Requests land with an assignment group and a named owner, so the next step is never ambiguous.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="0">
+          <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-chart-column"/></svg></span>
+          <h4>D/V/F assessment model</h4>
+          <p class="pt-muted" style="margin: 0;">Desirability, viability and feasibility signals are captured up front to speed PTAG scoring.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="80">
+          <span class="pt-icon-tile pt-icon-tile--cyan"><svg class="pt-i"><use href="#ptag-i-earth"/></svg></span>
+          <h4>Practice coverage</h4>
+          <p class="pt-muted" style="margin: 0;">Four practices and seven routes to market &mdash; from AI Platform &amp; Data to Security Risk and Governance.</p>
+        </div>
+        <div class="pt-card pt-card--hover pt-b-4 pt-reveal" data-delay="160">
+          <span class="pt-icon-tile pt-icon-tile--violet"><svg class="pt-i"><use href="#ptag-i-shield-check"/></svg></span>
+          <h4>No more chat-thread status</h4>
+          <p class="pt-muted" style="margin: 0;">Status lives on the record, not in a DM. The pipeline stays visible to everyone who needs it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-section pt-section--alt" id="pt-sec-cta">
+    <div class="pt-shell pt-center pt-reveal">
+      <h2 style="margin-bottom: 10px;">Ready to bring PTAG an engagement?</h2>
+      <p class="pt-muted" style="max-width: 520px; margin: 0 auto var(--pt-sp-6);">Three steps and the PTAG team takes it from there &mdash; with email updates from first triage to delivery.</p>
+      <a class="pt-btn pt-btn--primary pt-btn--lg pt-btn--pill" href="?id=ptag_submit"><svg class="pt-i"><use href="#ptag-i-send"/></svg> Submit an engagement</a>
+    </div>
+  </section>
+
+</div>]]></template>
+    </sp_widget>
+</record_update>

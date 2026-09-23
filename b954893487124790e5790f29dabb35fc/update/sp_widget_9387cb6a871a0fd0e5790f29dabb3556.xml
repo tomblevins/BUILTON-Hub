@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($scope, spUtil) {
+  /* I52: this widget renders on a LIGHT surface inside the Lumen frame. The
+     legacy injected snapshot paints body dark with !important and wins every
+     cascade, so the widget claims its page's body directly - inline style
+     outranks all stylesheets. Scoped by construction: this widget only lives
+     on the embed page. */
+  try { document.body.style.setProperty('background', '#ffffff', 'important'); } catch (e) {}
+  /* I53: same-origin frame - strip the border/shadow the workspace wrapper
+     paints around the component, from inside. */
+  try {
+    var fe = window.frameElement;
+    if (fe) {
+      fe.style.setProperty('border', '0', 'important');
+      fe.style.setProperty('box-shadow', 'none', 'important');
+      var p = fe.parentElement;
+      for (var k = 0; k < 4 && p; k++) {
+        p.style.setProperty('border', '0', 'important');
+        p.style.setProperty('box-shadow', 'none', 'important');
+        p = p.parentElement;
+      }
+    }
+  } catch (e) {}
+
+  /* live refresh when the record changes (Lumen's real-time story) */
+  try {
+    var t = String($scope.data.ready ? 'x_snc_ptag_engage_engagement_request' : '');
+    var r = String(($scope.data && $scope.data.number) ? $scope.data.number : '');
+    if ($scope.data.ready) {
+      spUtil.recordWatch($scope, 'x_snc_ptag_engage_engagement_request',
+        'number=' + r, function() { spUtil.update($scope); });
+    }
+  } catch (e) {}
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>.pt-emb { padding: 10px 16px 12px; font-family: var(--pt-font-body, inherit); background: #ffffff; }
+.pt-emb__rail { display: flex; align-items: flex-start; gap: 0; }
+.pt-emb__stage { flex: 1; position: relative; text-align: center; padding-top: 2px; min-width: 0; }
+.pt-emb__stage:not(:first-child)::before { content: ''; position: absolute; top: 14px;
+  left: -50%; width: 100%; height: 2px; background: #c9d2d9; }
+.pt-emb__stage.is-done:not(:first-child)::before,
+.pt-emb__stage.is-current:not(:first-child)::before { background: #2e9e4f; }
+.pt-emb__dot { position: relative; z-index: 1; display: inline-flex; align-items: center;
+  justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+  background: #f2f5f7; border: 2px solid #b9c3cb; color: #9aa4ae; }
+.pt-emb__stage.is-done .pt-emb__dot { background: #e4f3e8;
+  border-color: #2e9e4f; color: #2e9e4f; }
+.pt-emb__dot { --pt-emb-pulse: rgba(120, 136, 152, .55);
+  animation: pt-emb-ring 3.5s cubic-bezier(.22, .61, .24, 1) infinite; }
+.pt-emb__stage.is-done .pt-emb__dot { --pt-emb-pulse: rgba(46, 158, 79, .50); }
+.pt-emb__stage.is-current .pt-emb__dot { background: #2e9e4f; border-color: #2e9e4f;
+  color: #ffffff; --pt-emb-pulse: rgba(46, 158, 79, .60); }
+/* I54: the My Engagements cascade - staggered ripples travel down the rail
+   like drops in water; future nodes ripple soft grey. */
+.pt-emb__stage:nth-child(2) .pt-emb__dot { animation-delay: .25s; }
+.pt-emb__stage:nth-child(3) .pt-emb__dot { animation-delay: .50s; }
+.pt-emb__stage:nth-child(4) .pt-emb__dot { animation-delay: .75s; }
+.pt-emb__stage:nth-child(5) .pt-emb__dot { animation-delay: 1.0s; }
+.pt-emb__stage:nth-child(6) .pt-emb__dot { animation-delay: 1.25s; }
+.pt-emb__stage:nth-child(7) .pt-emb__dot { animation-delay: 1.5s; }
+.pt-emb__stage--branch .pt-emb__dot { background: #fb923c; border-color: #fb923c; color: #fff;
+  --pt-emb-pulse: rgba(251, 146, 60, .60); }
+.pt-emb__stage--branch.is-neg .pt-emb__dot { background: #e2574a; border-color: #e2574a;
+  --pt-emb-pulse: rgba(226, 87, 74, .60); }
+@keyframes pt-emb-ring {
+  0%   { box-shadow: 0 0 0 0 var(--pt-emb-pulse, rgba(46,158,79,.38)); }
+  70%  { box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+.pt-emb__lbl { display: block; margin-top: 6px; font-size: var(--pt-fs-xs, 11px);
+  color: #5b6572; overflow-wrap: break-word; }
+.pt-emb__stage.is-current .pt-emb__lbl { color: #16181c; font-weight: 600; }
+.pt-emb__meta { margin-top: 6px; font-size: var(--pt-fs-xs, 11px); color: #8b94a0; }
+.pt-emb__score { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 10px; padding-top: 9px; border-top: 1px solid #dfe5ea; flex-wrap: wrap; }
+.pt-emb__scorenum { display: flex; align-items: center; gap: 10px; }
+.pt-emb__n { font-family: var(--pt-font-display, inherit); font-size: 28px; font-weight: 700; color: #16181c; }
+.pt-emb .pt-chip { background: #2e9e4f !important; color: #ffffff !important;
+  border: 0 !important; font-weight: 600 !important; }
+.pt-emb .pt-chip::before { background: #ffffff !important; }
+.pt-emb__scorenum .pt-i { color: #2e9e4f; }
+.pt-emb__scorenum--none { color: #8b94a0; font-size: var(--pt-fs-sm, 13px); }
+.pt-emb__signals { display: flex; gap: 8px 14px; flex-wrap: wrap; }
+.pt-emb__sig { display: inline-flex; align-items: center; gap: 6px; font-size: var(--pt-fs-xs, 11px);
+  color: #8b94a0; }
+.pt-emb__sig.is-on { color: #16181c; }
+.pt-emb__sigdot { width: 9px; height: 9px; border-radius: 50%; background: transparent;
+  border: 2px solid #c1cad1; box-sizing: border-box; }
+.pt-emb__sig.is-on .pt-emb__sigdot { background: #2e9e4f; border-color: #2e9e4f; }
+.pt-emb__denied, .pt-emb__empty { padding: 18px; color: #8b94a0; font-size: var(--pt-fs-sm, 13px); }
+@media (prefers-reduced-motion: reduce) { .pt-emb__dot { animation: none; } }
+
+/* == responsive: shrink and wrap, never hide == */
+@media (max-width: 720px) {
+  .pt-emb { padding: 8px 12px 10px; }
+  .pt-emb__lbl { font-size: 10px; margin-top: 4px; }
+  .pt-emb__dot { width: 22px; height: 22px; }
+  .pt-emb__stage:not(:first-child)::before { top: 12px; }
+  .pt-emb__signals { gap: 6px 10px; }
+  .pt-emb__n { font-size: 22px; }
+}
+@media (max-width: 560px) {
+  .pt-emb__lbl { font-size: 9px; }
+  .pt-emb__sig { font-size: 10px; }
+  .pt-emb__meta { display: none; }
+}
+/* I54b: ripple strengthened for white surface */
+/* I53: My-Engagements node treatment, no-hide labels */</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description>I49 staff embed: journey timeline + D/V/F score visual, fed by Lumen table/record params. Staff-gated, table-whitelisted.</description>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_timeline_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Staff Timeline + Score</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* I49: staff embed - journey timeline + score visual. Fed by Lumen's
+     table/record params; table is WHITELISTED to the Hub request table. */
+  var TABLE = 'x_snc_ptag_engage_engagement_request';
+  data.denied = false;
+  data.ready = false;
+  try {
+    if (!new x_snc_ptag_engage.PTAGHubAccess().isStaff()) { data.denied = true; return; }
+  } catch (e) { data.denied = true; return; }
+  var tbl = String($sp.getParameter('table') || '');
+  var rid = String($sp.getParameter('record') || '');
+  if (tbl !== TABLE || !/^[0-9a-f]{32}$/.test(rid)) { return; }
+  var gr = new GlideRecord(TABLE);
+  if (!gr.get(rid)) { return; }
+  data.ready = true;
+  data.number = gr.getValue('number');
+  data.short_description = String(gr.getValue('short_description') || '');
+  var state = String(gr.getValue('state') || '');
+  data.entered = gr.state_entered_on.getDisplayValue();
+
+  var HAPPY = ['1', '-1', '2', '4', '5', '3'];
+  var LABELS = {'1':'Submitted','-1':'Under Review','2':'In Backlog','4':'Planned',
+                '5':'In Development','3':'Completed','-2':'Need More Info',
+                '7':'Unlikely to Implement','9':'Cancelled','8':'Duplicate'};
+  var idx = HAPPY.indexOf(state);
+  data.journey = [];
+  for (var i = 0; i < HAPPY.length; i++) {
+    data.journey.push({label: LABELS[HAPPY[i]],
+                       done: idx > -1 && i < idx,
+                       current: i === idx});
+  }
+  var NEG = {'9': 1, '8': 1};
+  data.branch = (idx === -1 && state)
+    ? {label: LABELS[state] || ('State ' + state), neg: !!NEG[state]}
+    : null;
+
+  data.score = parseInt(gr.getValue('score'), 10);
+  data.score = isNaN(data.score) ? null : data.score;
+  data.band = gr.score_band.getDisplayValue() || '';
+  data.locked = gr.getValue('score_locked') === '1' || gr.getValue('score_locked') === 'true';
+  var SIGNALS = [['pipeline','Pipeline'],['business_owner','Business Owner'],
+                 ['executive_sponsor','Exec Sponsor'],['corporate_alignment','Corp Alignment'],
+                 ['budget','Budget'],['has_customers','Existing Customers'],
+                 ['certified_resources','Certified Resources']];
+  data.signals = [];
+  for (var s = 0; s < SIGNALS.length; s++) {
+    var v = gr.getValue(SIGNALS[s][0]);
+    data.signals.push({label: SIGNALS[s][1], on: v === '1' || v === 'true'});
+  }
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-28 18:30:14</sys_created_on>
+        <sys_id>9387cb6a871a0fd0e5790f29dabb3556</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>PTAG Staff Timeline + Score</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_9387cb6a871a0fd0e5790f29dabb3556</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-28 21:35:46</sys_updated_on>
+        <template><![CDATA[<div class="pt-emb">
+  <div class="pt-emb__denied" ng-if="data.denied">Not authorized.</div>
+  <div ng-if="!data.denied && !data.ready" class="pt-emb__empty">No record context.</div>
+  <div ng-if="data.ready">
+    <div class="pt-emb__rail" role="list" aria-label="Engagement journey">
+      <div class="pt-emb__stage" ng-repeat="s in data.journey" role="listitem"
+           ng-class="{'is-done': s.done, 'is-current': s.current}">
+        <span class="pt-emb__dot">
+          <svg class="pt-i pt-i--sm" ng-if="s.done || s.current" aria-hidden="true"><use href="#ptag-i-check"/></svg>
+        </span>
+        <span class="pt-emb__lbl">{{s.label}}</span>
+      </div>
+      <div class="pt-emb__stage pt-emb__stage--branch is-current" ng-if="data.branch" role="listitem"
+           ng-class="{'is-neg': data.branch.neg}">
+        <span class="pt-emb__dot">
+          <svg class="pt-i pt-i--sm" ng-if="!data.branch.neg" aria-hidden="true"><use href="#ptag-i-triangle-alert"/></svg>
+          <svg class="pt-i pt-i--sm" ng-if="data.branch.neg" aria-hidden="true"><use href="#ptag-i-x"/></svg>
+        </span>
+        <span class="pt-emb__lbl">{{data.branch.label}}</span>
+      </div>
+    </div>
+    <div class="pt-emb__meta" ng-if="data.entered">In this stage since {{data.entered}}</div>
+    <div class="pt-emb__score">
+      <div class="pt-emb__scorenum" ng-if="data.score !== null">
+        <span class="pt-emb__n">{{data.score}}</span>
+        <span class="pt-chip" ng-if="data.band">{{data.band}}</span>
+        <svg ng-if="data.locked" class="pt-i pt-i--sm" aria-label="Score locked"><use href="#ptag-i-shield-check"/></svg>
+      </div>
+      <div class="pt-emb__scorenum pt-emb__scorenum--none" ng-if="data.score === null">Not yet scored</div>
+      <div class="pt-emb__signals">
+        <span class="pt-emb__sig" ng-repeat="g in data.signals" ng-class="{'is-on': g.on}"
+              title="{{g.label}}: {{g.on ? 'confirmed' : 'not confirmed'}}"
+              aria-label="{{g.label}}: {{g.on ? 'confirmed' : 'not confirmed'}}">
+          <span class="pt-emb__sigdot"></span>{{g.label}}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>]]></template>
+    </sp_widget>
+</record_update>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_search_filter">
+    <sys_search_filter action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <ais_search_source display_value="Scoring Weight">cdecac8d875ec790e5790f29dabb35ef</ais_search_source>
+        <label>Scoring Weight</label>
+        <name>Scoring Weight</name>
+        <order>200</order>
+        <search_context_config display_value="PTAG Engagement Hub AI Search Configuration">25dc288d635ec790f96a837d0c8d57fe</search_context_config>
+        <sys_class_name>sys_search_filter</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 15:23:38</sys_created_on>
+        <sys_id>49ecec8d875ec790e5790f29dabb3508</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Scoring Weight</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_search_filter_49ecec8d875ec790e5790f29dabb3508</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 15:23:38</sys_updated_on>
+    </sys_search_filter>
+</record_update>

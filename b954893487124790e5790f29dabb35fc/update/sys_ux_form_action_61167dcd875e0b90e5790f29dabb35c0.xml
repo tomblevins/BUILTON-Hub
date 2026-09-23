@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ux_form_action">
+    <sys_ux_form_action action="INSERT_OR_UPDATE">
+        <action_type>ui_action</action_type>
+        <active>true</active>
+        <declarative_action/>
+        <description/>
+        <name>Compare requests (AI)</name>
+        <specificity>10</specificity>
+        <sys_class_name>sys_ux_form_action</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:43:25</sys_created_on>
+        <sys_id>61167dcd875e0b90e5790f29dabb35c0</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Compare requests (AI)</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ux_form_action_61167dcd875e0b90e5790f29dabb35c0</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:43:25</sys_updated_on>
+        <table>x_snc_ptag_engage_engagement_request</table>
+        <ui_action display_value="Compare requests (AI)">61167dcd875e0b90e5790f29dabb35be</ui_action>
+    </sys_ux_form_action>
+</record_update>

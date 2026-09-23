@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_generative_ai_prompt_config">
+    <sys_generative_ai_prompt_config action="INSERT_OR_UPDATE">
+        <ai_config display_value="OneExtend Capability Definition: PTAG Engagement Executive Summary (Azure OpenAI - Chat Completions)">a738150d87d60b90e5790f29dabb354e</ai_config>
+        <definition display_value="PTAG Engagement Executive Summary (Azure OpenAI - Chat Completions)">6338150d87d60b90e5790f29dabb3535</definition>
+        <filter_properties/>
+        <filter_type>default</filter_type>
+        <is_default>true</is_default>
+        <order>0</order>
+        <sys_class_name>sys_generative_ai_prompt_config</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 18:33:02</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>6338150d87d60b90e5790f29dabb3550</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>a738150d87d60b90e5790f29dabb354e</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_generative_ai_prompt_config_6338150d87d60b90e5790f29dabb3550</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 18:33:02</sys_updated_on>
+    </sys_generative_ai_prompt_config>
+</record_update>

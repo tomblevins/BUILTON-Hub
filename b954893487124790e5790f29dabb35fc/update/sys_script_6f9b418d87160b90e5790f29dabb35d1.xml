@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>true</action_insert>
+        <action_query>false</action_query>
+        <action_update>true</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>x_snc_ptag_engage_engagement_request</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition/>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PTAG Approval - accept gate</name>
+        <order>100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous) {
+    if (current.operation() === 'insert') {
+        if (String(current.state) === '2') current.setValue('state', 1);
+        return;
+    }
+    if (!current.state.changes() || String(current.state) !== '2') return;
+    var appr = String(current.getValue('approval') || 'not_requested');
+    if (appr === 'approved') return; /* post-approval advance (conversion path) */
+    var engine = new PTAGApprovalEngine();
+    var prevState = previous ? String(previous.getValue('state') || '-1') : '-1';
+    current.setValue('state', prevState); /* hold until the decision */
+    if (appr !== 'requested') {
+        current.setValue('approval', 'requested');
+        var who = engine.resolveApprover(current);
+        if (who) current.setValue('approver', who);
+        var whoName = engine.userName(who);
+        current.work_notes = 'Acceptance (In Backlog) requires approval. Approval requested' +
+            (whoName ? (' from ' + whoName) : ' (no approver resolvable - set Approver manually)') +
+            '; the request stays in its current state until the decision.';
+    } else {
+        current.work_notes = 'Acceptance already awaiting approval; state unchanged until the decision.';
+    }
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 17:37:52</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>6f9b418d87160b90e5790f29dabb35d1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Approval - accept gate</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_6f9b418d87160b90e5790f29dabb35d1</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 17:37:52</sys_updated_on>
+        <template/>
+        <when>before</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=6f9b418d87160b90e5790f29dabb35d1"/>
+</record_update>

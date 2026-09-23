@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sysevent_script_action">
+    <sysevent_script_action action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition_script/>
+        <description/>
+        <event_name>x_snc_ptag_engage.rescore_due</event_name>
+        <name>PTAG Hub - debounced rescore (event)</name>
+        <order>100</order>
+        <script><![CDATA[(function() {
+    /* debounce for the event fallback path: only the LAST stamp in a burst runs */
+    var engine = new x_snc_ptag_engage.PTAGScoringEngine();
+    var last = gs.getProperty('x_snc_ptag_engage.last_weight_change', '');
+    if (!last || String(event.parm1) === String(last)) {
+        engine.rescoreOpen('debounced weight change (event)');
+    }
+})();]]></script>
+        <synchronous>false</synchronous>
+        <sys_class_name>sysevent_script_action</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:50:19</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>0945e88d87dac790e5790f29dabb357d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Hub - debounced rescore (event)</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sysevent_script_action_0945e88d87dac790e5790f29dabb357d</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 14:50:19</sys_updated_on>
+    </sysevent_script_action>
+</record_update>

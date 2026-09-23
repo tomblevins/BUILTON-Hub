@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sn_aia_version">
+    <sn_aia_version action="INSERT_OR_UPDATE">
+        <condition/>
+        <instructions>Objective: for the given engagement request, produce ONE [AI Triage Draft] work note with the Desirability/Viability/Feasibility read, the verbatim stamped-assessment citation, and a band-consistent suggested next step. Steps: 1) PTAG Triage Assist fetches the record via PTAG - Get triage signals. 2) It assesses each axis from the returned signals and narrative heads only. 3) It appends exactly one work note via the journal-only write tool and ends.</instructions>
+        <state>published</state>
+        <sys_class_name>sn_aia_version</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 20:39:03</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_id>6515790d875e0b90e5790f29dabb3550</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>V1</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sn_aia_version_6515790d875e0b90e5790f29dabb3550</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 20:39:03</sys_updated_on>
+        <target_id>a915790d875e0b90e5790f29dabb354d</target_id>
+        <target_table>sn_aia_usecase</target_table>
+        <version_name>V1</version_name>
+        <version_number>1</version_number>
+    </sn_aia_version>
+</record_update>
