@@ -48,7 +48,28 @@ html.pt-booted::before, html.pt-booted::after {
   html::before { animation: pt-boot-timeout 0s linear 8s forwards; }
   html::after  { animation: pt-boot-timeout 0s linear 8s forwards; }
 }
-/* == PTAG BOOT SPLASH END == */</css_variables>
+/* == PTAG BOOT SPLASH END == */
+
+
+/* == B147 LIGHT BOOT (Fiber 2026-09-29) ==============================================
+   The head boot script (UI script x_snc_ptag_engage.ptag_theme_boot, a JS include on
+   THIS theme) sets html[data-pt-theme] from the viewer's saved preference before first
+   paint, so a light-theme viewer's splash and page background are light from the very
+   first frame. Literal colours for the same reason as the splash above. == */
+html[data-pt-theme="light"], html[data-pt-theme="light"] body { background: #f1f3f5; }
+html[data-pt-theme="light"]::before {
+  background:
+    radial-gradient(760px 420px at 50% 42%, rgba(46, 158, 79, 0.10), transparent 70%),
+    radial-gradient(520px 320px at 78% 8%, rgba(3, 105, 161, 0.06), transparent 70%),
+    #f1f3f5;
+}
+html[data-pt-theme="light"]::after {
+  border-color: rgba(46, 158, 79, 0.18);
+  border-top-color: #2e9e4f;
+  border-right-color: rgba(46, 158, 79, 0.55);
+}
+/* == B147 LIGHT BOOT END == */
+</css_variables>
         <footer/>
         <footer_fixed>false</footer_fixed>
         <header/>
@@ -62,14 +83,14 @@ html.pt-booted::before, html.pt-booted::after {
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:07</sys_created_on>
         <sys_id>49f9cd3887924790e5790f29dabb358e</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>PTAG Engage Dark</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_theme_49f9cd3887924790e5790f29dabb358e</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-28 19:26:43</sys_updated_on>
+        <sys_updated_on>2026-09-29 21:00:54</sys_updated_on>
         <turn_off_scss_compilation>false</turn_off_scss_compilation>
     </sp_theme>
 </record_update>

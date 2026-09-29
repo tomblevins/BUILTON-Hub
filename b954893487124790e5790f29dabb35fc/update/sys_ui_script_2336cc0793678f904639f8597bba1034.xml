@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>B147 (STRY0012133 + Jon 2026-09-29 theme toggle): sets html[data-pt-theme] from the viewer's ptag.hub.theme preference before first paint on /ptag. JS include of the PTAG Engage Dark theme.</description>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_snc_ptag_engage.ptag_theme_boot</name>
+        <script><![CDATA[/* PTAG Hub theme boot (B147, Fiber 2026-09-29) - JS include of the PTAG Engage Dark theme.
+   Runs in <head>, before the body is parsed, so html[data-pt-theme] is right on the FIRST
+   frame: no flash of the wrong theme.
+   Truth = the viewer's user preference ptag.hub.theme ('dark' | 'light', default dark).
+   Fast path: a per-user cache of it (localStorage 'ptag.hub.theme.<user sys_id>').
+   First visit on a device (no cache): ONE synchronous read of the viewer's own preference
+   row (Table API, own-row ACL), then cached. ptag_global confirms the server value before
+   the boot splash lifts; the header toggle updates both. /ptag only - never the embed pages
+   or the sign-in page. Any failure falls back to dark (today's look). */
+(function () {
+  try {
+    if (!/^\/ptag\/?$/.test(window.location.pathname)) { return; }
+    if (/[?&]id=(ptag_embed|ptag_login)/.test(window.location.search || '')) { return; }
+    var N = window.NOW || {};
+    var uid = String(N.user_id || '');
+    var t = '';
+    if (uid && N.user_name && N.user_name !== 'guest') {
+      var key = 'ptag.hub.theme.' + uid;
+      try { t = window.localStorage.getItem(key) || ''; } catch (e1) { t = ''; }
+      if (t !== 'light' && t !== 'dark') {
+        t = '';
+        try {
+          var x = new XMLHttpRequest();
+          x.open('GET', '/api/now/table/sys_user_preference?sysparm_fields=value&sysparm_limit=1&sysparm_query=' +
+                 encodeURIComponent('user=' + uid + '^name=ptag.hub.theme'), false);
+          x.setRequestHeader('Accept', 'application/json');
+          if (window.g_ck) { x.setRequestHeader('X-UserToken', window.g_ck); }
+          x.send(null);
+          if (x.status === 200) {
+            var r = (JSON.parse(x.responseText) || {}).result || [];
+            t = (r[0] && r[0].value === 'light') ? 'light' : 'dark';
+            try { window.localStorage.setItem(key, t); } catch (e2) {}
+          }
+        } catch (e3) { t = ''; }
+      }
+    }
+    document.documentElement.setAttribute('data-pt-theme', t === 'light' ? 'light' : 'dark');
+  } catch (e) {}
+})();
+]]></script>
+        <script_name>ptag_theme_boot</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 21:01:06</sys_created_on>
+        <sys_id>2336cc0793678f904639f8597bba1034</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.ptag_theme_boot</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_ui_script_2336cc0793678f904639f8597bba1034</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 21:01:06</sys_updated_on>
+        <ui_type>10</ui_type>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>

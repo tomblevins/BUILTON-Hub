@@ -47,6 +47,37 @@
        (c.signal.records === 1 ? '' : 's'))
     : '';
 
+
+  /* --- B147 #6: light/dark theme -----------------------------------------------
+     Applies at once (no reload), then saves to the viewer's preference ptag.hub.theme.
+     The same html[data-pt-theme] attribute is what the head boot script and the
+     ptag_global link function set, and the per-user cache key is shared with them,
+     so all three agree on the next page load (any device: the server value wins). */
+  function readTheme() {
+    var a = '';
+    try { a = document.documentElement.getAttribute('data-pt-theme') || ''; } catch (e) {}
+    return a === 'light' ? 'light' : 'dark';
+  }
+  c.theme = (c.data && (c.data.theme === 'light' || c.data.theme === 'dark')) ? c.data.theme : readTheme();
+  c.themeErr = false;
+  function applyTheme(t) {
+    try { document.documentElement.setAttribute('data-pt-theme', t); } catch (e) {}
+    try {
+      var uid = (window.NOW && window.NOW.user_id) || '';
+      if (uid) { window.localStorage.setItem('ptag.hub.theme.' + uid, t); }
+    } catch (e2) {}
+  }
+  c.toggleTheme = function () {
+    var next = c.theme === 'light' ? 'dark' : 'light';
+    c.theme = next;
+    c.themeErr = false;
+    applyTheme(next);
+    c.server.get({ action: 'set_theme', theme: next }).then(function (r) {
+      var d = (r && r.data) || {};
+      if (!d.theme_saved) { c.themeErr = true; }
+    }, function () { c.themeErr = true; });
+  };
+
   /* --- I10 mobile nav: toggle + Esc/scrim close + focus management ------- */
   c.mobileOpen = false;
   function q1(sel) { try { return document.querySelector(sel); } catch (e) { return null; } }
@@ -116,6 +147,24 @@
     try { data.user_email = String(u.getEmail() || ''); } catch (e4) { data.user_email = ''; }
   }
 
+  /* B147 #6: the portal theme. set_theme is the only write in this widget and it only
+     ever touches the viewer's OWN preference. Answers early so the toggle never waits
+     on the comment signal below. */
+  data.theme = 'dark';
+  if (!data.is_guest) {
+    try { data.theme = String(gs.getUser().getPreference('ptag.hub.theme') || '') === 'light' ? 'light' : 'dark'; } catch (eT0) {}
+  }
+  if (input && input.action === 'set_theme') {
+    data.theme_saved = false;
+    if (!data.is_guest) {
+      var want = String(input.theme || '') === 'light' ? 'light' : 'dark';
+      try { gs.getUser().savePreference('ptag.hub.theme', want); } catch (eT1) {}
+      try { data.theme_saved = String(gs.getUser().getPreference('ptag.hub.theme') || '') === want; } catch (eT2) {}
+      data.theme = want;
+    }
+    return;
+  }
+
   /* I21: portal-wide "waiting on you" signal. Same PTAGCommentSignal the My
      Engagements list uses, so the header count and that list can never disagree.
      Wrapped defensively - the nav must never fail over a badge. */
@@ -132,14 +181,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 23:32:11</sys_created_on>
         <sys_id>0023d5f4931ec3d04639f8597bba10c3</sys_id>
-        <sys_mod_count>8</sys_mod_count>
+        <sys_mod_count>9</sys_mod_count>
         <sys_name>PTAG Header</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_0023d5f4931ec3d04639f8597bba10c3</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 03:10:44</sys_updated_on>
+        <sys_updated_on>2026-09-29 21:00:42</sys_updated_on>
         <template><![CDATA[<!-- I3 SKIN: ptag_header - pt-* design system markup (classes ship via ptag_global) -->
 <nav class="pt-nav">
   <div class="pt-shell pt-nav__inner">
@@ -222,6 +271,13 @@
       <a href="?id=ptag_help" ng-class="{'is-active': c.page == 'ptag_help'}">Help</a>
     </div>
     <div class="pt-flex" style="gap: 10px;">
+      <!-- B147 #6: light/dark theme. Applies at once, saved to your preferences (ptag.hub.theme). -->
+      <button type="button" class="pt-iconbtn pt-themebtn" ng-if="c.user.name" ng-click="c.toggleTheme()"
+              aria-pressed="{{c.theme === 'light'}}" aria-label="Light theme"
+              title="{{c.themeErr ? 'Theme changed for this visit, but it could not be saved' : (c.theme === 'light' ? 'Switch to the dark theme' : 'Switch to the light theme')}}">
+        <svg class="pt-i" aria-hidden="true" ng-if="c.theme !== 'light'"><use href="#ptag-i-sun"/></svg>
+        <svg class="pt-i" aria-hidden="true" ng-if="c.theme === 'light'"><use href="#ptag-i-moon"/></svg>
+      </button>
       <!-- I21: waiting-on-you signal. Rendered only when something is actually
            outstanding, so the nav stays clean once you are caught up. Goes to
            My Engagements pre-filtered to exactly these records. -->
@@ -284,6 +340,11 @@
     <div class="pt-nav__mobile-user" ng-if="c.user.name">
       <span class="pt-avatar">{{c.initials}}</span><span>{{c.user.name}}</span>
     </div>
+    <!-- B147 #6 -->
+    <button type="button" class="pt-nav__themerow" ng-if="c.user.name" ng-click="c.toggleTheme()" aria-pressed="{{c.theme === 'light'}}">
+      <span>Light theme</span>
+      <span class="pt-nav__themeval"><svg class="pt-i pt-i--sm" aria-hidden="true" ng-if="c.theme === 'light'"><use href="#ptag-i-moon"/></svg><svg class="pt-i pt-i--sm" aria-hidden="true" ng-if="c.theme !== 'light'"><use href="#ptag-i-sun"/></svg>{{c.theme === 'light' ? 'On' : 'Off'}}</span>
+    </button>
     <!-- I22 -->
     <a ng-if="c.user.name" href="/logout.do?sysparm_goto_url=%2Fptag">Sign out</a>
     <a ng-if="!c.user.name" href="/login.do?sysparm_goto_url=%2Fptag">Sign in</a>

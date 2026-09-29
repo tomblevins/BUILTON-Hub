@@ -2,7 +2,7 @@
     <sys_ux_list action="INSERT_OR_UPDATE">
         <active>true</active>
         <category display_value="By Practice">2a1eac81879ec790e5790f29dabb35df</category>
-        <columns>number,short_description,partner,practice,state,score,score_band,assigned_to,state_entered_on,age_days</columns>
+        <columns>number,short_description,partner,practice,target_geo,state,score,score_band,assigned_to,state_entered_on,age_days</columns>
         <condition table="x_snc_ptag_engage_engagement_request">practice=412e3aa287960fd0e5790f29dabb3503^stateNOT IN3,7,8,9<item display_table="x_snc_ptag_engage_practice" display_value="Security Risk and Governance" endquery="false" field="practice" goto="false" newquery="false" operator="=" or="false" value="412e3aa287960fd0e5790f29dabb3503"/>
             <item display_value="3,7,8,9" endquery="false" field="state" goto="false" newquery="false" operator="NOT IN" or="false" value="3,7,8,9"/>
         </condition>
@@ -68,7 +68,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>6a1eac81879ec790e5790f29dabb35ef</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>3</sys_mod_count>
         <sys_name>Security Risk and Governance</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -76,7 +76,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_ux_list_6a1eac81879ec790e5790f29dabb35ef</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-28 22:35:41</sys_updated_on>
+        <sys_updated_on>2026-09-29 20:14:35</sys_updated_on>
         <table>x_snc_ptag_engage_engagement_request</table>
         <title>Security Risk and Governance</title>
         <view/>

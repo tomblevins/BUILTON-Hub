@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <advanced>false</advanced>
+        <business_calendar/>
+        <condition/>
+        <conditional>false</conditional>
+        <entered_run_end/>
+        <entered_run_start/>
+        <entered_time/>
+        <max_drift/>
+        <name>PTAG Hub - PDS team membership sync</name>
+        <offset/>
+        <offset_type>0</offset_type>
+        <repeat_every/>
+        <run_as display_value="Jon DeLuna">3494c6283be9be90c9c355f726e45afc</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek/>
+        <run_daysofweek/>
+        <run_end/>
+        <run_month/>
+        <run_period>1970-01-01 12:00:00</run_period>
+        <run_start>2026-09-30 06:00:00</run_start>
+        <run_time/>
+        <run_type>periodically</run_type>
+        <run_weekinmonth/>
+        <script><![CDATA[(function ptagPdsTeamSync() {
+    // Mirrors the ACTIVE members of "PDS Solution Consulting" into "PTAG Hub - PDS Team" (Jon, 2026-09-29).
+    // Adds missing people, removes anyone who is no longer in the source group or is inactive.
+    // Creates the target group on first run, so the job self-installs on every instance.
+    var SOURCE = 'PDS Solution Consulting', TARGET = 'PTAG Hub - PDS Team';
+    var src = new GlideRecord('sys_user_group');
+    if (!src.get('name', SOURCE)) { gs.warn('PTAG PDS team sync: source group not found: ' + SOURCE); return; }
+    var tgt = new GlideRecord('sys_user_group');
+    if (!tgt.get('name', TARGET)) {
+        tgt.initialize();
+        tgt.setValue('name', TARGET);
+        tgt.setValue('active', true);
+        tgt.setValue('description', 'PDS team for PTAG Hub assignment. Members mirror "' + SOURCE +
+            '" every 12 hours (scheduled job "PTAG Hub - PDS team membership sync"). Change membership in "' +
+            SOURCE + '", not here: manual edits here are overwritten.');
+        tgt.insert();
+    }
+    var want = {}, wantCount = 0;
+    var m = new GlideRecord('sys_user_grmember');
+    m.addQuery('group', src.getUniqueValue());
+    m.addQuery('user.active', true);
+    m.query();
+    while (m.next()) { if (!want[m.getValue('user')]) { want[m.getValue('user')] = true; wantCount++; } }
+    var have = {}, added = 0, removed = 0;
+    var t = new GlideRecord('sys_user_grmember');
+    t.addQuery('group', tgt.getUniqueValue());
+    t.query();
+    while (t.next()) {
+        var u = t.getValue('user');
+        if (!want[u] || have[u]) { t.deleteRecord(); removed++; } else { have[u] = true; }
+    }
+    for (var id in want) {
+        if (!have[id]) {
+            var n = new GlideRecord('sys_user_grmember');
+            n.initialize();
+            n.setValue('group', tgt.getUniqueValue());
+            n.setValue('user', id);
+            n.insert();
+            added++;
+        }
+    }
+    gs.info('PTAG PDS team sync: +' + added + ' -' + removed + ', members now ' + wantCount);
+})();]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 20:12:06</sys_created_on>
+        <sys_id>b90b7f7693a38f904639f8597bba103e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Hub - PDS team membership sync</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sysauto_script_b90b7f7693a38f904639f8597bba103e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 20:12:06</sys_updated_on>
+        <time_zone/>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>
