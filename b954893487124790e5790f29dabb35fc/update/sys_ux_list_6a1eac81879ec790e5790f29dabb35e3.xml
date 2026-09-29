@@ -3,7 +3,7 @@
         <active>true</active>
         <category display_value="By Practice">2a1eac81879ec790e5790f29dabb35df</category>
         <columns>number,short_description,partner,practice,state,score,score_band,assigned_to,state_entered_on,age_days</columns>
-        <condition table="x_snc_ptag_engage_engagement_request">practice=bce9e7ff93a947504639f8597bba10de^stateNOT IN3,7,8,9<item endquery="false" field="practice" goto="false" newquery="false" operator="=" or="false" value="bce9e7ff93a947504639f8597bba10de"/>
+        <condition table="x_snc_ptag_engage_engagement_request">practice=cd2e7a6a87d20fd0e5790f29dabb3523^stateNOT IN3,7,8,9<item display_table="x_snc_ptag_engage_practice" display_value="AI Platform &amp; Data" endquery="false" field="practice" goto="false" newquery="false" operator="=" or="false" value="cd2e7a6a87d20fd0e5790f29dabb3523"/>
             <item display_value="3,7,8,9" endquery="false" field="state" goto="false" newquery="false" operator="NOT IN" or="false" value="3,7,8,9"/>
         </condition>
         <configuration display_value="PTAG Engagement Hub_menu_config">37dc2c8d875ec790e5790f29dabb353a</configuration>
@@ -68,7 +68,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>6a1eac81879ec790e5790f29dabb35e3</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>AI Platform &amp; Data</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -76,7 +76,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_ux_list_6a1eac81879ec790e5790f29dabb35e3</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-23 17:42:30</sys_updated_on>
+        <sys_updated_on>2026-09-28 22:35:41</sys_updated_on>
         <table>x_snc_ptag_engage_engagement_request</table>
         <title>AI Platform &amp; Data</title>
         <view/>

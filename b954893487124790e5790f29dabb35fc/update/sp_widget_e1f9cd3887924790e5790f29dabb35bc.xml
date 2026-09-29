@@ -5,7 +5,7 @@
   var c = this;
   /* I6: Idea-lifecycle states (value -> chip slug). */
   var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
-               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '4': 'planned', '5': 'in_development', '10': 'on_hold', '3': 'completed', '7': 'unlikely',
                '9': 'cancelled', '8': 'duplicate'};
 
   c.loading = false;
@@ -447,7 +447,8 @@
     '3':  'Engagement delivered and closed.',
     '7':  'Not moving forward after PTAG review.',
     '8':  'Already tracked under another request.',
-    '9':  'Withdrawn before completion.'
+    '9':  'Withdrawn before completion.',
+    '10': 'Paused by PTAG. Work resumes when the hold is lifted.'
   };
 
   /* I12: ?state=<slug> whitelist - slug->value+label, hardcoded. The label
@@ -463,7 +464,8 @@
     'need_info':      { value: '-2', label: 'Need more information' },
     'unlikely':       { value: '7',  label: 'Unlikely to implement' },
     'cancelled':      { value: '9',  label: 'Cancelled' },
-    'duplicate':      { value: '8',  label: 'Duplicate' }
+    'duplicate':      { value: '8',  label: 'Duplicate' },
+    'on_hold':        { value: '10', label: 'On Hold' }
   };
 
   data.items = [];
@@ -599,6 +601,17 @@
       for (i = 2; i < TL_STEPS.length; i++) {
         nodes.push({ t: TL_STEPS[i].t, s: TL_STEPS[i].s, cls: 'is-future', neg: false, attn: false });
       }
+      return nodes;
+    }
+    if (st === '10') {
+      /* On Hold: paused by PTAG, still open. Convention-based history like the -2 branch (the
+         record carries no per-state history): Submitted..In Development done, the hold node
+         (clock) is where the request sits now, Completed stays future. */
+      for (i = 0; i < 5; i++) {
+        nodes.push({ t: TL_STEPS[i].t, s: TL_STEPS[i].s, cls: 'is-done', neg: false, attn: false });
+      }
+      nodes.push({ t: 'On Hold', s: 'Paused by PTAG. Work resumes when the hold is lifted.', cls: 'is-hold', neg: false, attn: false, hold: true });
+      nodes.push({ t: TL_STEPS[5].t, s: TL_STEPS[5].s, cls: 'is-future', neg: false, attn: false });
       return nodes;
     }
     var pos = 0;
@@ -855,6 +868,11 @@
     for (i = 0; i < HAPPY.length; i++) {
       s = HAPPY[i];
       data.chips.push({ slug: s, value: STATES[s].value, label: STATES[s].label, count: counts[STATES[s].value] || 0 });
+      /* On Hold chip: right after In Development, only when the viewer has one on hold */
+      if (s === 'in_development' && counts[STATES.on_hold.value]) {
+        data.chips.push({ slug: 'on_hold', value: STATES.on_hold.value, label: STATES.on_hold.label,
+                          count: counts[STATES.on_hold.value], branch: true });
+      }
     }
     for (i = 0; i < BRANCH.length; i++) {
       s = BRANCH[i];
@@ -872,14 +890,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9cd3887924790e5790f29dabb35bc</sys_id>
-        <sys_mod_count>22</sys_mod_count>
+        <sys_mod_count>23</sys_mod_count>
         <sys_name>PTAG My Engagements</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9cd3887924790e5790f29dabb35bc</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 03:25:31</sys_updated_on>
+        <sys_updated_on>2026-09-28 18:07:13</sys_updated_on>
         <template><![CDATA[<!-- I11 DETAIL: ptag_myeng_w - clickable row cards + engagement detail modal with customer-visible comments (I6 copy register; I5 .pt-modal system) -->
 <section class="pt-section">
   <div class="pt-shell pt-shell--form">
@@ -1041,7 +1059,8 @@
               <div class="pt-timeline pt-timeline--compact">
                 <div class="pt-tl-item" ng-repeat="n in c.dm.detail.timeline" ng-class="n.cls">
                   <div class="pt-tl-node">
-                    <svg class="pt-i pt-i--sm" ng-if="!n.neg && !n.attn"><use href="#ptag-i-check"/></svg>
+                    <svg class="pt-i pt-i--sm" ng-if="!n.neg && !n.attn && !n.hold"><use href="#ptag-i-check"/></svg>
+                    <svg class="pt-i pt-i--sm" ng-if="n.hold"><use href="#ptag-i-clock"/></svg>
                     <svg class="pt-i pt-i--sm" ng-if="n.attn"><use href="#ptag-i-triangle-alert"/></svg>
                     <svg class="pt-i pt-i--sm" ng-if="n.neg"><use href="#ptag-i-x"/></svg>
                   </div>

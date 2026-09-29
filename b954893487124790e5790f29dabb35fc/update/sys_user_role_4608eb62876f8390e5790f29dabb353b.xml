@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role">
+    <sys_user_role action="INSERT_OR_UPDATE">
+        <assignable_by/>
+        <can_delegate>true</can_delegate>
+        <description>PTAG Engagement Hub - Submitter: portal access; can submit and see ONLY their own engagement requests. Granted via the "PTAG Hub - Submitters" group.</description>
+        <elevated_privilege>false</elevated_privilege>
+        <encryption_context/>
+        <federated_id>zq8PiFF8poQmnrukMhyruscDGrtxBMFatdmR1Gy6e2o=</federated_id>
+        <grantable>true</grantable>
+        <includes_roles/>
+        <name>x_snc_ptag_engage.submitter</name>
+        <scoped_admin>false</scoped_admin>
+        <suffix>submitter</suffix>
+        <sys_class_name>sys_user_role</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 00:10:38</sys_created_on>
+        <sys_id>4608eb62876f8390e5790f29dabb353b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.submitter</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_user_role_4608eb62876f8390e5790f29dabb353b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 00:10:38</sys_updated_on>
+    </sys_user_role>
+</record_update>

@@ -378,6 +378,244 @@
             <sys_user/>
             <type/>
         </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>legacy_source</element>
+            <position>27</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:22</sys_created_on>
+            <sys_id>9cd1bfa687ef8390e5790f29dabb351b</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:22</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>legacy_number</element>
+            <position>28</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:23</sys_created_on>
+            <sys_id>54d1bfa687ef8390e5790f29dabb35a8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:23</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>legacy_mirror</element>
+            <position>29</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:23</sys_created_on>
+            <sys_id>60d1bfa687ef8390e5790f29dabb35fc</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:23</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>legacy_updated_on</element>
+            <position>30</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:24</sys_created_on>
+            <sys_id>70d1ffa687ef8390e5790f29dabb3545</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:24</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>business_owner_email</element>
+            <position>31</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:25</sys_created_on>
+            <sys_id>38d1ffa687ef8390e5790f29dabb3599</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:25</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>business_owner_first_name</element>
+            <position>32</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:25</sys_created_on>
+            <sys_id>49d1ffa687ef8390e5790f29dabb35c8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:25</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>business_owner_last_name</element>
+            <position>33</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:26</sys_created_on>
+            <sys_id>41d133e687ef8390e5790f29dabb3574</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:26</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>executive_sponsor_first_email</element>
+            <position>34</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:26</sys_created_on>
+            <sys_id>5dd133e687ef8390e5790f29dabb35af</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:26</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>executive_sponsor_first_name</element>
+            <position>35</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:27</sys_created_on>
+            <sys_id>11d173e687ef8390e5790f29dabb3511</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:27</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>executive_sponsor_last_name</element>
+            <position>36</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:27</sys_created_on>
+            <sys_id>69d173e687ef8390e5790f29dabb3540</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:27</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>primary_pta</element>
+            <position>37</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:28</sys_created_on>
+            <sys_id>25d173e687ef8390e5790f29dabb3570</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:28</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>pta_manager</element>
+            <position>38</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:29</sys_created_on>
+            <sys_id>b5d173e687ef8390e5790f29dabb35ba</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:29</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>resolution_code</element>
+            <position>39</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:29</sys_created_on>
+            <sys_id>b5d173e687ef8390e5790f29dabb35f7</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:29</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>technical_sme_email</element>
+            <position>40</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:30</sys_created_on>
+            <sys_id>06d1b3e687ef8390e5790f29dabb3534</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:30</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>technical_sme_first_name</element>
+            <position>41</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:30</sys_created_on>
+            <sys_id>1ad1b3e687ef8390e5790f29dabb3564</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:30</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>technical_sme_last_name</element>
+            <position>42</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:53:31</sys_created_on>
+            <sys_id>9ed1b3e687ef8390e5790f29dabb35eb</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:53:31</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>legacy_notes</element>
+            <position>43</position>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-29 00:59:57</sys_created_on>
+            <sys_id>ec53bf2e87ef8390e5790f29dabb35c5</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_snc_ptag_engage_engagement_request" sys_domain="global" view="Default view">dbfb240d875ec790e5790f29dabb35e8</sys_ui_section>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-29 00:59:57</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
         <sys_ui_section action="INSERT_OR_UPDATE">
             <caption/>
             <header>false</header>

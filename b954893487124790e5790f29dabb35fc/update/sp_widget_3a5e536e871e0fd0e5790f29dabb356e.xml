@@ -82,6 +82,198 @@
   c.clearHov = function() { c.hov = null; };
   c.ageBucket = function(d) { return d < 7 ? 0 : (d < 14 ? 1 : (d < 30 ? 2 : 3)); };
 
+  /* ---------- Trends: REAL PA daily scores -> three small multiples ----------
+     data.trends comes from the server (pa_scores_l1 totals). One shared x-domain
+     (the same days) so the crosshair lines up across panels; each panel has its
+     own single y-axis, never a dual axis. Built inside build(), so Refresh and the
+     record watch re-pull it with the rest of the Pulse. */
+  var TR_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var TR_DAY = 86400000;
+  function trMs(k) {
+    return Date.UTC(parseInt(k.substr(0, 4), 10), parseInt(k.substr(4, 2), 10) - 1,
+                    parseInt(k.substr(6, 2), 10));
+  }
+  function trLbl(ms) { var d = new Date(ms); return TR_MON[d.getUTCMonth()] + ' ' + d.getUTCDate(); }
+  function trNice(mx) {
+    if (!(mx > 0)) { return {max: 4, step: 2}; }
+    var raw = mx / 3, p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), m = raw / p;
+    var cand = p >= 10 ? [1, 2, 2.5, 5, 10] : [1, 2, 5, 10], st = 10;
+    for (var i = 0; i < cand.length; i++) { if (m <= cand[i] + 1e-9) { st = cand[i]; break; } }
+    st = Math.max(1, st * p);
+    return {max: Math.ceil(mx / st - 1e-9) * st, step: st};
+  }
+  function trTicks(nc) {
+    var out = [];
+    for (var v = 0; v <= nc.max + 1e-9; v += nc.step) {
+      out.push({v: v, label: String(Math.round(v)), y: 100 - v / nc.max * 100});
+    }
+    return out;
+  }
+  function trLine(vals, max, N) {
+    var d = '', pen = false, ys = [];
+    for (var j = 0; j < N; j++) {
+      var v = vals[j];
+      if (v === null || v === undefined) { ys.push(null); pen = false; continue; }
+      var y = 100 - v / max * 100;
+      ys.push(y);
+      d += (pen ? 'L' : 'M') + ((j + 0.5) / N * 1000).toFixed(1) + ',' + y.toFixed(2);
+      pen = true;
+    }
+    return {d: d, ys: ys};
+  }
+  function trLast(vals) {
+    for (var j = vals.length - 1; j >= 0; j--) {
+      if (vals[j] !== null && vals[j] !== undefined) { return j; }
+    }
+    return -1;
+  }
+  function trDelta(vals, li, dp) {
+    var k = li - 30;
+    if (li < 0 || k < 0 || vals[k] === null || vals[k] === undefined) { return ''; }
+    var f = dp ? 10 : 1, r = Math.round((vals[li] - vals[k]) * f) / f;
+    if (!r) { return 'no change vs 30d'; }
+    return (r > 0 ? '↑ +' : '↓ −') + Math.abs(r).toFixed(dp) + ' vs 30d';
+  }
+  function buildTrends() {
+    var T = $scope.data.trends || {state: 'error', error: 'no trends in the server response'};
+    var tr = {state: T.state || 'error', sub: 'daily Performance Analytics scores'};
+    c.trHi = null; c.trWk = null; c.trPanel = null;
+    if (tr.state !== 'ok') {
+      if (tr.state === 'empty') {
+        tr.emptyTitle = 'No trend history yet';
+        tr.emptyText = 'Performance Analytics has not collected any daily scores for the PTAG ' +
+          'indicators on this instance yet, so there is nothing to chart. The backlog, arrivals ' +
+          'and average-score trends appear here after the first daily collection runs.';
+      } else if (tr.state === 'missing') {
+        tr.emptyTitle = 'Trends are not set up on this instance';
+        tr.emptyText = 'These Performance Analytics indicators could not be found or read: ' +
+          (T.missing || []).join('; ') + '. There is no history to chart until they exist ' +
+          'and have collected scores.';
+      } else {
+        tr.emptyTitle = 'Trends could not be loaded';
+        tr.emptyText = 'The Pulse could not read Performance Analytics scores' +
+          (T.error ? ' (' + T.error + ')' : '') + '. The rest of the Pulse is unaffected.';
+      }
+      c.tr = tr;
+      return;
+    }
+    var days = T.days || [], N = days.length, i, ms0 = [];
+    for (i = 0; i < N; i++) { ms0.push(trMs(days[i])); }
+    tr.n = N;
+    tr.sub = 'daily Performance Analytics scores, ' + trLbl(ms0[0]) + ' – ' +
+             trLbl(ms0[N - 1]) + ', ' + new Date(ms0[N - 1]).getUTCFullYear();
+    tr.xs = []; tr.xticks = []; tr.tips = [];
+    var avgV = [];
+    for (i = 0; i < N; i++) {
+      tr.xs.push((i + 0.5) / N * 100);
+      var dd = new Date(ms0[i]);
+      if (dd.getUTCDate() === 1) { tr.xticks.push({x: tr.xs[i], label: TR_MON[dd.getUTCMonth()] + ' 1'}); }
+      var o = T.open[i], nw = T.neu[i], av = T.avg[i];
+      /* PA stores 0 for the average of an EMPTY set. With no open requests there
+         is no average, so that day is a gap, not a score of 0. */
+      avgV.push(o === 0 ? null : (av === undefined ? null : av));
+      tr.tips.push({date: trLbl(ms0[i]) + ', ' + dd.getUTCFullYear(),
+                    open: (o === null || o === undefined) ? 'no score' : String(Math.round(o)),
+                    avg: o === 0 ? 'n/a' : ((av === null || av === undefined) ? 'no score' : av.toFixed(1)),
+                    avgNote: o === 0 ? 'no open requests' : '',
+                    neu: (nw === null || nw === undefined) ? 'no score' : String(Math.round(nw))});
+    }
+    /* weekly arrivals: calendar weeks (Mon-Sun) summed from the DAILY New series */
+    var weeks = [], wOf = [], cur = null, total = 0;
+    for (i = 0; i < N; i++) {
+      var dow = (new Date(ms0[i]).getUTCDay() + 6) % 7, ws = ms0[i] - dow * TR_DAY;
+      if (!cur || cur.ws !== ws) {
+        cur = {ws: ws, first: i, last: i, n: 0, sum: 0, miss: 0};
+        weeks.push(cur);
+      }
+      cur.last = i; cur.n++;
+      var nv = T.neu[i];
+      if (nv === null || nv === undefined) { cur.miss++; } else { cur.sum += nv; total += nv; }
+      wOf.push(weeks.length - 1);
+    }
+    var wmx = 0;
+    for (i = 0; i < weeks.length; i++) { if (weeks[i].sum > wmx) { wmx = weeks[i].sum; } }
+    var wN = trNice(wmx);
+    for (i = 0; i < weeks.length; i++) {
+      var w = weeks[i], notes = [];
+      w.sum = Math.round(w.sum);
+      w.left = w.first / N * 100;
+      w.width = w.n / N * 100;
+      w.cx = (w.first + w.last + 1) / 2 / N * 100;
+      w.h = w.sum / wN.max * 100;
+      w.part = w.n < 7;
+      w.range = trLbl(w.ws) + ' – ' + trLbl(w.ws + 6 * TR_DAY);
+      if (w.part) { notes.push((w.last === N - 1 ? 'latest week, ' : '') + w.n + ' of 7 days in the window'); }
+      if (w.miss) { notes.push(w.miss + ' day' + (w.miss === 1 ? '' : 's') + ' without a score'); }
+      w.note = notes.join('; ');
+    }
+    tr.weeks = weeks; tr.wOf = wOf; tr.weekTotal = Math.round(total);
+    var omx = 0;
+    for (i = 0; i < N; i++) { if (T.open[i] > omx) { omx = T.open[i]; } }
+    var oN = trNice(omx), oL = trLine(T.open, oN.max, N), li = trLast(T.open);
+    var aL = trLine(avgV, 100, N), ai = trLast(avgV);
+    var oVal = li < 0 ? '—' : String(Math.round(T.open[li]));
+    var aVal = ai < 0 ? '—' : avgV[ai].toFixed(1);
+    var oD = trDelta(T.open, li, 0), aD = trDelta(avgV, ai, 1);
+    tr.panels = [
+      {key: 'open', kind: 'line', title: 'Open backlog', note: 'non-terminal requests, incl. On Hold',
+       value: oVal, delta: oD, ticks: trTicks(oN), d: oL.d, ys: oL.ys, end: li,
+       aria: 'Open backlog, daily: ' + oVal + (li < 0 ? '' : ' on ' + tr.tips[li].date) + (oD ? ', ' + oD : '') + '.',
+       hint: 'Open backlog chart. Left and right arrow keys step one day.'},
+      {key: 'neu', kind: 'bar', title: 'Arrivals per week', note: 'new requests, weekly totals',
+       value: String(tr.weekTotal), delta: 'in ' + N + ' days', ticks: trTicks(wN), weeks: weeks,
+       aria: 'Arrivals per week: ' + tr.weekTotal + ' new requests across ' + weeks.length + ' weeks.',
+       hint: 'Arrivals per week chart. Left and right arrow keys step one week.'},
+      {key: 'avg', kind: 'line', title: 'Avg score', note: 'open requests, 0–100 scale',
+       value: aVal, delta: aD, ticks: trTicks({max: 100, step: 50}), d: aL.d, ys: aL.ys, end: ai,
+       aria: 'Average score of open requests, daily: ' + aVal + (ai < 0 ? '' : ' on ' + tr.tips[ai].date) + (aD ? ', ' + aD : '') + '.',
+       hint: 'Average score chart. Left and right arrow keys step one day.'}
+    ];
+    c.tr = tr;
+  }
+  c.buildTrends = buildTrends;
+  c.trLeave = function() { c.trHi = null; c.trWk = null; c.trPanel = null; };
+  function trAt(p, i, w) {
+    var tr = c.tr;
+    if (p.kind === 'bar') {
+      if (w === undefined || w === null) { w = tr.wOf[i]; }
+      c.trWk = w; c.trHi = tr.weeks[w].last;
+    } else { c.trHi = i; c.trWk = tr.wOf[i]; }
+    c.trPanel = p.key;
+  }
+  c.trMove = function(ev, p) {
+    if (!c.tr || c.tr.state !== 'ok') { return; }
+    var r = ev.currentTarget.getBoundingClientRect();
+    var i = Math.floor((ev.clientX - r.left) / (r.width || 1) * c.tr.n);
+    trAt(p, Math.max(0, Math.min(c.tr.n - 1, i)));
+  };
+  c.trFocus = function(p) {
+    if (!c.tr || c.tr.state !== 'ok') { return; }
+    if (p.kind === 'bar') { trAt(p, 0, c.tr.weeks.length - 1); }
+    else { trAt(p, p.end >= 0 ? p.end : c.tr.n - 1); }
+  };
+  c.trKey = function(ev, p) {
+    var k = ev.keyCode;
+    if (!c.tr || c.tr.state !== 'ok' || (k !== 37 && k !== 39)) { return; }
+    ev.preventDefault();
+    var d = k === 39 ? 1 : -1;
+    /* Step from the SHARED crosshair, whichever panel set it (a pointer resting on
+       another chart moves it via Chrome's post-scroll mousemove). Only with no
+       active crosshair does the first arrow land on the latest point. */
+    if (p.kind === 'bar') {
+      var W = c.tr.weeks.length;
+      var w = c.trWk !== null ? c.trWk + d : W - 1;
+      trAt(p, 0, Math.max(0, Math.min(W - 1, w)));
+    } else {
+      var i = c.trHi !== null ? c.trHi + d : c.tr.n - 1;
+      trAt(p, Math.max(0, Math.min(c.tr.n - 1, i)));
+    }
+  };
+  c.trTipX = function(p) {
+    if (p.kind === 'bar') { return c.trWk === null ? 0 : c.tr.weeks[c.trWk].cx; }
+    return c.trHi === null ? 0 : c.tr.xs[c.trHi];
+  };
+
   function build() {
     var mix = $scope.data.practiceMix || [];
     c.practiceSlices = donut(mix, PRACTICE_PAL, true);
@@ -92,6 +284,7 @@
     c.topPracticeIds = ids.join(',');
     var bands = $scope.data.bands || [];
     c.bandSlices = donut(bands, bands.length > 3 ? RAMP4 : RAMP3, false);
+    buildTrends();
   }
   build();
 
@@ -430,6 +623,8 @@
   background: #2e9e4f; transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1); }
 .pt-cc__bar.is-attn .pt-cc__bf { background: #b8790e; }
 .pt-cc__bar.is-neg .pt-cc__bf { background: #cf4437; }
+/* On Hold (10): paused, open. fuchsia-700 on the light canvas (validator: CVD dE &gt;= 17 vs the set) */
+.pt-cc__bar.is-hold .pt-cc__bf { background: #a21caf; }
 .pt-cc__bn { flex: 0 0 28px; font-size: 12px; font-weight: 600; color: #16181c;
   font-variant-numeric: tabular-nums; }
 .pt-cc__bn.is-zero { color: #667080; font-weight: 400; }
@@ -530,6 +725,7 @@
 .pt-chip2--happy { background: #227a43; color: #ffffff; }
 .pt-chip2--attn { background: #f2b84b; color: #5c4306; }
 .pt-chip2--neg { background: #b0362c; color: #ffffff; }
+.pt-chip2--hold { background: #a21caf; color: #ffffff; }
 .pt-cc__agec.age-1 { color: #8a5f0e; font-weight: 600; }
 .pt-cc__agec.age-2 { color: #96491a; font-weight: 600; }
 .pt-cc__agec.age-3 { color: #a83228; font-weight: 600; }
@@ -579,7 +775,79 @@
 .pt-cc__bar:hover .pt-cc__bl { color: #16181c; font-weight: 600; }
 .pt-cc__dcenter--btn { pointer-events: none; }
 .pt-cc__dcenter--btn b, .pt-cc__dcenter--btn span { pointer-events: auto; cursor: pointer; }
-.pt-cc__dcenter--btn:hover b { color: #227a43; }</css>
+.pt-cc__dcenter--btn:hover b { color: #227a43; }
+
+/* ---- Trends: REAL PA daily scores, three small multiples (one y-axis each, never dual) ----
+   Pulse inks only: series #2e9e4f (validator PASS on #fff), grid #eef1f4, baseline #c9d1d8,
+   axis/label #5b6572, muted #667080, value #16181c. Hover = the I63 pop: hovered mark
+   brightens + drop shadow, the rest dim to .45. */
+.pt-cc__tr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.pt-cc__tr-panel { min-width: 0; }
+.pt-cc__tr-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  margin-bottom: 12px; }
+.pt-cc__tr-hl { min-width: 0; }
+.pt-cc__tr-hr { flex: 0 0 auto; text-align: right; }
+.pt-cc__tr-t { font-size: 12px; font-weight: 600; color: #16181c; }
+.pt-cc__tr-n { font-size: 11px; color: #667080; margin-top: 2px; white-space: nowrap; }
+.pt-cc__tr-v { font-size: 22px; font-weight: 700; color: #16181c; line-height: 1.05; }
+.pt-cc__tr-body { position: relative; padding-left: 28px; }
+.pt-cc__tr-plot { position: relative; height: 140px; }
+.pt-cc__tr-gl { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #eef1f4; }
+.pt-cc__tr-gl.is-base { border-top-color: #c9d1d8; }
+.pt-cc__tr-gl span { position: absolute; right: 100%; margin-right: 6px; top: -7px; font-size: 10px;
+  line-height: 14px; color: #5b6572; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pt-cc__tr-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible;
+  pointer-events: none; }
+.pt-cc__tr-line { fill: none; stroke: #2e9e4f; stroke-width: 2px; vector-effect: non-scaling-stroke;
+  stroke-linejoin: round; stroke-linecap: round; }
+.pt-cc__tr-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; }
+.pt-cc__tr-slot { position: absolute; top: 0; bottom: 0; display: flex; align-items: flex-end;
+  justify-content: center; }
+.pt-cc__tr-bar { display: block; width: calc(100% - 4px); max-width: 24px; background: #2e9e4f;
+  border-radius: 4px 4px 0 0; transition: opacity 150ms ease-out, filter 150ms ease-out; }
+.pt-cc__tr-bar.is-zero { height: 2px !important; background: #c9d1d8; border-radius: 1px; }
+.pt-cc__tr-slot.is-part .pt-cc__tr-bar { opacity: 0.45; }
+.pt-cc__tr-plot.is-hov .pt-cc__tr-slot:not(.is-hi) .pt-cc__tr-bar { opacity: 0.45; }
+.pt-cc__tr-plot.is-hov .pt-cc__tr-slot.is-part:not(.is-hi) .pt-cc__tr-bar { opacity: 0.25; }
+/* MEASURED 2026-09-28: the widget SCSS compile silently DROPS a filter value containing
+   drop-shadow(... rgba(...)) (also kills the I63 pipeline/donut pops). brightness() alone compiles,
+   so the lift is a box-shadow on the bar instead. */
+.pt-cc__tr-slot.is-hi .pt-cc__tr-bar { opacity: 1; filter: brightness(1.1);
+  box-shadow: 0 1px 3px rgba(22, 24, 28, 0.3); }
+.pt-cc__tr-slot.is-part.is-hi .pt-cc__tr-bar { opacity: 0.6; }
+.pt-cc__tr-cross { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid #8a97a3;
+  pointer-events: none; }
+.pt-cc__tr-dot { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
+  background: #2e9e4f; box-shadow: 0 0 0 2px #ffffff; pointer-events: none; }
+.pt-cc__tr-dot.is-hi { transform: scale(1.35);
+  box-shadow: 0 0 0 2px #ffffff, 0 1px 3px rgba(22, 24, 28, 0.35); }
+.pt-cc__tr-hit { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 2; cursor: crosshair;
+  border-radius: 4px; }
+.pt-cc__tr-hit:focus { outline: none; }
+.pt-cc__tr-hit:focus-visible { outline: 2px solid #2e9e4f; outline-offset: 4px; }
+.pt-cc__tr-tip { position: absolute; top: 0; z-index: 3; pointer-events: none; background: #ffffff;
+  border: 1px solid #adb8c2; border-radius: 8px; padding: 6px 9px; font-size: 11px; color: #5b6572;
+  white-space: nowrap; box-shadow: 0 4px 12px rgba(22, 24, 28, 0.12); }
+.pt-cc__tr-tip.is-l { transform: translateX(10px); }
+.pt-cc__tr-tip.is-r { transform: translateX(-100%) translateX(-10px); }
+.pt-cc__tr-td { font-weight: 600; color: #16181c; margin-bottom: 3px; }
+.pt-cc__tr-tr { line-height: 17px; }
+.pt-cc__tr-tr b { color: #16181c; font-size: 12px; font-variant-numeric: tabular-nums; }
+.pt-cc__tr-tn { color: #667080; font-size: 11px; }
+.pt-cc__tr-x { position: relative; height: 14px; margin-top: 6px; }
+.pt-cc__tr-x span { position: absolute; top: 0; transform: translateX(-50%); font-size: 10px; color: #5b6572;
+  white-space: nowrap; }
+.pt-cc__tr-empty { text-align: center; padding: 30px 16px 26px; }
+.pt-cc__tr-tblw { overflow-x: auto; }
+.pt-cc__tr-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pt-cc__tr-tbl th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #5b6572; padding: 8px 12px; border-bottom: 1px solid #adb8c2;
+  background: #fafbfc; }
+.pt-cc__tr-tbl td { padding: 7px 12px; color: #16181c; border-bottom: 1px solid #eef1f4; }
+.pt-cc__tr-tbl .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+.pt-cc__tr-tbl tfoot td { font-weight: 700; border-bottom: 0; }
+.pt-cc__tr-cap { caption-side: bottom; text-align: left; font-size: 11px; color: #667080; padding-top: 8px; }
+@media (max-width: 980px) { .pt-cc__tr-grid { grid-template-columns: 1fr; } }</css>
         <data_table>sp_instance</data_table>
         <demo_data/>
         <description>I56 glass command center: staff-wide live analytics (KPIs, pipeline, practice/score donuts, queue age, arrivals) hand-rolled SVG, staff-gated. Workspace home embed via Lumen.</description>
@@ -602,12 +870,12 @@
   } catch (e) { data.denied = true; return; }
 
   var LABELS = {'1':'Submitted','-1':'Under Review','2':'In Backlog','4':'Planned',
-                '5':'In Development','3':'Completed','-2':'Need More Info',
+                '5':'In Development','10':'On Hold','3':'Completed','-2':'Need More Info',
                 '7':'Unlikely','9':'Cancelled','8':'Duplicate'};
   var HAPPY = ['1','-1','2','4','5','3'];
   var BRANCH = ['-2','7','8','9'];
-  var KIND = {'-2':'attn','7':'neg','8':'neg','9':'neg'};
-  var ACTIVE_STATES = ['1','-1','-2','2','4','5'];
+  var KIND = {'-2':'attn','10':'hold','7':'neg','8':'neg','9':'neg'};
+  var ACTIVE_STATES = ['1','-1','-2','2','4','5','10'];
   var nowMs = new GlideDateTime().getNumericValue();
 
   function ageDays(gr) {
@@ -693,6 +961,12 @@
     var c1 = counts[HAPPY[i]] || 0;
     if (c1 > mx) { mx = c1; }
     data.pipeline.push({state: HAPPY[i], label: LABELS[HAPPY[i]], count: c1, kind: 'happy'});
+    /* On Hold (10): paused by PTAG but still open. Sits right after In Development,
+       shown only when it holds records (same rule as the branches). */
+    if (HAPPY[i] === '5' && counts['10']) {
+      if (counts['10'] > mx) { mx = counts['10']; }
+      data.pipeline.push({state: '10', label: LABELS['10'], count: counts['10'], kind: 'hold'});
+    }
   }
   data.branches = [];
   for (i = 0; i < BRANCH.length; i++) {
@@ -770,6 +1044,75 @@
               {label: '14-30d', count: buckets[2], sev: 2},
               {label: '30d+', count: buckets[3], sev: 3}];
   data.oldest = oldest;
+
+  /* ---------- Trends: REAL Performance Analytics daily scores ----------
+     pa_scores_l1 totals (breakdown empty) for three PTAG indicators resolved BY
+     NAME at runtime: pa_scores_l1.indicator holds pa_indicators.id, and that id
+     differs per instance, so it is never hardcoded. start_at is 'YYYYMMDD' in the
+     instance timezone. Window = the 90 days ending on the latest collected day.
+     Nothing is fabricated: a day without a score row stays null (a gap), and an
+     instance whose indicators have no scores yet reports 'empty' instead of a
+     flat zero line. Cross-scope READ of pa_indicators / pa_scores_l1 from this
+     scope rides sys_scope_privilege rows (runtime access tracking). */
+  data.trends = (function() {
+    var T = {state: 'empty', days: [], open: [], neu: [], avg: [], missing: [], points: 0};
+    var WANT = {open: 'PTAG - Open requests', neu: 'PTAG - New requests',
+                avg: 'PTAG - Average score of open requests'};
+    try {
+      var idOf = {}, keyOf = {}, key, ids = [];
+      for (key in WANT) {
+        var pi = new GlideRecord('pa_indicators');
+        pi.addQuery('name', WANT[key]);
+        pi.orderBy('sys_created_on');
+        pi.setLimit(1);
+        pi.query();
+        if (pi.next() && pi.getValue('id')) {
+          idOf[key] = String(pi.getValue('id'));
+          keyOf[idOf[key]] = key;
+          ids.push(idOf[key]);
+        } else { T.missing.push(WANT[key]); }
+      }
+      if (T.missing.length) { T.state = 'missing'; return T; }
+      var lastG = new GlideRecord('pa_scores_l1');
+      lastG.addQuery('indicator', 'IN', ids.join(','));
+      lastG.addNullQuery('breakdown');
+      lastG.orderByDesc('start_at');
+      lastG.setLimit(1);
+      lastG.query();
+      if (!lastG.next()) { return T; }
+      var endKey = String(lastG.getValue('start_at'));
+      var endMs = Date.UTC(parseInt(endKey.substr(0, 4), 10), parseInt(endKey.substr(4, 2), 10) - 1,
+                           parseInt(endKey.substr(6, 2), 10));
+      var DAYS = 90, at = {}, j;
+      for (j = 0; j < DAYS; j++) {
+        var dt = new Date(endMs - (DAYS - 1 - j) * 86400000);
+        var dk = '' + dt.getUTCFullYear() + ('0' + (dt.getUTCMonth() + 1)).slice(-2) +
+                 ('0' + dt.getUTCDate()).slice(-2);
+        at[dk] = j;
+        T.days.push(dk);
+        T.open.push(null); T.neu.push(null); T.avg.push(null);
+      }
+      var sg = new GlideRecord('pa_scores_l1');
+      sg.addQuery('indicator', 'IN', ids.join(','));
+      sg.addNullQuery('breakdown');
+      sg.addQuery('start_at', '>=', T.days[0]);
+      sg.addQuery('start_at', '<=', endKey);
+      sg.query();
+      while (sg.next()) {
+        var pos = at[String(sg.getValue('start_at'))];
+        var ser = keyOf[String(sg.getValue('indicator'))];
+        var val = parseFloat(sg.getValue('value'));
+        if (pos === undefined || !ser || isNaN(val)) { continue; }
+        T[ser][pos] = val;
+        T.points++;
+      }
+      T.state = T.points ? 'ok' : 'empty';
+    } catch (eT) {
+      T.state = 'error';
+      T.error = String(eT);
+    }
+    return T;
+  })();
   data.asOf = new GlideDateTime().getDisplayValue();
 })();]]></script>
         <servicenow>false</servicenow>
@@ -777,14 +1120,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-28 20:09:52</sys_created_on>
         <sys_id>3a5e536e871e0fd0e5790f29dabb356e</sys_id>
-        <sys_mod_count>17</sys_mod_count>
+        <sys_mod_count>21</sys_mod_count>
         <sys_name>PTAG Engagement Pulse</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_3a5e536e871e0fd0e5790f29dabb356e</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 22:16:50</sys_updated_on>
+        <sys_updated_on>2026-09-28 19:45:20</sys_updated_on>
         <template><![CDATA[<div class="pt-cc">
   <div class="pt-cc__denied" ng-if="data.denied">Not authorized.</div>
   <div class="pt-cc__wrap" ng-if="!data.denied">
@@ -910,7 +1253,7 @@
         <h3 class="pt-cc__ct">Pipeline<button type="button" class="pt-cc__all" ng-click="c.drill('total', '', 'Pipeline: all states', 2, 'updated')">View all</button></h3>
         <div class="pt-cc__bar" ng-repeat="p in data.pipeline" role="button" tabindex="0"
              ng-click="c.drill('state', p.state, 'Pipeline: ' + p.label, 2, 'age')"
-             ng-class="{'is-open': c.dp.label === 'Pipeline: ' + p.label}">
+             ng-class="{'is-hold': p.kind === 'hold', 'is-open': c.dp.label === 'Pipeline: ' + p.label}">
           <span class="pt-cc__bl">{{p.label}}</span>
           <span class="pt-cc__bt"><span class="pt-cc__bf"
             ng-style="{width: (p.count / data.maxCount * 100) + '%'}"></span></span>
@@ -998,6 +1341,64 @@
     </div>
 
     <div ng-if="c.dp.slot === 3" ng-include="'ptagDrill.html'"></div>
+
+    <div class="pt-cc__row">
+      <section class="glass-card pt-cc__card--trend" aria-label="Trends">
+        <h3 class="pt-cc__ct">Trends <span class="pt-cc__cs">{{c.tr.sub}}</span><button type="button" class="pt-cc__all" ng-if="c.tr.state === 'ok'" ng-click="c.trTable = !c.trTable; c.trLeave()" ng-attr-aria-pressed="{{c.trTable ? 'true' : 'false'}}">{{c.trTable ? 'Charts' : 'Table'}}</button></h3>
+        <div class="pt-cc__tr-empty" ng-if="c.tr.state !== 'ok'" role="status">
+          <div class="pt-cc__de-t">{{c.tr.emptyTitle}}</div>
+          <div class="pt-cc__de-s">{{c.tr.emptyText}}</div>
+        </div>
+        <div class="pt-cc__tr-grid" ng-if="c.tr.state === 'ok' && !c.trTable">
+          <div class="pt-cc__tr-panel" ng-repeat="p in c.tr.panels track by p.key" role="group" aria-label="{{p.aria}}" data-panel="{{p.key}}">
+            <div class="pt-cc__tr-head">
+              <div class="pt-cc__tr-hl"><div class="pt-cc__tr-t">{{p.title}}</div><div class="pt-cc__tr-n">{{p.note}}</div></div>
+              <div class="pt-cc__tr-hr"><div class="pt-cc__tr-v">{{p.value}}</div><div class="pt-cc__tr-n">{{p.delta}}</div></div>
+            </div>
+            <div class="pt-cc__tr-body">
+              <div class="pt-cc__tr-plot" ng-class="{'is-hov': c.trWk !== null}">
+                <div class="pt-cc__tr-gl" ng-repeat="t in p.ticks" ng-class="{'is-base': !t.v}" ng-style="{top: t.y + '%'}"><span>{{t.label}}</span></div>
+                <div class="pt-cc__tr-layer" ng-if="p.kind === 'bar'">
+                  <div class="pt-cc__tr-slot" ng-repeat="w in p.weeks" ng-class="{'is-hi': c.trWk === $index, 'is-part': w.part}" ng-style="{left: w.left + '%', width: w.width + '%'}"><span class="pt-cc__tr-bar" ng-class="{'is-zero': !w.sum}" ng-style="{height: w.h + '%'}"></span></div>
+                </div>
+                <svg class="pt-cc__tr-svg" ng-if="p.kind === 'line'" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path class="pt-cc__tr-line" ng-attr-d="{{p.d}}"></path></svg>
+                <div class="pt-cc__tr-cross" ng-if="p.kind === 'line' && c.trHi !== null" ng-style="{left: c.tr.xs[c.trHi] + '%'}"></div>
+                <span class="pt-cc__tr-dot" ng-if="p.kind === 'line' && c.trHi === null && p.end >= 0" ng-style="{left: c.tr.xs[p.end] + '%', top: p.ys[p.end] + '%'}"></span>
+                <span class="pt-cc__tr-dot is-hi" ng-if="p.kind === 'line' && c.trHi !== null && p.ys[c.trHi] !== null" ng-style="{left: c.tr.xs[c.trHi] + '%', top: p.ys[c.trHi] + '%'}"></span>
+                <div class="pt-cc__tr-hit" tabindex="0" aria-label="{{p.hint}}"
+                     ng-mousemove="c.trMove($event, p)" ng-mouseleave="c.trLeave()"
+                     ng-focus="c.trFocus(p)" ng-blur="c.trLeave()" ng-keydown="c.trKey($event, p)"></div>
+                <div class="pt-cc__tr-tip" ng-if="c.trPanel === p.key" aria-live="polite"
+                     ng-class="c.trTipX(p) > 50 ? 'is-r' : 'is-l'" ng-style="{left: c.trTipX(p) + '%'}">
+                  <div ng-if="p.kind === 'line'">
+                    <div class="pt-cc__tr-td">{{c.tr.tips[c.trHi].date}}</div>
+                    <div class="pt-cc__tr-tr"><b>{{c.tr.tips[c.trHi].open}}</b> open backlog</div>
+                    <div class="pt-cc__tr-tr"><b>{{c.tr.tips[c.trHi].avg}}</b> avg score<span class="pt-cc__tr-tn" ng-if="c.tr.tips[c.trHi].avgNote"> ({{c.tr.tips[c.trHi].avgNote}})</span></div>
+                    <div class="pt-cc__tr-tr"><b>{{c.tr.tips[c.trHi].neu}}</b> new that day</div>
+                  </div>
+                  <div ng-if="p.kind === 'bar'">
+                    <div class="pt-cc__tr-td">Week of {{p.weeks[c.trWk].range}}</div>
+                    <div class="pt-cc__tr-tr"><b>{{p.weeks[c.trWk].sum}}</b> new request{{p.weeks[c.trWk].sum === 1 ? '' : 's'}}</div>
+                    <div class="pt-cc__tr-tn" ng-if="p.weeks[c.trWk].note">{{p.weeks[c.trWk].note}}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="pt-cc__tr-x" aria-hidden="true"><span ng-repeat="x in c.tr.xticks" ng-style="{left: x.x + '%'}">{{x.label}}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pt-cc__tr-tblw" ng-if="c.tr.state === 'ok' && c.trTable">
+          <table class="pt-cc__tr-tbl">
+            <caption class="pt-cc__tr-cap">Weekly view of the same daily Performance Analytics scores. Open backlog and avg score are the last day of each week in the window.</caption>
+            <thead><tr><th scope="col">Week</th><th scope="col" class="is-num">New requests</th><th scope="col" class="is-num">Open backlog</th><th scope="col" class="is-num">Avg score</th></tr></thead>
+            <tbody>
+              <tr ng-repeat="w in c.tr.weeks"><td>{{w.range}}<span class="pt-cc__tr-tn" ng-if="w.note"> &middot; {{w.note}}</span></td><td class="is-num">{{w.sum}}</td><td class="is-num">{{c.tr.tips[w.last].open}}</td><td class="is-num">{{c.tr.tips[w.last].avg}}</td></tr>
+            </tbody>
+            <tfoot><tr><td>Total, {{c.tr.n}} days</td><td class="is-num">{{c.tr.weekTotal}}</td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+      </section>
+    </div>
   </div>
 </div>]]></template>
     </sp_widget>

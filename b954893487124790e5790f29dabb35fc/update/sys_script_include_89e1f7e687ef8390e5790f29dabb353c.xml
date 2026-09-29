@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PTAGLegacySync</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>One-way read-only mirror of the legacy PTAG intake into the Hub until cutover.</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PTAGLegacySync</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PTAGLegacySync = Class.create();
+PTAGLegacySync.prototype = {
+  /* One-way, read-only mirror of the legacy PTAG intake into the Hub until cutover (cipher 2026-09-28).
+     Never writes the legacy table. Mirrored rows: legacy_mirror=true, hidden by the Hub ACLs (roles only),
+     no business rules / notifications (setWorkflow(false)), read-only for non-admins (BR guard). */
+  SRC: 'x_snc_ptag_intak_0_engagement_request',
+  DST: 'x_snc_ptag_engage_engagement_request',
+  COPY: ["budget", "business_owner", "certified_resources", "corporate_alignment", "customer_pain_points", "executive_sponsor", "has_customers", "in_market_status", "partner", "partner_manager", "pipeline", "primary_product", "resolution_notes", "tam", "target_geo", "value_prop", "what_is_the_partners_ai_strategy", "business_owner_email", "business_owner_first_name", "business_owner_last_name", "executive_sponsor_first_email", "executive_sponsor_first_name", "executive_sponsor_last_name", "primary_pta", "pta_manager", "resolution_code", "technical_sme_email", "technical_sme_first_name", "technical_sme_last_name", "short_description", "idea_description", "state", "opened_by", "submitter", "assigned_to", "assignment_group", "close_notes", "closed_at", "closed_by", "opened_at", "priority"],
+  LOOKUPS: {"practice": "x_snc_ptag_engage_practice", "primary_industry": "x_snc_ptag_engage_industry", "partner_use_case": "x_snc_ptag_engage_partner_use_case", "route_to_market": "x_snc_ptag_engage_route_to_market"},
+  TERMINAL: ['3', '7', '8', '9'],
+  BATCH: 40,
+  MAX_SCAN: 3000,
+  MAX_ATTACH_BYTES: 157286400,
+
+  initialize: function () {
+    this.stats = {scanned: 0, created: 0, updated: 0, skipped: 0, journal: 0, attachments: 0, attach_bytes: 0,
+                  lookup_misses: 0, errors: []};
+    this._maps = {};
+  },
+
+  _norm: function (s) {
+    return String(s || '').toLowerCase().replace(/implimentation/g, 'implementation').replace(/\s+/g, ' ').trim();
+  },
+
+  _lookup: function (table, name) {
+    if (!name) return '';
+    if (!this._maps[table]) {
+      var m = {}, g = new GlideRecord(table); g.query();
+      while (g.next()) m[this._norm(g.getDisplayValue())] = g.getUniqueValue();
+      this._maps[table] = m;
+    }
+    var id = this._maps[table][this._norm(name)];
+    if (!id) this.stats.lookup_misses++;
+    return id || '';
+  },
+
+  _hwm: function () {
+    var g = new GlideRecord(this.DST);
+    g.addNotNullQuery('legacy_updated_on');
+    g.orderByDesc('legacy_updated_on');
+    g.setLimit(1); g.query();
+    return g.next() ? String(g.getValue('legacy_updated_on')) : '';
+  },
+
+  ready: function () {
+    if (String(gs.getProperty('x_snc_ptag_engage.legacy_sync_enabled', 'true')) !== 'true') return 'disabled';
+    for (var f in this.LOOKUPS) {
+      var g = new GlideRecord(this.LOOKUPS[f]); g.setLimit(1); g.query();
+      if (!g.hasNext()) return 'waiting for config data (' + this.LOOKUPS[f] + ' is empty)';
+    }
+    if (!new GlideRecord(this.SRC).isValid()) return 'legacy table not present';
+    return 'ok';
+  },
+
+  run: function (maxBatches) {
+    var state = this.ready();
+    this.stats.state = state;
+    if (state !== 'ok') { this._status(); return this.stats; }
+    var hwm = this._hwm(), changed = 0, limit = this.BATCH * (maxBatches || 5);
+    var src = new GlideRecord(this.SRC);
+    if (hwm) src.addQuery('sys_updated_on', '>=', hwm);
+    src.orderBy('sys_updated_on'); src.orderBy('sys_id');
+    src.setLimit(this.MAX_SCAN);
+    src.query();
+    while (src.next() && changed < limit) {
+      this.stats.scanned++;
+      try { if (this._upsert(src)) changed++; }
+      catch (e) { this.stats.errors.push(String(src.getValue('number')) + ': ' + e); }
+      if (this.stats.attach_bytes > this.MAX_ATTACH_BYTES) { this.stats.capped = 'attachment bytes'; break; }
+    }
+    this.stats.hwm_before = hwm;
+    this._status();
+    return this.stats;
+  },
+
+  _upsert: function (src) {
+    var sid = src.getUniqueValue();
+    var dst = new GlideRecord(this.DST);
+    dst.addQuery('legacy_source', sid); dst.query();
+    var isNew = !dst.next();
+    if (!isNew && String(dst.getValue('legacy_updated_on')) === String(src.getValue('sys_updated_on'))) {
+      this.stats.skipped++;
+      this._children(src, dst);
+      return false;
+    }
+    if (isNew) { dst = new GlideRecord(this.DST); dst.newRecord(); dst.setValue('legacy_mirror', true); }
+    var i, f;
+    for (i = 0; i < this.COPY.length; i++) {
+      f = this.COPY[i];
+      if (src.isValidField(f) && dst.isValidField(f)) dst.setValue(f, src.getValue(f));
+    }
+    for (f in this.LOOKUPS) {
+      if (src.isValidField(f)) dst.setValue(f, this._lookup(this.LOOKUPS[f], src[f].getDisplayValue()));
+    }
+    var appr = String(src.getValue('approval') || 'not requested');
+    dst.setValue('approval', appr === 'not requested' ? 'not_requested' : appr);
+    var st = String(src.getValue('state'));
+    var terminal = this.TERMINAL.indexOf(st) >= 0;
+    dst.setValue('active', !terminal);
+    dst.setValue('number', src.getValue('number'));
+    dst.setValue('legacy_number', src.getValue('number'));
+    dst.setValue('legacy_source', sid);
+    dst.setValue('legacy_updated_on', src.getValue('sys_updated_on'));
+    var entered = terminal && src.getValue('closed_at') ? src.getValue('closed_at') : src.getValue('sys_updated_on');
+    dst.setValue('state_entered_on', entered);
+    var days = Math.floor((new GlideDateTime().getNumericValue() - new GlideDateTime(entered).getNumericValue()) / 86400000);
+    dst.setValue('age_days', days < 0 ? 0 : days);
+    if (terminal && !dst.getValue('close_notes')) dst.setValue('close_notes', 'Closed in the legacy PTAG intake as ' + src.state.getDisplayValue() + '.');
+    if (!dst.getValue('status_token')) dst.setValue('status_token', ('' + gs.generateGUID() + gs.generateGUID()).replace(/-/g, '').substring(0, 24));
+    if (String(dst.getValue('score_locked')) !== 'true') { try { new PTAGScoringEngine().apply(dst); } catch (e) { this.stats.errors.push('score ' + sid + ': ' + e); } }
+    dst.setValue('sys_created_on', src.getValue('sys_created_on'));
+    dst.setValue('sys_created_by', src.getValue('sys_created_by'));
+    dst.setValue('sys_updated_on', src.getValue('sys_updated_on'));
+    dst.setValue('sys_updated_by', src.getValue('sys_updated_by'));
+    dst.setWorkflow(false); dst.autoSysFields(false);
+    var ok = isNew ? dst.insert() : dst.update();
+    if (!ok) { this.stats.errors.push('write failed ' + src.getValue('number') + ': ' + dst.getLastErrorMessage()); return false; }
+    if (isNew) this.stats.created++; else this.stats.updated++;
+    this._children(src, dst);
+    return true;
+  },
+
+  _children: function (src, dst) {
+    var sid = src.getUniqueValue(), did = dst.getUniqueValue();
+    // Legacy work notes / comments -> the read-only legacy_notes field (newest first, stamped with the original
+    // author and time). Measured 2026-09-28: scoped apps may not insert sys_journal_field (create_access=false),
+    // setJournalEntry is fenced, and journal fields do NOT persist under setWorkflow(false); turning workflow on
+    // would fire Idea/task/PTAG rules and notifications on mirrors. Rebuilt from source each run = idempotent.
+    var lines = [], s = new GlideRecord('sys_journal_field'), names = {};
+    s.addQuery('name', this.SRC); s.addQuery('element_id', sid); s.orderByDesc('sys_created_on'); s.query();
+    while (s.next()) {
+      var el = s.getValue('element'), who = s.getValue('sys_created_by');
+      if (el !== 'work_notes' && el !== 'comments') continue;
+      if (!names[who]) { var u = new GlideRecord('sys_user'); u.addQuery('user_name', who); u.setLimit(1); u.query(); names[who] = u.next() ? u.getDisplayValue() : who; }
+      lines.push('[' + (el === 'comments' ? 'Comment' : 'Work note') + ' · ' + names[who] + ' (' + who + ') · ' + s.getValue('sys_created_on') + ']\n' + s.getValue('value'));
+    }
+    var text = lines.join('\n\n');
+    if (String(dst.getValue('legacy_notes') || '') !== text) {
+      dst.setValue('legacy_notes', text);
+      dst.setWorkflow(false); dst.autoSysFields(false);
+      if (dst.update()) this.stats.journal += lines.length; else this.stats.errors.push('notes ' + sid + ': ' + dst.getLastErrorMessage());
+    }
+    // attachments not yet mirrored (key: file name + size)
+    var got = {}, a = new GlideRecord('sys_attachment');
+    a.addQuery('table_name', this.DST); a.addQuery('table_sys_id', did); a.query();
+    while (a.next()) got[a.getValue('file_name') + '|' + a.getValue('size_bytes')] = 1;
+    var sa = new GlideSysAttachment(), b = new GlideRecord('sys_attachment');
+    b.addQuery('table_name', this.SRC); b.addQuery('table_sys_id', sid); b.query();
+    while (b.next()) {
+      if (got[b.getValue('file_name') + '|' + b.getValue('size_bytes')]) continue;
+      if (this.stats.attach_bytes > this.MAX_ATTACH_BYTES) { this.stats.capped = 'attachment bytes'; return; }
+      try {
+        var id = sa.writeContentStream(dst, b.getValue('file_name'), b.getValue('content_type'), sa.getContentStream(b.getUniqueValue()));
+        if (id) { this.stats.attachments++; this.stats.attach_bytes += parseInt(b.getValue('size_bytes'), 10) || 0; }
+        else this.stats.errors.push('attach ' + b.getValue('file_name'));
+      } catch (e) { this.stats.errors.push('attach ' + b.getValue('file_name') + ': ' + e); }
+    }
+  },
+
+  _status: function () {
+    this.stats.at = new GlideDateTime().getDisplayValue();
+    gs.setProperty('x_snc_ptag_engage.legacy_sync_status', JSON.stringify(this.stats).substring(0, 3900));
+    gs.info('[PTAG legacy sync] ' + JSON.stringify(this.stats).substring(0, 2000));
+  },
+
+  type: 'PTAGLegacySync'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 00:53:42</sys_created_on>
+        <sys_id>89e1f7e687ef8390e5790f29dabb353c</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PTAGLegacySync</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_89e1f7e687ef8390e5790f29dabb353c</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 01:00:01</sys_updated_on>
+    </sys_script_include>
+</record_update>

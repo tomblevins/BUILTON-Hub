@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_search_source">
     <sys_search_source action="INSERT_OR_UPDATE">
         <active>true</active>
-        <condition table="x_snc_ptag_engage_engagement_request">active=true</condition>
+        <condition table="x_snc_ptag_engage_engagement_request">active=true<item endquery="false" field="active" goto="false" newquery="false" operator="=" or="false" value="true"/>
+        </condition>
         <group/>
         <name>PTAG Engagement Hub - x_snc_ptag_engage_engagement</name>
         <roles/>

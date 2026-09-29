@@ -44,14 +44,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-28 02:03:36</sys_created_on>
         <sys_id>b2b56792935e4f144639f8597bba1046</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>PTAG Help &amp; Guide</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_b2b56792935e4f144639f8597bba1046</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 02:03:36</sys_updated_on>
+        <sys_updated_on>2026-09-28 18:07:18</sys_updated_on>
         <template><![CDATA[<!-- I26: Help & guide. Renders the real components in a legend rather than
      describing them, so people recognise what they have already seen. -->
 <section class="pt-section">
@@ -144,9 +144,10 @@
         <span class="pt-chip" data-state="in_backlog">In Backlog</span>
         <span class="pt-chip" data-state="planned">Planned</span>
         <span class="pt-chip" data-state="in_development">In Development</span>
+        <span class="pt-chip" data-state="on_hold">On Hold</span>
         <span class="pt-chip" data-state="completed">Completed</span>
       </div>
-      <p class="pt-help__s" style="margin: 16px 0 0;"><b>Need more information</b> is the one to watch for. It means PTAG cannot progress your request until you add something, and it is the state most likely to stall if nobody notices it.</p>
+      <p class="pt-help__s" style="margin: 16px 0 0;"><b>Need more information</b> is the one to watch for. It means PTAG cannot progress your request until you add something, and it is the state most likely to stall if nobody notices it. <b>On Hold</b> is different: PTAG has paused the work on its side, so there is nothing you need to do, and it picks up again when the hold is lifted.</p>
     </div>
 
     <!-- ---------- comments ---------- -->

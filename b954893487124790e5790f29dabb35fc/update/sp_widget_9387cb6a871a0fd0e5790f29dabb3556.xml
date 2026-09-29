@@ -64,6 +64,9 @@
   --pt-emb-pulse: rgba(251, 146, 60, .60); }
 .pt-emb__stage--branch.is-neg .pt-emb__dot { background: #e2574a; border-color: #e2574a;
   --pt-emb-pulse: rgba(226, 87, 74, .60); }
+/* On Hold (10): current-but-paused stage on the white embed. fuchsia-700, white glyph 6.32:1 */
+.pt-emb__stage.is-hold .pt-emb__dot { background: #a21caf; border-color: #a21caf; color: #ffffff;
+  --pt-emb-pulse: rgba(162, 28, 175, .60); }
 @keyframes pt-emb-ring {
   0%   { box-shadow: 0 0 0 0 var(--pt-emb-pulse, rgba(46,158,79,.38)); }
   70%  { box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
@@ -143,7 +146,7 @@
 
   var HAPPY = ['1', '-1', '2', '4', '5', '3'];
   var LABELS = {'1':'Submitted','-1':'Under Review','2':'In Backlog','4':'Planned',
-                '5':'In Development','3':'Completed','-2':'Need More Info',
+                '5':'In Development','10':'On Hold','3':'Completed','-2':'Need More Info',
                 '7':'Unlikely to Implement','9':'Cancelled','8':'Duplicate'};
   var idx = HAPPY.indexOf(state);
   data.journey = [];
@@ -152,8 +155,15 @@
                        done: idx > -1 && i < idx,
                        current: i === idx});
   }
+  /* On Hold (10): paused, open, after In Development. Convention-based history (the record
+     stores no pre-hold state): Submitted..In Development done, On Hold is the CURRENT stage
+     (clock icon), Completed stays future. Never the generic 'State 10' branch. */
+  if (state === '10') {
+    for (var h = 0; h < 5; h++) { data.journey[h].done = true; }
+    data.journey.splice(5, 0, {label: LABELS['10'], done: false, current: true, hold: true});
+  }
   var NEG = {'9': 1, '8': 1};
-  data.branch = (idx === -1 && state)
+  data.branch = (idx === -1 && state && state !== '10')
     ? {label: LABELS[state] || ('State ' + state), neg: !!NEG[state]}
     : null;
 
@@ -176,23 +186,24 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-28 18:30:14</sys_created_on>
         <sys_id>9387cb6a871a0fd0e5790f29dabb3556</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>10</sys_mod_count>
         <sys_name>PTAG Staff Timeline + Score</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_9387cb6a871a0fd0e5790f29dabb3556</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 21:35:46</sys_updated_on>
+        <sys_updated_on>2026-09-28 18:07:09</sys_updated_on>
         <template><![CDATA[<div class="pt-emb">
   <div class="pt-emb__denied" ng-if="data.denied">Not authorized.</div>
   <div ng-if="!data.denied && !data.ready" class="pt-emb__empty">No record context.</div>
   <div ng-if="data.ready">
     <div class="pt-emb__rail" role="list" aria-label="Engagement journey">
       <div class="pt-emb__stage" ng-repeat="s in data.journey" role="listitem"
-           ng-class="{'is-done': s.done, 'is-current': s.current}">
+           ng-class="{'is-done': s.done, 'is-current': s.current, 'is-hold': s.hold}">
         <span class="pt-emb__dot">
-          <svg class="pt-i pt-i--sm" ng-if="s.done || s.current" aria-hidden="true"><use href="#ptag-i-check"/></svg>
+          <svg class="pt-i pt-i--sm" ng-if="(s.done || s.current) && !s.hold" aria-hidden="true"><use href="#ptag-i-check"/></svg>
+          <svg class="pt-i pt-i--sm" ng-if="s.hold" aria-hidden="true"><use href="#ptag-i-clock"/></svg>
         </span>
         <span class="pt-emb__lbl">{{s.label}}</span>
       </div>

@@ -5,7 +5,7 @@
   var c = this;
   /* I6: Idea-lifecycle states (value -> chip slug). */
   var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
-               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '4': 'planned', '5': 'in_development', '10': 'on_hold', '3': 'completed', '7': 'unlikely',
                '9': 'cancelled', '8': 'duplicate'};
   /* I12: state-context sub-notes - the I6 register VERBATIM (same copy
      ptag_myeng_w's CONTEXT speaks; one register app-wide). */
@@ -19,7 +19,8 @@
     '-2': 'Review is paused until you add the requested details.',
     '7':  'Not moving forward after PTAG review.',
     '8':  'Already tracked under another request.',
-    '9':  'Withdrawn before completion.'
+    '9':  'Withdrawn before completion.',
+    '10': 'Paused by PTAG. Work resumes when the hold is lifted.'
   };
 
   var stats = (c.data && c.data.stats) || { total: 0, by_state: [] };
@@ -35,7 +36,7 @@
   c.practices = stats.practices || 0;
   c.routes = stats.routes || 0;
   c.active = 0;
-  var activeKeys = ['1', '-2', '-1', '2', '4', '5'];
+  var activeKeys = ['1', '-2', '-1', '2', '4', '5', '10'];
   for (i = 0; i < activeKeys.length; i++) { c.active += counts[activeKeys[i]] || 0; }
 
   /* Live pipeline rows: the six happy-path lifecycle states always (zero-
@@ -45,6 +46,11 @@
   for (i = 0; i < happy.length; i++) {
     c.pipe.push({ slug: SLUGS[happy[i]], label: labels[happy[i]], count: counts[happy[i]] || 0,
                   note: NOTES[happy[i]] || '' });
+    /* On Hold (10): open but paused; right after In Development, only when it holds records */
+    if (happy[i] === '5' && counts['10']) {
+      c.pipe.push({ slug: SLUGS['10'], label: labels['10'] || 'On Hold', count: counts['10'],
+                    note: NOTES['10'] || '' });
+    }
   }
   var branch = ['-2', '7', '9', '8'];
   for (i = 0; i < branch.length; i++) {
@@ -203,9 +209,9 @@
      I6: state set = the intake app's Idea-lifecycle choices (mapped in i6_03;
      labels mirror the live sys_choice set). */
   var LABELS = {'1':'Submitted','-2':'Need more information','-1':'Under Review',
-                '2':'In Backlog','4':'Planned','5':'In Development','3':'Completed',
+                '2':'In Backlog','4':'Planned','5':'In Development','10':'On Hold','3':'Completed',
                 '7':'Unlikely to implement','9':'Cancelled','8':'Duplicate'};
-  var ORDER = ['1','-2','-1','2','4','5','3','7','9','8'];
+  var ORDER = ['1','-2','-1','2','4','5','10','3','7','9','8'];
   data.stats = { total: 0, by_state: [] }; // stats strip removed I11; by_state feeds the pipeline panel only
   var counts = {};
   var ga = new GlideAggregate('x_snc_ptag_engage_engagement_request');
@@ -239,14 +245,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:08</sys_created_on>
         <sys_id>d1f9cd3887924790e5790f29dabb35b2</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>19</sys_mod_count>
         <sys_name>PTAG Landing</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_d1f9cd3887924790e5790f29dabb35b2</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 17:08:04</sys_updated_on>
+        <sys_updated_on>2026-09-28 18:07:11</sys_updated_on>
         <template><![CDATA[<!-- I6 COPY: ptag_landing - internal register (GPC staff); structure unchanged from I3/I5 -->
 <div>
 
