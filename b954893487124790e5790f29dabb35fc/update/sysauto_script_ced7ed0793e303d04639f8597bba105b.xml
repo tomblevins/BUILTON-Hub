@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <advanced>false</advanced>
+        <business_calendar/>
+        <condition/>
+        <conditional>false</conditional>
+        <entered_run_end/>
+        <entered_run_start/>
+        <entered_time/>
+        <max_drift/>
+        <name>PTAG Hub - PTA to Partner Map Import</name>
+        <offset/>
+        <offset_type>0</offset_type>
+        <repeat_every/>
+        <run_as display_value="Jon DeLuna">3494c6283be9be90c9c355f726e45afc</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek/>
+        <run_daysofweek/>
+        <run_end/>
+        <run_month/>
+        <run_period/>
+        <run_start>2026-09-30 04:07:32</run_start>
+        <run_time/>
+        <run_type>on_demand</run_type>
+        <run_weekinmonth/>
+        <script><![CDATA[// On demand. Same behaviour as the legacy "PROC - PTA to Partner Map Import": processes every row in
+// "PTA to Partner Map - Import" into "PTA to Partner Map". Load the spreadsheet into the import table first.
+var processed = new PtagPtaPartnerMap().processImport();
+gs.info('PTAG Hub - PTA to Partner Map Import: processed ' + processed + ' import rows');]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-30 04:07:32</sys_created_on>
+        <sys_id>ced7ed0793e303d04639f8597bba105b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Hub - PTA to Partner Map Import</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sysauto_script_ced7ed0793e303d04639f8597bba105b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-30 04:07:32</sys_updated_on>
+        <time_zone/>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>

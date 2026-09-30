@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_snc_ptag_engage.PtagPtaPartnerMap</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>PTA to Partner Map logic, same behaviour as the legacy intake app flows (auto-assign, import, remove accounts with empty names).</description>
+        <mobile_callable>false</mobile_callable>
+        <name>PtagPtaPartnerMap</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var PtagPtaPartnerMap = Class.create();
+PtagPtaPartnerMap.prototype = {
+    initialize: function () {
+        this.MAP = 'x_snc_ptag_engage_pta_to_partner_map';
+        this.IMPORT = 'x_snc_ptag_engage_pta_to_partner_map_import';
+    },
+
+    /**
+     * Same behaviour as the legacy flow "BR - Auto Assign PTA": for each PTA to Partner Map row for the
+     * request's partner, set Primary PTA, PTA Manager and Watch list from the row.
+     * Called from the before business rule "PTAG Hub - Auto assign PTA" (no update() here).
+     * @returns {number} map rows applied
+     */
+    applyToRequest: function (current) {
+        var partner = current.getValue('partner');
+        if (!partner) {
+            return 0;
+        }
+        var m = new GlideRecord(this.MAP);
+        m.addQuery('partner', partner);
+        m.setLimit(1000);
+        m.query();
+        var n = 0;
+        while (m.next()) {
+            current.setValue('primary_pta', m.getValue('pta_lead'));
+            current.setValue('pta_manager', m.getValue('pta_manager'));
+            current.setValue('watch_list', m.getValue('all_assigned_ptas'));
+            n++;
+        }
+        return n;
+    },
+
+    /**
+     * Same behaviour as the legacy subflow "PROC - PTA to Partner Map Import": every row of
+     * "PTA to Partner Map - Import" goes through processImportRecord. Rows are left in place afterwards.
+     * @returns {number} import rows processed
+     */
+    processImport: function () {
+        var row = new GlideRecord(this.IMPORT);
+        row.setLimit(10000);
+        row.query();
+        var n = 0;
+        while (row.next()) {
+            this.processImportRecord(row);
+            n++;
+        }
+        return n;
+    },
+
+    /**
+     * Same behaviour as the legacy subflow "SUBPROC - PTA to Partner Map Record":
+     *  - PTA Lead: first user whose name contains the import value (left empty when the import value is empty)
+     *  - Partner: Account whose number equals the import Number
+     *  - exactly one map row for that partner: set its PTA Lead; otherwise create a new row (partner + PTA Lead)
+     *  - PTA Manager / ALL Assigned PTAs: the import value split on ", ", first 5 names, each resolved like
+     *    PTA Lead; names that resolve to nobody are dropped. Both fields are always written (empty clears).
+     * @returns {string} sys_id of the map row written
+     */
+    processImportRecord: function (row) {
+        var lead = '';
+        var leadName = row.getValue('pta_lead');
+        if (leadName) {
+            lead = this._userLike(leadName);
+        }
+        var account = this._accountByNumber(row.getValue('number'));
+
+        var found = new GlideRecord(this.MAP);
+        if (account) {
+            found.addQuery('partner', account);
+        } else {
+            found.addNullQuery('partner');
+        }
+        found.setLimit(1000);
+        found.query();
+
+        var mapped = '';
+        if (found.getRowCount() == 1 && found.next()) {
+            found.setValue('pta_lead', lead);
+            found.update();
+            mapped = found.getUniqueValue();
+        } else {
+            var created = new GlideRecord(this.MAP);
+            created.initialize();
+            created.setValue('partner', account);
+            created.setValue('pta_lead', lead);
+            mapped = String(created.insert() || '');
+        }
+
+        var target = new GlideRecord(this.MAP);
+        if (mapped && target.get(mapped)) {
+            target.setValue('pta_manager', this._namesToUsers(row.getValue('pta_manager')));
+            target.setValue('all_assigned_ptas', this._namesToUsers(row.getValue('all_pta_assigned')));
+            target.update();
+        }
+        return mapped;
+    },
+
+    /**
+     * Same behaviour as the legacy subflow "MAINT - Remove accounts with empty names":
+     * deletes Account records whose name is empty. Run on demand only.
+     * Deletes can be refused without an error (e.g. the Account table does not allow deletes from other
+     * application scopes on an instance), so only confirmed deletes are counted.
+     * @returns {{deleted: number, notDeleted: number}}
+     */
+    removeAccountsWithEmptyNames: function () {
+        var acct = new GlideRecord('customer_account');
+        acct.addEncodedQuery('nameISEMPTY');
+        acct.setLimit(10000);
+        acct.query();
+        var result = {deleted: 0, notDeleted: 0};
+        while (acct.next()) {
+            if (acct.getValue('name')) {
+                continue;
+            }
+            if (acct.deleteRecord()) {
+                result.deleted++;
+            } else {
+                result.notDeleted++;
+            }
+        }
+        return result;
+    },
+
+    _userLike: function (name) {
+        var u = new GlideRecord('sys_user');
+        u.addQuery('name', 'CONTAINS', name);
+        u.setLimit(1);
+        u.query();
+        return u.next() ? u.getUniqueValue() : '';
+    },
+
+    _accountByNumber: function (number) {
+        var a = new GlideRecord('customer_account');
+        a.addQuery('number', number || '');
+        a.setLimit(1);
+        a.query();
+        return a.next() ? a.getUniqueValue() : '';
+    },
+
+    _namesToUsers: function (list) {
+        if (!list) {
+            return '';
+        }
+        var names = String(list).split(', ').slice(0, 5);
+        var ids = [];
+        for (var i = 0; i < names.length; i++) {
+            if (!names[i]) {
+                continue;
+            }
+            var id = this._userLike(names[i]);
+            if (id) {
+                ids.push(id);
+            }
+        }
+        return ids.join(',');
+    },
+
+    type: 'PtagPtaPartnerMap'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-30 04:07:31</sys_created_on>
+        <sys_id>cad7ad0793e303d04639f8597bba10fe</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PtagPtaPartnerMap</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_script_include_cad7ad0793e303d04639f8597bba10fe</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-30 04:15:43</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_db_object">
+    <sys_db_object action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <actions_access>false</actions_access>
+        <alter_access>false</alter_access>
+        <caller_access/>
+        <client_scripts_access>false</client_scripts_access>
+        <columnar_table>false</columnar_table>
+        <configuration_access>false</configuration_access>
+        <create_access>false</create_access>
+        <create_access_controls>false</create_access_controls>
+        <delete_access>false</delete_access>
+        <filter_extension/>
+        <is_data_interface>false</is_data_interface>
+        <is_df_table>false</is_df_table>
+        <is_extendable>false</is_extendable>
+        <label>PTA to Partner Map - Import</label>
+        <live_feed_enabled>false</live_feed_enabled>
+        <name>x_snc_ptag_engage_pta_to_partner_map_import</name>
+        <number_ref/>
+        <provider_class/>
+        <read_access>true</read_access>
+        <scriptable_table>false</scriptable_table>
+        <super_class/>
+        <sys_class_name>sys_db_object</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-30 04:07:27</sys_created_on>
+        <sys_id>01d7a90793e303d04639f8597bba104e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTA to Partner Map - Import</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_db_object_01d7a90793e303d04639f8597bba104e</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-30 04:07:27</sys_updated_on>
+        <update_access>false</update_access>
+        <user_role/>
+        <ws_access>true</ws_access>
+    </sys_db_object>
+</record_update>

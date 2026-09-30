@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="pta_lead" label="PTA Lead" language="en" table="x_snc_ptag_engage_pta_to_partner_map">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>pta_lead</element>
+            <help/>
+            <hint/>
+            <label>PTA Lead</label>
+            <language>en</language>
+            <name>x_snc_ptag_engage_pta_to_partner_map</name>
+            <plural>PTA Leads</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>jon.deluna</sys_created_by>
+            <sys_created_on>2026-09-30 04:07:27</sys_created_on>
+            <sys_id>bcd7a90793e303d04639f8597bba100b</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>PTA Lead</sys_name>
+            <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+            <sys_update_name>sys_documentation_x_snc_ptag_engage_pta_to_partner_map_pta_lead_en</sys_update_name>
+            <sys_updated_by>jon.deluna</sys_updated_by>
+            <sys_updated_on>2026-09-30 04:07:27</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+    </sys_documentation>
+</record_update>
