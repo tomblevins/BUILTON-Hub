@@ -12,7 +12,7 @@
         <change_fields>false</change_fields>
         <client_callable>false</client_callable>
         <collection>x_snc_ptag_engage_engagement_request</collection>
-        <condition/>
+        <condition>gs.getProperty('x_snc_ptag_engage.ai_features_enabled', 'false') == 'true'</condition>
         <description>I10 runtime: starts the PTAG Triage Assist use case (journal-only [AI Triage Draft] notes) when a request enters Under Review. Uses the proven usecase-shape startAiAgentConversation call; the AIA trigger row x_snc_ptag_engage.ptag_request_entered_review stays inactive as the declarative registration.</description>
         <execute_function>false</execute_function>
         <filter_condition table="x_snc_ptag_engage_engagement_request">stateCHANGESTO-1^EQ<item display_value="Under Review" endquery="false" field="state" goto="false" newquery="false" operator="CHANGESTO" or="false" value="-1"/>
@@ -43,7 +43,7 @@
             usecaseId: 'a915790d875e0b90e5790f29dabb354d',
             conversationUser: gs.getUserID()
         });
-        gs.info('[PTAG triage] start: ' + JSON.stringify(resp));
+        if (!resp) { gs.warn('[PTAG triage] AI agent did not start for ' + current.getValue('number') + ' (refused by licensing or configuration); no draft written.'); } else { gs.info('[PTAG triage] start: ' + JSON.stringify(resp)); }
     } catch (e) {
         gs.warn('[PTAG triage] failed to start: ' + e);
     }
@@ -54,7 +54,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>f515790d875e0b90e5790f29dabb3563</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>PTAG I10 - Triage assist on review entry</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -62,7 +62,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_script_f515790d875e0b90e5790f29dabb3563</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-23 20:39:04</sys_updated_on>
+        <sys_updated_on>2026-10-06 17:27:35</sys_updated_on>
         <template/>
         <when>after</when>
     </sys_script>

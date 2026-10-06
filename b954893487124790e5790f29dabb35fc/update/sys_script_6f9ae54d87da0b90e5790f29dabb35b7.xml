@@ -12,7 +12,7 @@
         <change_fields>false</change_fields>
         <client_callable>false</client_callable>
         <collection>x_snc_ptag_engage_engagement_request</collection>
-        <condition/>
+        <condition>gs.getProperty('x_snc_ptag_engage.ai_features_enabled', 'false') == 'true'</condition>
         <description>I9 runtime: starts the PTAG Completeness Chase use case (journal-only drafts) when a request enters Need more information. Uses the proven usecase-shape startAiAgentConversation call; the AIA trigger row d46e958d... stays as the declarative registration (its flow path NPEs in the conversation service on this instance - evidence in data/ptag_hub_i9_build.json).</description>
         <execute_function>false</execute_function>
         <filter_condition table="x_snc_ptag_engage_engagement_request">stateCHANGESTO-2^EQ<item display_value="Need more information" endquery="false" field="state" goto="false" newquery="false" operator="CHANGESTO" or="false" value="-2"/>
@@ -43,7 +43,7 @@
             usecaseId: '0c6e958d871a0b90e5790f29dabb357c',
             conversationUser: gs.getUserID()
         });
-        gs.info('[PTAG chaser] start: ' + JSON.stringify(resp));
+        if (!resp) { gs.warn('[PTAG chaser] AI agent did not start for ' + current.getValue('number') + ' (refused by licensing or configuration); no draft written.'); } else { gs.info('[PTAG chaser] start: ' + JSON.stringify(resp)); }
     } catch (e) {
         gs.warn('[PTAG chaser] failed to start: ' + e);
     }
@@ -54,7 +54,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>6f9ae54d87da0b90e5790f29dabb35b7</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>PTAG I9 - Chaser on need more info</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -62,7 +62,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_script_6f9ae54d87da0b90e5790f29dabb35b7</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-23 19:53:19</sys_updated_on>
+        <sys_updated_on>2026-10-06 17:27:35</sys_updated_on>
         <template/>
         <when>after</when>
     </sys_script>

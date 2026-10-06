@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
     <sp_widget action="INSERT_OR_UPDATE">
         <category>custom</category>
-        <client_script><![CDATA[function($timeout) {
+        <client_script><![CDATA[function($timeout, $scope) {
   var c = this;
   c.step = 1;
   c.form = { partner_scope: 'global' };
@@ -269,6 +269,23 @@
     return true;
   }
   c.stepReady = stepReady;
+
+  /* STRY0011976: a field's "required" message clears as soon as the field holds a valid
+     value, instead of waiting for the next Continue click. Same rules as validate();
+     this only ever removes a flag, validate() is still the only place that sets one. */
+  function fieldOk(key) {
+    if (key === 'tam') {
+      if (!hasVal(c.form.tam)) { return true; }
+      var tv = parseFloat(String(c.form.tam).replace(/[$,\s]/g, ''));
+      return !isNaN(tv) && tv >= 0;
+    }
+    return hasVal(c.form[key]);
+  }
+  $scope.$watchCollection(function() { return c.form; }, function() {
+    for (var key in c.err) {
+      if (c.err.hasOwnProperty(key) && fieldOk(key)) { delete c.err[key]; }
+    }
+  });
   c.formReady = function() { return stepReady(1) && stepReady(2) && stepReady(3); };
 
   c.next = function() { if (validate(c.step)) { c.step = Math.min(3, c.step + 1); toTop(); } };
@@ -600,14 +617,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9c1b8939ac3d04639f8597bba1026</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>PTAG Submit Engagement</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9c1b8939ac3d04639f8597bba1026</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 19:25:34</sys_updated_on>
+        <sys_updated_on>2026-10-06 18:26:07</sys_updated_on>
         <template><![CDATA[<!-- I6 RECEIPT: ptag_submit_w - internal register + number-based status link (I5 REFS structure unchanged) -->
 <section class="pt-section">
   <div class="pt-shell pt-shell--form">

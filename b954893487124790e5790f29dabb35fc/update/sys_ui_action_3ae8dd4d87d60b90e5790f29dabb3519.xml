@@ -5,7 +5,7 @@
         <client>false</client>
         <client_script_v2/>
         <comments>I9: invokes the PTAG Engagement Executive Summary Now Assist skill via PTAGAiUtil. [AI]-marked draft; humans decide.</comments>
-        <condition>current.canWrite()</condition>
+        <condition>current.canWrite() &amp;&amp; gs.getProperty('x_snc_ptag_engage.ai_features_enabled', 'false') == 'true'</condition>
         <form_action>true</form_action>
         <form_button>true</form_button>
         <form_button_icon/>
@@ -52,7 +52,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>3ae8dd4d87d60b90e5790f29dabb3519</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>Generate executive summary</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -60,7 +60,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_ui_action_3ae8dd4d87d60b90e5790f29dabb3519</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-23 18:35:59</sys_updated_on>
+        <sys_updated_on>2026-10-06 17:27:34</sys_updated_on>
         <table>x_snc_ptag_engage_engagement_request</table>
         <ui11_compatible>true</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
