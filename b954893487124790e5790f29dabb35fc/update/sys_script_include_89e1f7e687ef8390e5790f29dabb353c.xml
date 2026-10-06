@@ -16,8 +16,9 @@ PTAGLegacySync.prototype = {
      no business rules / notifications (setWorkflow(false)), read-only for non-admins (BR guard). */
   SRC: 'x_snc_ptag_intak_0_engagement_request',
   DST: 'x_snc_ptag_engage_engagement_request',
-  COPY: ["budget", "business_owner", "certified_resources", "corporate_alignment", "customer_pain_points", "executive_sponsor", "has_customers", "in_market_status", "partner", "partner_manager", "pipeline", "primary_product", "resolution_notes", "tam", "target_geo", "value_prop", "what_is_the_partners_ai_strategy", "business_owner_email", "business_owner_first_name", "business_owner_last_name", "executive_sponsor_first_email", "executive_sponsor_first_name", "executive_sponsor_last_name", "primary_pta", "pta_manager", "resolution_code", "technical_sme_email", "technical_sme_first_name", "technical_sme_last_name", "short_description", "idea_description", "state", "opened_by", "submitter", "assigned_to", "assignment_group", "close_notes", "closed_at", "closed_by", "opened_at", "priority"],
+  COPY: ["budget", "business_owner", "certified_resources", "corporate_alignment", "customer_pain_points", "executive_sponsor", "has_customers", "in_market_status", "partner", "partner_manager", "pipeline", "primary_product", "resolution_notes", "tam", "target_geo", "value_prop", "what_is_the_partners_ai_strategy", "business_owner_email", "business_owner_first_name", "business_owner_last_name", "executive_sponsor_first_email", "executive_sponsor_first_name", "executive_sponsor_last_name", "primary_pta", "pta_manager", "resolution_code", "technical_sme_email", "technical_sme_first_name", "technical_sme_last_name", "short_description", "idea_description", "state", "opened_by", "submitter", "assigned_to", "assignment_group", "close_notes", "closed_at", "closed_by", "opened_at", "priority", "watch_list"],
   LOOKUPS: {"practice": "x_snc_ptag_engage_practice", "primary_industry": "x_snc_ptag_engage_industry", "partner_use_case": "x_snc_ptag_engage_partner_use_case", "route_to_market": "x_snc_ptag_engage_route_to_market"},
+  CURRENCY: ['tam'],
   TERMINAL: ['3', '7', '8', '9'],
   BATCH: 40,
   MAX_SCAN: 3000,
@@ -98,7 +99,7 @@ PTAGLegacySync.prototype = {
     var i, f;
     for (i = 0; i < this.COPY.length; i++) {
       f = this.COPY[i];
-      if (src.isValidField(f) && dst.isValidField(f)) dst.setValue(f, src.getValue(f));
+      if (src.isValidField(f) && dst.isValidField(f)) this._copyField(src, dst, f);
     }
     for (f in this.LOOKUPS) {
       if (src.isValidField(f)) dst.setValue(f, this._lookup(this.LOOKUPS[f], src[f].getDisplayValue()));
@@ -168,6 +169,51 @@ PTAGLegacySync.prototype = {
     }
   },
 
+  _copyField: function (src, dst, f) {
+    if (this.CURRENCY.indexOf(f) >= 0) {
+      // Currency keeps its own code and amount ("EUR;80000000.00"); copying the plain value would store the
+      // reference-currency figure and lose the currency the requester entered. A currency field cannot be
+      // empty on the platform: no amount is stored as 0.
+      var v = src.getValue(f);
+      dst.setValue(f, v && parseFloat(v) !== 0 ? String(src[f].getCurrencyString()) : '0');
+      return;
+    }
+    if (src.getValue(f)) dst.setValue(f, src.getValue(f));
+    else if (dst.getValue(f)) dst.setValue(f, '');
+  },
+
+  _fieldKey: function (gr, f) {
+    var v = gr.getValue(f);
+    if (this.CURRENCY.indexOf(f) >= 0) return v && parseFloat(v) !== 0 ? String(gr[f].getCurrencyString()) : '';
+    return String(v || '');
+  },
+
+  refreshFields: function (fields, maxRows) {
+    // Re-copies the given fields onto existing mirrors and changes nothing else: no business rules, no email,
+    // sys fields and legacy_updated_on kept. Needed when a field joins COPY after mirrors exist, because the
+    // regular run skips mirrors whose source has not changed. Idempotent.
+    var out = {checked: 0, updated: 0, missing_source: 0, errors: []};
+    var dst = new GlideRecord(this.DST);
+    dst.addQuery('legacy_mirror', true); dst.setLimit(maxRows || 5000); dst.query();
+    while (dst.next()) {
+      out.checked++;
+      var src = new GlideRecord(this.SRC);
+      if (!src.get(dst.getValue('legacy_source'))) { out.missing_source++; continue; }
+      var changed = false;
+      for (var i = 0; i < fields.length; i++) {
+        var f = fields[i];
+        if (!src.isValidField(f) || !dst.isValidField(f)) continue;
+        if (this._fieldKey(dst, f) === this._fieldKey(src, f)) continue;
+        this._copyField(src, dst, f);
+        changed = true;
+      }
+      if (!changed) continue;
+      dst.setWorkflow(false); dst.autoSysFields(false);
+      if (dst.update()) out.updated++; else out.errors.push(String(dst.getValue('number')) + ': ' + dst.getLastErrorMessage());
+    }
+    return out;
+  },
+
   _status: function () {
     this.stats.at = new GlideDateTime().getDisplayValue();
     gs.setProperty('x_snc_ptag_engage.legacy_sync_status', JSON.stringify(this.stats).substring(0, 3900));
@@ -180,13 +226,13 @@ PTAGLegacySync.prototype = {
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-09-29 00:53:42</sys_created_on>
         <sys_id>89e1f7e687ef8390e5790f29dabb353c</sys_id>
-        <sys_mod_count>3</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>PTAGLegacySync</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_script_include_89e1f7e687ef8390e5790f29dabb353c</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-30 01:59:06</sys_updated_on>
+        <sys_updated_on>2026-10-06 23:28:01</sys_updated_on>
     </sys_script_include>
 </record_update>
