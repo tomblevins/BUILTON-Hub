@@ -17,9 +17,9 @@
         sec.classList.remove('sp-scroll', 'flex-grow', 'flex-column', 'page');
         sec.style.setProperty('overflow', 'visible', 'important');
       }
-      /* I73 (Jon's root-cause #2): SP's flex-row on the row wrapper changes
+      /* I73 (root cause #2): SP's flex-row on the row wrapper changes
          the narrow-width geometry and CREATES the overflow that drew the bar.
-         His hand fix, made permanent: flex-row -> row. */
+         The manual fix, made permanent: flex-row -> row. */
       var rows = document.querySelectorAll('.sp-na-root-container.flex-row, .sp-row-content.flex-row');
       for (var ri = 0; ri < rows.length; ri++) {
         rows[ri].classList.remove('flex-row');
@@ -102,14 +102,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-28 21:50:50</sys_created_on>
         <sys_id>bd753f6e87124fd0e5790f29dabb356b</sys_id>
-        <sys_mod_count>6</sys_mod_count>
+        <sys_mod_count>7</sys_mod_count>
         <sys_name>PTAG Shell Control</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_bd753f6e87124fd0e5790f29dabb356b</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-07-28 22:43:32</sys_updated_on>
+        <sys_updated_on>2026-10-06 20:42:33</sys_updated_on>
         <template><![CDATA[<div class="pt-shell-ctl" style="display:none" aria-hidden="true"></div>]]></template>
     </sp_widget>
 </record_update>

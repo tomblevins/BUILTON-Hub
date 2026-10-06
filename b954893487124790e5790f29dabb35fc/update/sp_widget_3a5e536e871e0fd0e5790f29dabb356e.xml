@@ -6,7 +6,7 @@
   try { document.body.style.setProperty('background', '#f1f3f5', 'important'); } catch (e) {}
   try { document.body.style.setProperty('margin', '0', 'important'); } catch (e) {}
   /* I63: framed embed never scrolls itself - the frame self-sizes, so the
-     inner scrollbar was pure rounding noise (Jon's dark-grey bar). */
+     inner scrollbar was pure rounding noise (the dark-grey bar). */
   try {
     if (window.frameElement) {
       document.documentElement.style.setProperty('overflow', 'hidden', 'important');
@@ -459,7 +459,7 @@
 
   c.drill = function(kind, value, label, slot, sortHint) {
     if (c.dp && c.dp.label === label) { c.closeDrill(); return; }
-    if (!c.dp) { saveScroll(); }   /* fresh open: remember where Jon was */
+    if (!c.dp) { saveScroll(); }   /* fresh open: remember where the user was */
     var sortKey = sortHint === 'score' ? 'score' : (sortHint === 'updated' ? 'updated_ms' : 'age');
     c.dpArgs = {kind: kind, value: String(value),
                 ids: (kind === 'practice' && String(value) === '__other__') ? c.topPracticeIds : ''};
@@ -1120,14 +1120,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-28 20:09:52</sys_created_on>
         <sys_id>3a5e536e871e0fd0e5790f29dabb356e</sys_id>
-        <sys_mod_count>21</sys_mod_count>
+        <sys_mod_count>22</sys_mod_count>
         <sys_name>PTAG Engagement Pulse</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_3a5e536e871e0fd0e5790f29dabb356e</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-28 19:45:20</sys_updated_on>
+        <sys_updated_on>2026-10-06 20:41:59</sys_updated_on>
         <template><![CDATA[<div class="pt-cc">
   <div class="pt-cc__denied" ng-if="data.denied">Not authorized.</div>
   <div class="pt-cc__wrap" ng-if="!data.denied">

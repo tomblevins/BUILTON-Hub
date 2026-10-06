@@ -26,7 +26,7 @@
         <run_type>periodically</run_type>
         <run_weekinmonth/>
         <script><![CDATA[(function ptagPdsTeamSync() {
-    // Mirrors the ACTIVE members of "PDS Solution Consulting" into "PTAG Hub - PDS Team" (Jon, 2026-09-29).
+    // Mirrors the ACTIVE members of "PDS Solution Consulting" into "PTAG Hub - PDS Team".
     // Adds missing people, removes anyone who is no longer in the source group or is inactive.
     // Creates the target group on first run, so the job self-installs on every instance.
     var SOURCE = 'PDS Solution Consulting', TARGET = 'PTAG Hub - PDS Team';
@@ -72,14 +72,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-09-29 20:12:06</sys_created_on>
         <sys_id>b90b7f7693a38f904639f8597bba103e</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>PTAG Hub - PDS team membership sync</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sysauto_script_b90b7f7693a38f904639f8597bba103e</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-29 20:12:06</sys_updated_on>
+        <sys_updated_on>2026-10-06 20:43:27</sys_updated_on>
         <time_zone/>
         <upgrade_safe>false</upgrade_safe>
     </sysauto_script>

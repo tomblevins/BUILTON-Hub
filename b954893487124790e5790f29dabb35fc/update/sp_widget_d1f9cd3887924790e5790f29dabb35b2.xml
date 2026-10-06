@@ -215,7 +215,7 @@
   data.stats = { total: 0, by_state: [] }; // stats strip removed I11; by_state feeds the pipeline panel only
   var counts = {};
   var ga = new GlideAggregate('x_snc_ptag_engage_engagement_request');
-  ga.addQuery('opened_by', gs.getUserID()); // I11: viewer-scoped per Jon
+  ga.addQuery('opened_by', gs.getUserID()); // I11: viewer-scoped
   ga.addAggregate('COUNT');
   ga.groupBy('state');
   ga.query();
@@ -245,14 +245,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:08</sys_created_on>
         <sys_id>d1f9cd3887924790e5790f29dabb35b2</sys_id>
-        <sys_mod_count>19</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>PTAG Landing</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_d1f9cd3887924790e5790f29dabb35b2</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-28 18:07:11</sys_updated_on>
+        <sys_updated_on>2026-10-06 20:42:44</sys_updated_on>
         <template><![CDATA[<!-- I6 COPY: ptag_landing - internal register (GPC staff); structure unchanged from I3/I5 -->
 <div>
 

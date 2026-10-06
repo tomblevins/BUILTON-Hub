@@ -31,7 +31,7 @@
         <rest_variables/>
         <role_conditions/>
         <script><![CDATA[(function executeRule(current, previous /*null when async*/) {
-    // Jon, 2026-09-29: new requests default to the PDS team group everybody is part of.
+    // New requests default to the PDS team group everybody is part of.
     // Looked up by NAME: the group is created per instance by "PTAG Hub - PDS team membership sync".
     if (current.getValue('assignment_group')) return;
     if (String(current.getValue('legacy_mirror')) === 'true' || String(current.getValue('legacy_mirror')) === '1') return;
@@ -48,7 +48,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>f634144793ab8f904639f8597bba105b</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>PTAG Hub - default assignment group</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -56,7 +56,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sys_script_f634144793ab8f904639f8597bba105b</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-29 22:02:13</sys_updated_on>
+        <sys_updated_on>2026-10-06 20:43:05</sys_updated_on>
         <template/>
         <when>before</when>
     </sys_script>
