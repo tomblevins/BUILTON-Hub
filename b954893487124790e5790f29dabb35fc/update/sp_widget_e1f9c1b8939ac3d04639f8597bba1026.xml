@@ -4,7 +4,15 @@
         <client_script><![CDATA[function($timeout, $scope) {
   var c = this;
   c.step = 1;
-  c.form = { partner_scope: 'global' };
+  /* A new request starts from the field defaults read on the server: data.activity_type_default is the
+     dictionary default of activity_type when it is an active choice, otherwise empty. Used on load and
+     by reset, so both start the same way. */
+  function newForm() {
+    var f = { partner_scope: 'global' };
+    if (c.data && c.data.activity_type_default) { f.activity_type = c.data.activity_type_default; }
+    return f;
+  }
+  c.form = newForm();
   c.err = {};
   c.busy = false;
   c.copied = false;
@@ -321,7 +329,7 @@
   };
 
   c.reset = function() {
-    c.form = { partner_scope: 'global' }; c.err = {}; c.step = 1; c.copied = false;
+    c.form = newForm(); c.err = {}; c.step = 1; c.copied = false;
     c.queue = []; c.attErr = ''; c.up = { busy: false, total: 0, done: 0, failed: [] };  /* I41 */
     for (var k in c.ref) {
       if (c.ref.hasOwnProperty(k)) { c.ref[k] = { name: '' }; }
@@ -453,6 +461,23 @@
     return out;
   }
 
+  /* Activity type default for a new request: the dictionary default_value of activity_type, read at run
+     time. Used only when it is one of the active choices; any other value (none, inactive, unknown or a
+     scripted default) gives '' and the form starts empty. */
+  function activityTypeDefault(ats) {
+    var v = '';
+    try {
+      var dd = new GlideRecord('sys_dictionary');
+      dd.addQuery('name', TABLE);
+      dd.addQuery('element', 'activity_type');
+      dd.setLimit(1);
+      dd.query();
+      if (dd.next()) { v = String(dd.getValue('default_value') || '').trim(); }
+    } catch (eD) { v = ''; }
+    for (var di = 0; di < ats.length; di++) { if (ats[di].id === v) { return v; } }
+    return '';
+  }
+
   if (input && input.action === 'search') {
     /* table-whitelisted; returns sys_id + name only */
     data.matches = [];
@@ -521,6 +546,7 @@
     data.use_cases = list('x_snc_ptag_engage_partner_use_case');
     data.geos = geoOptions();
     data.activity_types = activityTypes();
+    data.activity_type_default = activityTypeDefault(data.activity_types);
     data.maturity = [];
     try {
       var mc = new GlideRecord('sys_choice');
@@ -634,7 +660,9 @@
   if (hasVal(f.primary_industry)) { rec.setValue('primary_industry', String(f.primary_industry)); }
   if (hasVal(f.route_to_market)) { rec.setValue('route_to_market', String(f.route_to_market)); }
   if (hasVal(f.partner_use_case)) { rec.setValue('partner_use_case', String(f.partner_use_case)); }
-  if (hasVal(f.activity_type)) { rec.setValue('activity_type', String(f.activity_type)); }
+  /* insert() puts the dictionary default into an empty activity_type (unset or ''); 'NULL' keeps an empty
+     pick empty, so the saved value is the one shown on review. */
+  rec.setValue('activity_type', hasVal(f.activity_type) ? String(f.activity_type) : 'NULL');
   if (hasVal(f.customer_pain_points)) { rec.setValue('customer_pain_points', String(f.customer_pain_points)); }
   if (hasVal(f.value_prop)) { rec.setValue('value_prop', String(f.value_prop)); }
   if (hasVal(f.in_market_status)) { rec.setValue('in_market_status', String(f.in_market_status)); }
@@ -661,14 +689,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9c1b8939ac3d04639f8597bba1026</sys_id>
-        <sys_mod_count>19</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>PTAG Submit Engagement</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9c1b8939ac3d04639f8597bba1026</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-10-07 18:13:09</sys_updated_on>
+        <sys_updated_on>2026-10-07 20:29:33</sys_updated_on>
         <template><![CDATA[<!-- I6 RECEIPT: ptag_submit_w - internal register + number-based status link (I5 REFS structure unchanged) -->
 <section class="pt-section">
   <div class="pt-shell pt-shell--form">
