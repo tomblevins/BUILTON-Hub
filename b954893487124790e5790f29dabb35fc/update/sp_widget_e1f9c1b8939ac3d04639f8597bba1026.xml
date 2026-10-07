@@ -115,18 +115,17 @@
   }
 
   /* ---- reusable modal reference picker ----------------------------------
-     ONE parameterized helper set drives all four reference fields; c.form
-     holds the picked sys_ids, c.ref the display names for control + review. */
+     ONE parameterized helper set drives the three searchable reference fields;
+     c.form holds the picked sys_ids, c.ref the display names for control + review.
+     Target geo is a plain select of the controlled regions (data.geos). */
   c.ref = {
     partner:         { name: '' },
     partner_manager: { name: '' },
-    target_geo:      { name: '' },
     primary_product: { name: '' }
   };
   var RP_LABELS = {
     partner: 'Parent Partner',
     partner_manager: 'Partner Manager',
-    target_geo: 'Where is the target geo',
     primary_product: 'What is the Primary Product Used?'
   };
   c.rp = { open: false, key: '', label: '', term: '', items: [], busy: false, hi: -1 };
@@ -419,14 +418,40 @@
   data.result = { ok: false };
   data.errors = [];
 
+  /* target_geo is not searchable: the form offers the controlled regions (PTAGGeo) as a select, so this
+     feed never returns arbitrary cmn_location rows for it. */
   var SEARCH = {
     partner: 'customer_account',
     partner_manager: 'sys_user',
-    target_geo: 'cmn_location',
     primary_product: 'cmdb_ci_business_app'
   };
 
   function hasVal(v) { return v !== null && v !== undefined && String(v).trim() !== ''; }
+
+  /* Target geo options: the controlled regions in display order (PTAGGeo reads
+     x_snc_ptag_engage.target_geo_options). */
+  function geoOptions() {
+    try {
+      return new PTAGGeo().options().map(function(o) { return { id: String(o.sys_id), name: String(o.name) }; });
+    } catch (eG) { return []; }
+  }
+
+  /* Activity type options: the active choices of activity_type, by sequence. Read at run time, so a new
+     choice row appears on the form and is accepted by 'create' without a code change. */
+  function activityTypes() {
+    var out = [];
+    try {
+      var at = new GlideRecord('sys_choice');
+      at.addQuery('name', TABLE);
+      at.addQuery('element', 'activity_type');
+      at.addQuery('inactive', false);
+      at.addQuery('language', 'en');
+      at.orderBy('sequence');
+      at.query();
+      while (at.next()) { out.push({ id: String(at.getValue('value')), name: String(at.getValue('label')) }); }
+    } catch (eA) { out = []; }
+    return out;
+  }
 
   if (input && input.action === 'search') {
     /* table-whitelisted; returns sys_id + name only */
@@ -494,6 +519,8 @@
     data.routes = list('x_snc_ptag_engage_route_to_market', true);
     data.industries = list('x_snc_ptag_engage_industry');
     data.use_cases = list('x_snc_ptag_engage_partner_use_case');
+    data.geos = geoOptions();
+    data.activity_types = activityTypes();
     data.maturity = [];
     try {
       var mc = new GlideRecord('sys_choice');
@@ -548,7 +575,6 @@
     ['partner', 'customer_account', 'Parent Partner'],
     ['partner_manager', 'sys_user', 'Partner Manager'],
     ['practice', 'x_snc_ptag_engage_practice', 'Practice'],
-    ['target_geo', 'cmn_location', 'Target geo'],
     ['primary_product', 'cmdb_ci_business_app', 'Primary Product'],
     ['primary_industry', 'x_snc_ptag_engage_industry', 'Primary Target Industry'],
     ['route_to_market', 'x_snc_ptag_engage_route_to_market', 'Route to Market'],
@@ -558,6 +584,23 @@
     if (hasVal(f[REFS[i][0]]) && !refOk(REFS[i][1], f[REFS[i][0]])) {
       errs.push(REFS[i][2] + ' not recognized.');
     }
+  }
+
+  /* Target geo only takes the controlled regions. The table's save rule refuses anything else as well; this
+     check answers first, with a message the requester can act on. */
+  if (hasVal(f.target_geo)) {
+    var geo = new PTAGGeo();
+    if (!geo.isAllowed(String(f.target_geo))) {
+      var gn = geo.names();
+      errs.push(gn.length ? 'Target geo must be one of: ' + gn.join(', ') + '.' : 'No target geo regions are configured.');
+    }
+  }
+
+  /* Activity type is optional; when given it must be one of the active choices. */
+  if (hasVal(f.activity_type)) {
+    var atOk = false, ats = activityTypes();
+    for (var ai = 0; ai < ats.length; ai++) { if (ats[ai].id === String(f.activity_type)) { atOk = true; break; } }
+    if (!atOk) { errs.push('Activity type value not recognized.'); }
   }
 
   var MATS = { 'Idea': 1, 'in_market': 1, 'pilot': 1, 'prototype': 1, 'ready_for_sale': 1 };
@@ -591,6 +634,7 @@
   if (hasVal(f.primary_industry)) { rec.setValue('primary_industry', String(f.primary_industry)); }
   if (hasVal(f.route_to_market)) { rec.setValue('route_to_market', String(f.route_to_market)); }
   if (hasVal(f.partner_use_case)) { rec.setValue('partner_use_case', String(f.partner_use_case)); }
+  if (hasVal(f.activity_type)) { rec.setValue('activity_type', String(f.activity_type)); }
   if (hasVal(f.customer_pain_points)) { rec.setValue('customer_pain_points', String(f.customer_pain_points)); }
   if (hasVal(f.value_prop)) { rec.setValue('value_prop', String(f.value_prop)); }
   if (hasVal(f.in_market_status)) { rec.setValue('in_market_status', String(f.in_market_status)); }
@@ -617,14 +661,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9c1b8939ac3d04639f8597bba1026</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>19</sys_mod_count>
         <sys_name>PTAG Submit Engagement</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9c1b8939ac3d04639f8597bba1026</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-10-07 15:45:17</sys_updated_on>
+        <sys_updated_on>2026-10-07 18:13:09</sys_updated_on>
         <template><![CDATA[<!-- I6 RECEIPT: ptag_submit_w - internal register + number-based status link (I5 REFS structure unchanged) -->
 <section class="pt-section">
   <div class="pt-shell pt-shell--form">
@@ -710,17 +754,13 @@
             </div>
           </div>
 
+          <!-- Target geo: a select of the controlled regions (data.geos, from PTAGGeo). A free location search let
+               people pick countries and addresses, which broke the Geo filters. -->
           <div class="pt-field" ng-class="{'has-error': c.err.target_geo}">
             <label for="pt-f-geo">Where is the target geo <span class="pt-req">*</span></label>
-            <div class="pt-refselect" ng-class="{'is-set': !!c.form.target_geo}">
-              <button id="pt-f-geo" class="pt-refselect__btn" type="button" ng-click="c.rpOpen('target_geo')" aria-haspopup="dialog">
-                <span class="pt-refselect__val" ng-if="c.ref.target_geo.name">{{c.ref.target_geo.name}}</span>
-                <span class="pt-refselect__ph" ng-if="!c.ref.target_geo.name">Select a location&hellip;</span>
-              </button>
-              <button class="pt-refselect__clear pt-iconbtn" type="button" ng-if="c.ref.target_geo.name" ng-click="c.rpClear('target_geo')" aria-label="Clear target geo"><svg class="pt-i pt-i--sm"><use href="#ptag-i-x"/></svg></button>
-              <svg class="pt-i pt-i--sm pt-refselect__chev" aria-hidden="true"><use href="#ptag-i-chevron-down"/></svg>
-            </div>
-            <div class="pt-field__err" ng-if="c.err.target_geo">Where is the target geo is required &mdash; pick from the list.</div>
+            <select id="pt-f-geo" class="pt-select" ng-model="c.form.target_geo" ng-options="g.id as g.name for g in data.geos"><option value="">Select a region&hellip;</option></select>
+            <div class="pt-field__hint" ng-if="!c.err.target_geo">For a single country, pick the region it belongs to.</div>
+            <div class="pt-field__err" ng-if="c.err.target_geo">Where is the target geo is required.</div>
           </div>
 
           <div class="pt-field pt-field--full" ng-class="{'has-error': c.err.short_description}">
@@ -764,6 +804,12 @@
           <div class="pt-field">
             <label for="pt-f-usecase">Primary Use Case</label>
             <select id="pt-f-usecase" class="pt-select" ng-model="c.form.partner_use_case" ng-options="u.id as u.name for u in data.use_cases"><option value="">Select a use case&hellip; (optional)</option></select>
+          </div>
+
+          <!-- Activity type (optional): the active choices of activity_type (data.activity_types). -->
+          <div class="pt-field" ng-if="data.activity_types.length">
+            <label for="pt-f-activity">Activity type</label>
+            <select id="pt-f-activity" class="pt-select" ng-model="c.form.activity_type" ng-options="a.id as a.name for a in data.activity_types"><option value="">Select an activity type&hellip; (optional)</option></select>
           </div>
 
         </div>
@@ -841,8 +887,9 @@
           <div class="pt-review__row"><div class="pt-review__k">Partner Manager</div><div class="pt-review__v">{{c.ref.partner_manager.name || '&mdash;'}}</div></div>
           <div class="pt-review__row"><div class="pt-review__k">Practice</div><div class="pt-review__v">{{c.nameOf(data.practices, c.form.practice) || '&mdash;'}}</div></div>
           <div class="pt-review__row"><div class="pt-review__k">Primary Product</div><div class="pt-review__v">{{c.ref.primary_product.name || '&mdash;'}}</div></div>
-          <div class="pt-review__row"><div class="pt-review__k">Target geo</div><div class="pt-review__v">{{c.ref.target_geo.name || '&mdash;'}}</div></div>
+          <div class="pt-review__row"><div class="pt-review__k">Target geo</div><div class="pt-review__v">{{c.nameOf(data.geos, c.form.target_geo) || '&mdash;'}}</div></div>
           <div class="pt-review__row"><div class="pt-review__k">Short Description</div><div class="pt-review__v">{{c.form.short_description || '&mdash;'}}</div></div>
+          <div class="pt-review__row" ng-if="data.activity_types.length"><div class="pt-review__k">Activity type</div><div class="pt-review__v">{{c.nameOf(data.activity_types, c.form.activity_type) || '&mdash;'}}</div></div>
           <div class="pt-review__row"><div class="pt-review__k">Maturity</div><div class="pt-review__v">{{c.nameOf(data.maturity, c.form.in_market_status) || '&mdash;'}}</div></div>
           <div class="pt-review__row"><div class="pt-review__k">Assessment signals</div><div class="pt-review__v">{{c.signals()}} of 7 confirmed</div></div>
           <div class="pt-review__row" ng-if="c.queue.length"><div class="pt-review__k">Attachments</div><div class="pt-review__v">{{c.queue.length}} {{c.queue.length === 1 ? 'file' : 'files'}} ready to upload</div></div>

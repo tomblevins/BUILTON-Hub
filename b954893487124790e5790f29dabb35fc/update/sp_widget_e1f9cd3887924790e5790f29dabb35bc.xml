@@ -1410,19 +1410,16 @@
     return;
   }
 
-  /* ---- Geo picker: data-driven (target_geo -> cmn_location), counts within the
-     People scope, "Not set" always last and always present (spec 6.2) ---- */
+  /* ---- Geo picker: the controlled regions (PTAGGeo, x_snc_ptag_engage.target_geo_options) in that
+     order, counts within the People scope, "Not set" always last and always present (spec 6.2).
+     A Geo still held in a saved view but not offered any more is listed after them, so it can be
+     cleared. Records holding an older value keep showing it in the table and the detail view. ---- */
   if (input && input.action === 'geo_options') {
     var gv0 = normalize(String(input.view_json || '')).view;
-    var inUse = {}, order = [];
-    var gall = new GlideAggregate(TABLE);
-    if (!BROWSE) { gall.addQuery('opened_by', ME); }
-    gall.addAggregate('COUNT');
-    gall.groupBy('target_geo');
-    gall.query();
-    while (gall.next()) {
-      var gid = String(gall.getValue('target_geo') || '');
-      if (gid && !inUse[gid]) { inUse[gid] = true; order.push(gid); }
+    var inUse = {}, order = [], ctl = {}, cids = [];
+    try { cids = new PTAGGeo().options().map(function(o) { return String(o.sys_id); }); } catch (eC) { cids = []; }
+    for (var ci = 0; ci < cids.length; ci++) {
+      if (!inUse[cids[ci]]) { inUse[cids[ci]] = true; ctl[cids[ci]] = ci; order.push(cids[ci]); }
     }
     for (var si = 0; si < gv0.geo.length; si++) {
       if (gv0.geo[si] !== 'none' && !inUse[gv0.geo[si]]) { inUse[gv0.geo[si]] = true; order.push(gv0.geo[si]); }
@@ -1451,7 +1448,9 @@
       gopts.push({ id: order[oi], label: glabels[order[oi]] || '(unknown)', n: gcnt[order[oi]] || 0 });
     }
     gopts.sort(function(a, b) {
-      if (b.n !== a.n) { return b.n - a.n; }
+      var ca = ctl.hasOwnProperty(a.id), cb = ctl.hasOwnProperty(b.id);
+      if (ca && cb) { return ctl[a.id] - ctl[b.id]; }
+      if (ca !== cb) { return ca ? -1 : 1; }
       var x = a.label.toLowerCase(), y = b.label.toLowerCase();
       return x < y ? -1 : (x > y ? 1 : 0);
     });
@@ -1729,14 +1728,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9cd3887924790e5790f29dabb35bc</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>26</sys_mod_count>
         <sys_name>PTAG My Engagements</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9cd3887924790e5790f29dabb35bc</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-09-29 21:14:42</sys_updated_on>
+        <sys_updated_on>2026-10-07 18:14:55</sys_updated_on>
         <template><![CDATA[<!-- I11 + B147 (STRY0012133): ptag_myeng_w - saved view (Submitted by include/exclude, Target Geo, state chip, sort) over a sortable table (cards under 980px) + engagement detail modal. Spec: deliveries/PTAG Hub/PTAG-Portal-Filter-UX-Spec_2026-09-29.md -->
 <section class="pt-section pt-myeng">
   <div class="pt-shell">

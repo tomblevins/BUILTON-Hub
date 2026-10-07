@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>Locations allowed in Target Geo on engagement requests, as cmn_location sys_ids in display order (AMS, EMEA, APAC; the same sys_ids on every instance). Add a sys_id to offer another region.</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_snc_ptag_engage.target_geo_options</name>
+        <read_roles/>
+        <suffix>target_geo_options</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-10-07 18:02:38</sys_created_on>
+        <sys_id>971a2c6593bf4b544639f8597bba10ed</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_ptag_engage.target_geo_options</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_properties_971a2c6593bf4b544639f8597bba10ed</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-10-07 18:02:38</sys_updated_on>
+        <type>string</type>
+        <value>9647aa4e1b55d550b1c7a930604bcbd1,00c8228e1b55d550b1c7a930604bcbe7,01b8228e1b55d550b1c7a930604bcbe5</value>
+        <write_roles/>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=971a2c6593bf4b544639f8597bba10ed"/>
+</record_update>
