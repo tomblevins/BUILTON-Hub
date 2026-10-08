@@ -216,6 +216,21 @@
     c.live = '';
     $timeout(function() { c.live = msg; }, 80);
   }
+  /* the updating state: on from the digest that starts a refetch until its answer is applied, and held
+     for at least BUSY_MIN ms so a fast answer does not flicker. c.loading keeps its own meaning. */
+  var BUSY_MIN = 300, busyAt = 0, busyTimer = null;
+  c.busy = false;
+  function busyOn() {
+    if (busyTimer) { $timeout.cancel(busyTimer); busyTimer = null; }
+    if (!c.busy) { busyAt = Date.now(); }
+    c.busy = true;
+  }
+  function busyOff() {
+    var left = BUSY_MIN - (Date.now() - busyAt);
+    if (busyTimer) { $timeout.cancel(busyTimer); busyTimer = null; }
+    if (left <= 0) { c.busy = false; return; }
+    busyTimer = $timeout(function() { busyTimer = null; c.busy = false; }, left);
+  }
   function countMsg(d) {
     var n = (d && d.total) || 0;
     return n ? (n + ' request' + (n === 1 ? '' : 's')) : 'No requests match this view';
@@ -237,11 +252,14 @@
     lastPayload = { payload: payload, after: after };
     c.loading = true;
     c.loadError = false;
+    busyOn();
+    announce('Updating list');
     return c.server.get(payload).then(function(r) {
       if (my !== seq) { return; }          /* a newer request was sent: this answer is stale */
       var d = (r && r.data) || {};
       applyList(d);
       c.loading = false;
+      busyOff();
       refreshDerived();
       scrollActiveChip();
       if (d.number && (c.linked && c.linked.kind === 'number')) { c.numInput = d.number; }
@@ -250,6 +268,7 @@
       if (my !== seq) { return; }
       c.loading = false;
       c.loadError = true;
+      busyOff();
       refreshDerived();
       announce("Couldn't load requests.");
     });
@@ -1728,14 +1747,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 22:52:09</sys_created_on>
         <sys_id>e1f9cd3887924790e5790f29dabb35bc</sys_id>
-        <sys_mod_count>26</sys_mod_count>
+        <sys_mod_count>27</sys_mod_count>
         <sys_name>PTAG My Engagements</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_e1f9cd3887924790e5790f29dabb35bc</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-10-07 18:14:55</sys_updated_on>
+        <sys_updated_on>2026-10-08 18:43:49</sys_updated_on>
         <template><![CDATA[<!-- I11 + B147 (STRY0012133): ptag_myeng_w - saved view (Submitted by include/exclude, Target Geo, state chip, sort) over a sortable table (cards under 980px) + engagement detail modal. Spec: deliveries/PTAG Hub/PTAG-Portal-Filter-UX-Spec_2026-09-29.md -->
 <section class="pt-section pt-myeng">
   <div class="pt-shell">
@@ -1948,6 +1967,19 @@
       <span>Showing the first {{data.count}} of {{data.total}} requests. Narrow the filters to see the rest.</span>
     </div>
 
+    <!-- ===== results region: the empty / error states and the list ===== -->
+    <!-- While a refetch is in flight (c.busy) the region is aria-busy, shows an indeterminate bar and an
+         "Updating list" label, dims the list and hides the empty states. With no list on screen a placeholder
+         stands in, so the previous answer never reads as the new one. -->
+    <div class="pt-results" ng-class="{'is-busy': c.busy}" ng-attr-aria-busy="{{c.busy ? 'true' : 'false'}}">
+      <div class="pt-results__bar" ng-if="c.busy" aria-hidden="true"></div>
+      <div class="pt-results__status" ng-if="c.busy" aria-hidden="true">
+        <span class="pt-results__pill"><svg class="pt-i pt-i--sm pt-spin"><use href="#ptag-i-loader-circle"/></svg>Updating list&hellip;</span>
+      </div>
+      <div class="pt-results__wait" ng-if="c.busy && !(data.items.length && !c.loadError)" aria-hidden="true">
+        <div class="pt-skel"></div><div class="pt-skel"></div><div class="pt-skel"></div>
+      </div>
+
     <!-- ===== empty / error states (spec 11) ===== -->
     <div class="pt-empty" ng-if="!data.is_guest && c.empty === 'first'">
       <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-radar"/></svg></span>
@@ -2002,7 +2034,7 @@
     </div>
 
     <!-- ===== the list: a sortable table at 980px and up, cards below (spec 8, 14) ===== -->
-    <div class="pt-elist" ng-class="{'is-refetching': c.loading}" ng-if="!data.is_guest && data.items.length && !c.loadError">
+    <div class="pt-elist" ng-class="{'is-refetching': c.busy}" ng-if="!data.is_guest && data.items.length && !c.loadError">
 
       <div class="pt-sortbar pt-sortbar--list">
         <label class="pt-sortbar__k" for="pt-sortsel">Sort by</label>
@@ -2106,6 +2138,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /.pt-results -->
 
     <!-- I11 engagement detail modal: whitelisted payload; comments journal only -->
     <div class="pt-modal-backdrop" ng-if="c.dm.open" ng-click="c.close()" ng-keydown="c.dmKeydown($event)" role="presentation">
