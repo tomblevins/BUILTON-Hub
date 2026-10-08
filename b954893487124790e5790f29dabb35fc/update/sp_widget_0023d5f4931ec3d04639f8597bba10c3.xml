@@ -39,13 +39,20 @@
   c.initials = ((parts[0] ? parts[0].charAt(0) : '') +
                 (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
 
-  /* I21: waiting-on-you signal, straight from the server payload */
+  /* I21: waiting-on-you signal, straight from the server payload. The title and the
+     link are read from c.signal at render time, so they always match what is shown:
+     with comments waiting, the count and the awaiting filter; with none, a plain
+     statement and My Engagements (the awaiting filter would be empty). */
   c.signal = (c.data && c.data.signal) || { comments: 0, records: 0 };
-  c.signalTitle = c.signal.comments
-    ? (c.signal.comments + ' comment' + (c.signal.comments === 1 ? '' : 's') +
-       ' waiting on you across ' + c.signal.records + ' engagement' +
-       (c.signal.records === 1 ? '' : 's'))
-    : '';
+  c.signalTitle = function () {
+    var n = c.signal.comments, r = c.signal.records;
+    if (!n) { return 'No comments waiting on you'; }
+    return n + ' comment' + (n === 1 ? '' : 's') + ' waiting on you across ' +
+           r + ' engagement' + (r === 1 ? '' : 's');
+  };
+  c.signalHref = function () {
+    return c.signal.comments ? '?id=ptag_status&awaiting=1' : '?id=ptag_status';
+  };
 
 
   /* --- B147 #6: light/dark theme -----------------------------------------------
@@ -181,14 +188,14 @@
         <sys_created_by>jon.deluna</sys_created_by>
         <sys_created_on>2026-07-22 23:32:11</sys_created_on>
         <sys_id>0023d5f4931ec3d04639f8597bba10c3</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>PTAG Header</sys_name>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
         <sys_policy/>
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sp_widget_0023d5f4931ec3d04639f8597bba10c3</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-10-06 17:48:48</sys_updated_on>
+        <sys_updated_on>2026-10-08 22:21:10</sys_updated_on>
         <template><![CDATA[<!-- I3 SKIN: ptag_header - pt-* design system markup (classes ship via ptag_global) -->
 <nav class="pt-nav">
   <div class="pt-shell pt-nav__inner">
@@ -232,13 +239,15 @@
         <svg class="pt-i" aria-hidden="true" ng-if="c.theme !== 'light'"><use href="#ptag-i-sun"/></svg>
         <svg class="pt-i" aria-hidden="true" ng-if="c.theme === 'light'"><use href="#ptag-i-moon"/></svg>
       </button>
-      <!-- I21: waiting-on-you signal. Rendered only when something is actually
-           outstanding, so the nav stays clean once you are caught up. Goes to
-           My Engagements pre-filtered to exactly these records. -->
-      <a class="pt-signal" ng-if="c.signal.comments" href="?id=ptag_status&amp;awaiting=1"
-         title="{{c.signalTitle}}" aria-label="{{c.signalTitle}}">
+      <!-- I21: waiting-on-you signal, shown to every signed-in viewer. With comments
+           waiting it carries the count and goes to My Engagements pre-filtered to exactly
+           those records. With none it is a quiet icon (pt-signal--zero) that goes to My
+           Engagements, since that filter would be empty. The link, title and label are
+           read from c.signal (client script), so they always match the state shown. -->
+      <a class="pt-signal" ng-if="c.user.name" ng-class="{'pt-signal--zero': !c.signal.comments}"
+         ng-href="{{c.signalHref()}}" title="{{c.signalTitle()}}" aria-label="{{c.signalTitle()}}">
         <svg class="pt-i pt-i--sm" aria-hidden="true"><use href="#ptag-i-message-square"/></svg>
-        <span class="pt-signal__n">{{c.signal.comments}}</span>
+        <span class="pt-signal__n" ng-if="c.signal.comments">{{c.signal.comments}}</span>
       </a>
       <!-- I22: the profile chip is now a real menu. There was previously no way
            to sign out of the portal at all. -->
@@ -287,9 +296,13 @@
     <a href="?id=ptag_submit" ng-class="{'is-active': c.page == 'ptag_submit'}" ng-click="c.closeMobile()">Submit</a>
     <a href="?id=ptag_status" ng-class="{'is-active': c.page == 'ptag_status'}" ng-click="c.closeMobile()">My Engagements</a>
     <a href="?id=ptag_help" ng-class="{'is-active': c.page == 'ptag_help'}" ng-click="c.closeMobile()">Help</a>
-    <!-- I32b: a status sentence, not a nav label, so it opts out of the caps treatment -->
-    <a class="pt-nav__alert" ng-if="c.signal.comments" href="?id=ptag_status&amp;awaiting=1" ng-click="c.closeMobile()">
-      Awaiting your reply <span class="pt-signal__n">{{c.signal.comments}}</span>
+    <!-- I32b: a status sentence, not a nav label, so it opts out of the caps treatment.
+         Shown to every signed-in viewer, like the header icon: the count and the awaiting
+         filter when comments are waiting, a quiet row to My Engagements when none are. -->
+    <a class="pt-nav__alert" ng-if="c.user.name" ng-class="{'pt-nav__alert--zero': !c.signal.comments}"
+       ng-href="{{c.signalHref()}}" ng-click="c.closeMobile()">
+      <span ng-if="c.signal.comments">Awaiting your reply <span class="pt-signal__n">{{c.signal.comments}}</span></span>
+      <span ng-if="!c.signal.comments">No replies waiting</span>
     </a>
     <div class="pt-nav__mobile-user" ng-if="c.user.name">
       <span class="pt-avatar">{{c.initials}}</span><span>{{c.user.name}}</span>
