@@ -61,7 +61,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>a90504ad93774b544639f8597bba103d</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>4</sys_mod_count>
         <sys_name>PTAG Hub N12 - Assigned, to requester</sys_name>
         <sys_overrides/>
         <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
@@ -69,7 +69,7 @@
         <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
         <sys_update_name>sysevent_email_action_a90504ad93774b544639f8597bba103d</sys_update_name>
         <sys_updated_by>jon.deluna</sys_updated_by>
-        <sys_updated_on>2026-10-07 15:20:35</sys_updated_on>
+        <sys_updated_on>2026-10-07 16:25:19</sys_updated_on>
         <sys_version>2</sys_version>
         <template display_value="PTAG Hub - Assigned, to requester">290544e993774b544639f8597bba10f9</template>
         <type>email</type>
