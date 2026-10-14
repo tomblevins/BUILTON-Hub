@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="99c5013c87524790e5790f29dabb3545" extends="im_idea_core" label="Engagement Request" max_length="40" name="x_snc_ptag_engage_engagement_request" text_index="true" type="collection">
+        <element choice="1" default="1" label="Activity type" max_length="40" name="activity_type" type="string">
+            <choice>
+                <element inactive_on_update="false" label="GTM Co-Innovation" sequence="10" value="1"/>
+            </choice>
+        </element>
+        <element default="0" label="Age days" max_length="40" name="age_days" type="integer"/>
+        <element label="Approver" max_length="32" name="approver" reference="sys_user" type="reference"/>
+        <element label="Budget" max_length="40" name="budget" type="boolean"/>
+        <element label="Business owner identified" max_length="40" name="business_owner" type="boolean"/>
+        <element label="Business Owner Email" max_length="40" name="business_owner_email" type="string"/>
+        <element label="Business Owner First Name" max_length="40" name="business_owner_first_name" type="string"/>
+        <element label="Business Owner Last Name" max_length="40" name="business_owner_last_name" type="string"/>
+        <element label="Certified resources" max_length="40" name="certified_resources" type="boolean"/>
+        <element label="Corporate goal alignment" max_length="40" name="corporate_alignment" type="boolean"/>
+        <element label="Customer pain points" max_length="8000" name="customer_pain_points" type="html"/>
+        <element label="Engagement" max_length="32" name="engagement" reference="x_snc_ptag_engage_engagement" type="reference"/>
+        <element label="Executive sponsor" max_length="40" name="executive_sponsor" type="boolean"/>
+        <element label="Executive Sponsor Email" max_length="40" name="executive_sponsor_first_email" type="string"/>
+        <element label="Executive Sponsor First Name" max_length="40" name="executive_sponsor_first_name" type="string"/>
+        <element label="Executive Sponsor Last Name" max_length="40" name="executive_sponsor_last_name" type="string"/>
+        <element label="Executive summary" max_length="8000" name="exec_summary" type="html"/>
+        <element label="Executive summary generated on" max_length="40" name="exec_summary_generated_on" type="glide_date_time"/>
+        <element label="Existing customers" max_length="40" name="has_customers" type="boolean"/>
+        <element choice="3" label="Maturity" max_length="40" name="in_market_status" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Idea" sequence="100" value="Idea"/>
+                <element inactive_on_update="false" label="In Market" sequence="200" value="in_market"/>
+                <element inactive_on_update="false" label="Pilot" sequence="300" value="pilot"/>
+                <element inactive_on_update="false" label="Prototype" sequence="400" value="prototype"/>
+                <element inactive_on_update="false" label="Ready For Sale" sequence="500" value="ready_for_sale"/>
+            </choice>
+        </element>
+        <element label="Legacy mirror" max_length="40" name="legacy_mirror" type="boolean"/>
+        <element hint="Work notes and comments copied from the previous intake, newest first. Read-only." label="Work notes from the previous intake" max_length="65000" name="legacy_notes" read_only="true" read_only_option="instance_configured" type="string"/>
+        <element label="Legacy number" max_length="40" name="legacy_number" type="string"/>
+        <element label="Legacy record" max_length="32" name="legacy_source" type="string"/>
+        <element label="Legacy updated" max_length="40" name="legacy_updated_on" type="glide_date_time"/>
+        <element label="Partner" max_length="32" name="partner" reference="customer_account" type="reference"/>
+        <element label="Partner manager" max_length="32" name="partner_manager" reference="sys_user" type="reference"/>
+        <element choice="1" label="Partner Market Scope" max_length="40" name="partner_scope" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Global" sequence="100" value="global"/>
+                <element inactive_on_update="false" label="Multi-regional" sequence="200" value="multi_regional"/>
+                <element inactive_on_update="false" label="Regional" sequence="300" value="regional"/>
+            </choice>
+        </element>
+        <element label="Partner Use Case" max_length="32" name="partner_use_case" reference="x_snc_ptag_engage_partner_use_case" type="reference"/>
+        <element label="Pipeline" max_length="40" name="pipeline" type="boolean"/>
+        <element label="Practice" max_length="32" name="practice" reference="x_snc_ptag_engage_practice" type="reference"/>
+        <element label="Primary Industry" max_length="32" name="primary_industry" reference="x_snc_ptag_engage_industry" type="reference"/>
+        <element label="Primary Product" max_length="32" name="primary_product" reference="cmdb_ci_business_app" type="reference"/>
+        <element label="Primary PTA" max_length="32" name="primary_pta" reference="sys_user" type="reference"/>
+        <element label="PTA Manager" max_length="4000" name="pta_manager" reference="sys_user" type="glide_list"/>
+        <element choice="1" label="Resolution Code" max_length="40" name="resolution_code" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Built an automation (agent, KB article, or tool)" value="2"/>
+                <element inactive_on_update="false" label="Facilitated a workshop" value="4"/>
+                <element inactive_on_update="false" label="Long-Term Engagement" value="5"/>
+                <element inactive_on_update="false" label="Re-routed external to PTAG" value="1"/>
+                <element inactive_on_update="false" label="Updated, ideated, or provided an asset (i.e. Demo set up)" value="3"/>
+            </choice>
+        </element>
+        <element label="Resolution notes" max_length="4000" name="resolution_notes" type="string"/>
+        <element label="Route to market" max_length="32" name="route_to_market" reference="x_snc_ptag_engage_route_to_market" type="reference"/>
+        <element choice="3" label="Score band" max_length="40" name="score_band" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Fast Track" sequence="100" value="fast_track"/>
+                <element inactive_on_update="false" label="Standard" sequence="200" value="standard"/>
+                <element inactive_on_update="false" label="Needs Development" sequence="300" value="needs_development"/>
+            </choice>
+        </element>
+        <element label="Score locked" max_length="40" name="score_locked" type="boolean"/>
+        <element label="Scoring version" max_length="40" name="scoring_version" type="integer"/>
+        <element label="State entered on" max_length="40" name="state_entered_on" type="glide_date_time"/>
+        <element label="Status token" max_length="32" name="status_token" type="string"/>
+        <element label="TAM" max_length="20" name="tam" type="currency"/>
+        <element choice="1" label="Target geo" max_length="32" name="target_geo" reference="cmn_location" reference_qual="javascript:new x_snc_ptag_engage.PTAGGeo().refQual()" type="reference" use_reference_qualifier="advanced">
+            <choice/>
+        </element>
+        <element label="Technical SME Email" max_length="40" name="technical_sme_email" type="string"/>
+        <element label="Technical SME First Name" max_length="40" name="technical_sme_first_name" type="string"/>
+        <element label="Technical SME Last Name" max_length="40" name="technical_sme_last_name" type="string"/>
+        <element label="Value proposition" max_length="8000" name="value_prop" type="html"/>
+        <element label="What is the Partners AI Strategy" max_length="8000" name="what_is_the_partners_ai_strategy" type="html"/>
+    </element>
+</database>

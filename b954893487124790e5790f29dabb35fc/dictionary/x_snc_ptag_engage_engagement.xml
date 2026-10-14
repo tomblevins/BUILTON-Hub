@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="cebac18987160b90e5790f29dabb356b" extends="task" label="Engagement" max_length="40" name="x_snc_ptag_engage_engagement" type="collection">
+        <element label="Engagement request" max_length="32" name="engagement_request" reference="x_snc_ptag_engage_engagement_request" type="reference"/>
+        <element label="Partner" max_length="32" name="partner" reference="customer_account" type="reference"/>
+        <element label="Practice" max_length="32" name="practice" reference="x_snc_ptag_engage_practice" type="reference"/>
+        <element label="Score band snapshot" max_length="40" name="score_band_snapshot" type="string"/>
+        <element label="Score snapshot" max_length="40" name="score_snapshot" type="integer"/>
+    </element>
+</database>

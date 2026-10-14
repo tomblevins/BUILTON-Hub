@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_container">
+    <sp_container action="DELETE">
+        <aria_label/>
+        <background_color/>
+        <background_image/>
+        <background_style>default</background_style>
+        <bootstrap_alt>false</bootstrap_alt>
+        <class_name/>
+        <container_class_name/>
+        <name>Agent Console Help - Container 100</name>
+        <order>100</order>
+        <semantic_tag/>
+        <sp_page display_value="agent_console_help">79a6635187564f90e5790f29dabb3570</sp_page>
+        <subheader>false</subheader>
+        <sys_class_name>sp_container</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-24 23:33:45</sys_created_on>
+        <sys_id>2ea66799935a8fd04639f8597bba10d8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Agent Console Help - Container 100</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_container_2ea66799935a8fd04639f8597bba10d8</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-24 23:33:45</sys_updated_on>
+        <title/>
+        <width>container-fluid</width>
+    </sp_container>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</application>
+        <file_path/>
+        <instance_id>70bded75dba641d042b321c4059619ee</instance_id>
+        <instance_name>astrodev</instance_name>
+        <name>sp_container_2ea66799935a8fd04639f8597bba10d8</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_container"><sp_container action="INSERT_OR_UPDATE"><aria_label/><background_color/><background_image/><background_style>default</background_style><bootstrap_alt>false</bootstrap_alt><class_name/><container_class_name/><name>Agent Console Help - Container 100</name><order>100</order><semantic_tag/><sp_page display_value="agent_console_help">79a6635187564f90e5790f29dabb3570</sp_page><subheader>false</subheader><sys_class_name>sp_container</sys_class_name><sys_created_by>jon.deluna</sys_created_by><sys_created_on>2026-07-24 23:33:45</sys_created_on><sys_id>2ea66799935a8fd04639f8597bba10d8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>Agent Console Help - Container 100</sys_name><sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package><sys_policy/><sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope><sys_update_name>sp_container_2ea66799935a8fd04639f8597bba10d8</sys_update_name><sys_updated_by>jon.deluna</sys_updated_by><sys_updated_on>2026-07-24 23:33:45</sys_updated_on><title/><width>container-fluid</width></sp_container></record_update>]]></payload>
+        <payload_hash>902406535</payload_hash>
+        <record_name>Agent Console Help - Container 100</record_name>
+        <reverted_from/>
+        <source>79540db887524790e5790f29dabb35b7</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-24 23:33:45</sys_created_on>
+        <sys_id>6ea66799935a8fd04639f8597bba10dd</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f967a4eab0000001</sys_recorded_at>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-24 23:33:45</sys_updated_on>
+        <type>Container</type>
+        <update_guid>aaa66799695a8fd02fdb099c7cf845dc</update_guid>
+        <update_guid_history>aaa66799695a8fd02fdb099c7cf845dc:902406535</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete display_value="Agent Console Help - Container 100">601c3b95875a4f90e5790f29dabb35c0</sys_audit_delete>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-25 01:07:17</sys_created_on>
+        <sys_db_object display_value="" name="sp_container">sp_container</sys_db_object>
+        <sys_id>48eda73aa2a24a8aa5228a04c87171e4</sys_id>
+        <sys_metadata>2ea66799935a8fd04639f8597bba10d8</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Agent Console Help - Container 100</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_scope_delete display_value="">03813b0e5340432a86171cda984ae284</sys_scope_delete>
+        <sys_update_name>sp_container_2ea66799935a8fd04639f8597bba10d8</sys_update_name>
+        <sys_update_version display_value="sp_container_2ea66799935a8fd04639f8597bba10d8">6ea66799935a8fd04639f8597bba10dd</sys_update_version>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-25 01:07:17</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

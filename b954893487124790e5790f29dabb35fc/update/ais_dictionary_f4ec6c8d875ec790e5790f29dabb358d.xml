@@ -8,10 +8,10 @@
         <derived>true</derived>
         <field/>
         <label>ptag-engagement-hub Search Profile Default Spell Check Dictionary</label>
-        <last_derived>2026-10-08 07:27:01</last_derived>
+        <last_derived>2026-10-14 12:27:01</last_derived>
         <locale>en</locale>
         <name>x_snc_ptag_engage_ptag_engagement_hub_search_profile_default_spell_check_dictionary</name>
-        <publish_id>11b7ca43-7d40-4f56-ade4-8e3ee658f090</publish_id>
+        <publish_id>5f65aa8f-ff14-41a0-95e0-0d5a435b5f17</publish_id>
         <punctuation_sensitive>false</punctuation_sensitive>
         <state>PUBLISHED</state>
         <sys_class_name>ais_dictionary</sys_class_name>

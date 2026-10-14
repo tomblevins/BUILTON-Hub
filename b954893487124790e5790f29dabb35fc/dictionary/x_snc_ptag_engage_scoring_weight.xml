@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="9774640d87dac790e5790f29dabb3532" label="Scoring Weight" max_length="40" name="x_snc_ptag_engage_scoring_weight" text_index="true" type="collection">
+        <element default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element choice="3" label="Band" max_length="40" name="band" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Fast Track" sequence="100" value="fast_track"/>
+                <element inactive_on_update="false" label="Standard" sequence="200" value="standard"/>
+                <element inactive_on_update="false" label="Needs Development" sequence="300" value="needs_development"/>
+            </choice>
+        </element>
+        <element choice="3" label="Category" max_length="40" name="category" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Desirability" sequence="100" value="desirability"/>
+                <element inactive_on_update="false" label="Viability" sequence="200" value="viability"/>
+                <element inactive_on_update="false" label="Feasibility" sequence="300" value="feasibility"/>
+            </choice>
+        </element>
+        <element label="Label" max_length="160" name="label" type="string"/>
+        <element label="Notes" max_length="1000" name="notes" type="string"/>
+        <element choice="3" label="Row type" max_length="40" name="row_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Weight" sequence="100" value="weight"/>
+                <element inactive_on_update="false" label="Band" sequence="200" value="band"/>
+                <element inactive_on_update="false" label="Gate" sequence="300" value="gate"/>
+            </choice>
+        </element>
+        <element choice="3" label="Rule" max_length="40" name="rule" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Boolean is true" sequence="100" value="boolean_true"/>
+                <element inactive_on_update="false" label="Value match" sequence="200" value="value_match"/>
+                <element inactive_on_update="false" label="Numeric band" sequence="300" value="numeric_band"/>
+                <element inactive_on_update="false" label="All fields non-empty" sequence="400" value="all_nonempty"/>
+                <element inactive_on_update="false" label="All fields false" sequence="500" value="all_false"/>
+            </choice>
+        </element>
+        <element label="Scoring version" max_length="40" name="scoring_version" type="integer"/>
+        <element label="Signal" max_length="80" name="signal" type="string"/>
+        <element label="Signal value" max_length="80" name="signal_value" type="string"/>
+        <element label="Threshold max" max_length="40" name="threshold_max" type="integer"/>
+        <element label="Threshold min" max_length="40" name="threshold_min" type="integer"/>
+        <element label="Weight" max_length="40" name="weight" type="integer"/>
+    </element>
+</database>

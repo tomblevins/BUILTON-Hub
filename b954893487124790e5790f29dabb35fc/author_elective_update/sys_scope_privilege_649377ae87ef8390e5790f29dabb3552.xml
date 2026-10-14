@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege">
+    <sys_scope_privilege action="DELETE">
+        <operation>read</operation>
+        <source_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</source_scope>
+        <status>allowed</status>
+        <sys_class_name>sys_scope_privilege</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 01:01:02</sys_created_on>
+        <sys_id>649377ae87ef8390e5790f29dabb3552</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_agentcon_ac_project</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sys_scope_privilege_649377ae87ef8390e5790f29dabb3552</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 01:01:02</sys_updated_on>
+        <target_name>x_snc_agentcon_ac_project</target_name>
+        <target_scope display_value="Agent Console">6cb825ff2fb883d0f773d71bcfa4e3af</target_scope>
+        <target_type>sys_db_object</target_type>
+    </sys_scope_privilege>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</application>
+        <file_path/>
+        <instance_id>70bded75dba641d042b321c4059619ee</instance_id>
+        <instance_name>astrodev</instance_name>
+        <name>sys_scope_privilege_649377ae87ef8390e5790f29dabb3552</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege"><sys_scope_privilege action="INSERT_OR_UPDATE"><operation>read</operation><source_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</source_scope><status>allowed</status><sys_class_name>sys_scope_privilege</sys_class_name><sys_created_by>jon.deluna</sys_created_by><sys_created_on>2026-09-29 01:01:02</sys_created_on><sys_id>649377ae87ef8390e5790f29dabb3552</sys_id><sys_mod_count>0</sys_mod_count><sys_name>x_snc_agentcon_ac_project</sys_name><sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package><sys_policy/><sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope><sys_update_name>sys_scope_privilege_649377ae87ef8390e5790f29dabb3552</sys_update_name><sys_updated_by>jon.deluna</sys_updated_by><sys_updated_on>2026-09-29 01:01:02</sys_updated_on><target_name>x_snc_agentcon_ac_project</target_name><target_scope display_value="Agent Console">6cb825ff2fb883d0f773d71bcfa4e3af</target_scope><target_type>sys_db_object</target_type></sys_scope_privilege></record_update>]]></payload>
+        <payload_hash>1831569318</payload_hash>
+        <record_name>x_snc_agentcon_ac_project</record_name>
+        <reverted_from/>
+        <source>79540db887524790e5790f29dabb35b7</source>
+        <source_table>sys_update_set</source_table>
+        <state>current</state>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 01:01:02</sys_created_on>
+        <sys_id>689377ae87ef8390e5790f29dabb3555</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>1a0eaadedb70000001</sys_recorded_at>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 01:01:02</sys_updated_on>
+        <type>Cross scope privilege</type>
+        <update_guid>e49377aec5ef8390506b7eef23528154</update_guid>
+        <update_guid_history>e49377aec5ef8390506b7eef23528154:1831569318</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-09-29 01:10:26</sys_created_on>
+        <sys_db_object display_value="" name="sys_scope_privilege">sys_scope_privilege</sys_db_object>
+        <sys_id>10f8bed4c6264cd6b0a80aa5bfb0cc91</sys_id>
+        <sys_metadata>649377ae87ef8390e5790f29dabb3552</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_snc_agentcon_ac_project</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_scope_delete display_value="">03813b0e5340432a86171cda984ae284</sys_scope_delete>
+        <sys_update_name>sys_scope_privilege_649377ae87ef8390e5790f29dabb3552</sys_update_name>
+        <sys_update_version display_value="sys_scope_privilege_649377ae87ef8390e5790f29dabb3552">689377ae87ef8390e5790f29dabb3555</sys_update_version>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-09-29 01:10:26</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="8c8dfa2287960fd0e5790f29dabb352c" label="Practice" max_length="40" name="x_snc_ptag_engage_practice" type="collection">
+        <element label="Description" max_length="4000" name="description" type="string"/>
+        <element display="true" label="Name" max_length="255" name="name" type="string"/>
+    </element>
+</database>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_row">
+    <sp_row action="DELETE">
+        <aria_label/>
+        <class_name/>
+        <order>100</order>
+        <semantic_tag/>
+        <sp_column/>
+        <sp_container display_value="Engagement Status - Container 100">803391b887164790e5790f29dabb3536</sp_container>
+        <sys_class_name>sp_row</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 23:32:29</sys_created_on>
+        <sys_id>d03391b887164790e5790f29dabb353b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>100</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_row_d03391b887164790e5790f29dabb353b</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-22 23:32:29</sys_updated_on>
+    </sp_row>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</application>
+        <file_path/>
+        <instance_id>70bded75dba641d042b321c4059619ee</instance_id>
+        <instance_name>astrodev</instance_name>
+        <name>sp_row_d03391b887164790e5790f29dabb353b</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_row"><sp_row action="INSERT_OR_UPDATE"><aria_label/><class_name/><order>100</order><semantic_tag/><sp_column/><sp_container display_value="Engagement Status - Container 100">803391b887164790e5790f29dabb3536</sp_container><sys_class_name>sp_row</sys_class_name><sys_created_by>jon.deluna</sys_created_by><sys_created_on>2026-07-22 23:32:29</sys_created_on><sys_id>d03391b887164790e5790f29dabb353b</sys_id><sys_mod_count>0</sys_mod_count><sys_name>100</sys_name><sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package><sys_policy/><sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope><sys_update_name>sp_row_d03391b887164790e5790f29dabb353b</sys_update_name><sys_updated_by>jon.deluna</sys_updated_by><sys_updated_on>2026-07-22 23:32:29</sys_updated_on></sp_row></record_update>]]></payload>
+        <payload_hash>-1632972925</payload_hash>
+        <record_name>100</record_name>
+        <reverted_from/>
+        <source>79540db887524790e5790f29dabb35b7</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 23:32:29</sys_created_on>
+        <sys_id>543391b887164790e5790f29dabb3558</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f8c2c6b410000001</sys_recorded_at>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-22 23:32:29</sys_updated_on>
+        <type>Row</type>
+        <update_guid>903391b83f164790302ee1feedf3c857</update_guid>
+        <update_guid_history>903391b83f164790302ee1feedf3c857:-1632972925</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete display_value="100">9495f649879a4b90e5790f29dabb35af</sys_audit_delete>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-24 01:20:46</sys_created_on>
+        <sys_db_object display_value="" name="sp_row">sp_row</sys_db_object>
+        <sys_id>0a0535f412e940cf82aac2a99361ce09</sys_id>
+        <sys_metadata>d03391b887164790e5790f29dabb353b</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>100</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_scope_delete display_value="">03813b0e5340432a86171cda984ae284</sys_scope_delete>
+        <sys_update_name>sp_row_d03391b887164790e5790f29dabb353b</sys_update_name>
+        <sys_update_version display_value="sp_row_d03391b887164790e5790f29dabb353b">543391b887164790e5790f29dabb3558</sys_update_version>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-24 01:20:46</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

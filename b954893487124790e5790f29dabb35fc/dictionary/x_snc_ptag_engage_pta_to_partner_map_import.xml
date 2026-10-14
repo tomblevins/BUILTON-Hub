@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="01d7a90793e303d04639f8597bba104e" label="PTA to Partner Map - Import" max_length="40" name="x_snc_ptag_engage_pta_to_partner_map_import" type="collection">
+        <element label="All PTA Assigned" max_length="1000" name="all_pta_assigned" type="string"/>
+        <element label="Assigned PTA" max_length="40" name="assigned_pta" type="string"/>
+        <element label="Is Parent" max_length="40" name="is_parent" type="string"/>
+        <element label="Number" max_length="40" name="number" type="string"/>
+        <element label="Partner" max_length="80" name="partner" type="string"/>
+        <element label="PTA Lead" max_length="40" name="pta_lead" type="string"/>
+        <element label="PTA Manager" max_length="1000" name="pta_manager" type="string"/>
+        <element label="Updated" max_length="40" name="updated" type="glide_date_time"/>
+    </element>
+</database>

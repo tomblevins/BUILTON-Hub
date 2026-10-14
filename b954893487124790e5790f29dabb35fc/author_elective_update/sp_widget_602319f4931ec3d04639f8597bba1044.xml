@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="DELETE">
+        <category>custom</category>
+        <client_script><![CDATA[function($location) {
+  var c = this;
+  /* I6: Idea-lifecycle states. Happy path 1 -> -1 -> 2 -> 4 -> 5 -> 3;
+     -2 renders as an attention node; 7/8/9 as terminal branches. */
+  var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
+               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '9': 'cancelled', '8': 'duplicate'};
+  var STEPS = [
+    { v: '1',  t: 'Submitted',      s: 'Request received and queued for triage.' },
+    { v: '-1', t: 'Under Review',   s: 'PTAG is validating scope and fit.' },
+    { v: '2',  t: 'In Backlog',     s: 'Accepted and waiting for capacity.' },
+    { v: '4',  t: 'Planned',        s: 'Scheduled with an owner and a timeline.' },
+    { v: '5',  t: 'In Development', s: 'Work in flight with the assigned team.' },
+    { v: '3',  t: 'Completed',      s: 'Engagement delivered and closed.' }
+  ];
+  var TERMINAL = {
+    '7': { t: 'Unlikely to implement', s: 'Not moving forward after PTAG review.', pred: 2 },
+    '8': { t: 'Duplicate',             s: 'Already tracked under another request.', pred: 2 },
+    '9': { t: 'Cancelled',             s: 'Withdrawn before completion.', pred: 1 }
+  };
+
+  c.number = '';
+  c.busy = false;
+  c.nodes = [];
+
+  function decorate() {
+    c.nodes = [];
+    var rec = c.data && c.data.rec;
+    if (!rec) { return; }
+    var st = String(rec.state || '1');
+    rec.slug = SLUGS[st] || 'submitted';
+    rec.created_d = String(rec.created || '').split(' ')[0];
+    var i;
+    if (TERMINAL[st]) {
+      for (i = 0; i < TERMINAL[st].pred; i++) {
+        c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: 'is-done', neg: false, attn: false });
+      }
+      c.nodes.push({ t: TERMINAL[st].t, s: TERMINAL[st].s, cls: 'is-negative', neg: true, attn: false });
+      return;
+    }
+    if (st === '-2') {
+      /* attention: review is paused on the requester */
+      c.nodes.push({ t: STEPS[0].t, s: STEPS[0].s, cls: 'is-done', neg: false, attn: false });
+      c.nodes.push({ t: STEPS[1].t, s: STEPS[1].s, cls: 'is-done', neg: false, attn: false });
+      c.nodes.push({ t: 'Need more information', s: 'PTAG is waiting on you - check your email and update the request.', cls: 'is-attn', neg: false, attn: true });
+      for (i = 2; i < STEPS.length; i++) {
+        c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: 'is-future', neg: false, attn: false });
+      }
+      return;
+    }
+    var pos = 0;
+    for (i = 0; i < STEPS.length; i++) { if (STEPS[i].v === st) { pos = i; break; } }
+    for (i = 0; i < STEPS.length; i++) {
+      var cls = (i < pos) ? 'is-done' : ((i === pos) ? 'is-current' : 'is-future');
+      if (st === '3') { cls = 'is-done'; }
+      c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: cls, neg: false, attn: false });
+    }
+  }
+
+  c.lookup = function() {
+    var n = String(c.number || '').toUpperCase().replace(/\s+/g, '');
+    if (!n || c.busy) { return; }
+    c.number = n;
+    c.busy = true;
+    c.server.get({ number: n }).then(function(r) {
+      c.data.searched = r.data.searched;
+      c.data.found = r.data.found;
+      c.data.rec = r.data.rec;
+      decorate();
+      c.busy = false;
+    }, function() { c.busy = false; });
+  };
+
+  /* auto-lookup when the page carries ?number= (submit receipt / My Engagements) */
+  var q = {};
+  try { q = $location.search() || {}; } catch (e) {}
+  var n0 = q.number || '';
+  if (!n0) {
+    try {
+      var m = (window.location.search || '').match(/[?&]number=([^&]+)/);
+      if (m) { n0 = decodeURIComponent(m[1]); }
+    } catch (e2) {}
+  }
+  if (n0) { c.number = String(n0); c.lookup(); }
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>/* I3 SKIN: ptag_track_w - all styling via pt-* classes from ptag_global (design-tokens.css + global.css). Shared additions live in ptag_global css field, SKIN:GLOBAL-COMPONENTS. */
+</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>ptag_track_w</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>PTAG Status Tracker</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* I6: logged-in lookup by PTAG number. Access enforced HERE (server side):
+       - requester sees records they opened (opened_by = session user)
+       - x_snc_ptag_engage.user / x_snc_ptag_engage.admin see all
+         (gs.hasRole also returns true for admins - intended)
+     status_token stays in the schema, dormant; there is no token path.
+     Anti-enumeration posture kept: exact-match single record, {found:false}
+     on any miss, whitelisted payload only, no record sys_ids. */
+  data.found = false;
+  data.searched = false;
+  if (!gs.getSession().isLoggedIn()) { return; }
+  if (!input || !input.number) { return; }
+  data.searched = true;
+
+  var num = String(input.number).toUpperCase().replace(/\s+/g, '');
+  if (!/^PTAG\d{4,12}$/.test(num)) { return; }
+
+  var canSeeAll = gs.hasRole('x_snc_ptag_engage.user') || gs.hasRole('x_snc_ptag_engage.admin');
+  var gr = new GlideRecord('x_snc_ptag_engage_engagement_request');
+  gr.addQuery('number', num);
+  if (!canSeeAll) { gr.addQuery('opened_by', gs.getUserID()); }
+  gr.setLimit(1);
+  gr.query();
+  if (!gr.next()) { return; }
+
+  /* WHITELIST ONLY - never widen without a security review */
+  data.found = true;
+  data.rec = {
+    number: gr.getValue('number'),
+    state: String(gr.getValue('state') || '1'),
+    state_label: gr.getDisplayValue('state'),
+    practice: gr.getDisplayValue('practice'),
+    route_to_market: gr.getDisplayValue('route_to_market'),
+    partner_name: gr.getDisplayValue('partner'),
+    short_description: gr.getValue('short_description'),
+    assigned_to: gr.getDisplayValue('assigned_to'),
+    created: gr.getDisplayValue('sys_created_on'),
+    updated: gr.getDisplayValue('sys_updated_on')
+  };
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-22 23:32:13</sys_created_on>
+        <sys_id>602319f4931ec3d04639f8597bba1044</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>PTAG Status Tracker</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_update_name>sp_widget_602319f4931ec3d04639f8597bba1044</sys_update_name>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 14:07:34</sys_updated_on>
+        <template><![CDATA[<!-- I6 TRACK: ptag_track_w - logged-in lookup by PTAG number (token retired from UI; schema keeps status_token dormant) -->
+<section class="pt-section">
+  <div class="pt-shell pt-shell--narrow">
+
+    <header class="pt-center pt-reveal" style="margin-bottom: 28px;">
+      <h2 style="margin-bottom: 8px;">Track an engagement</h2>
+      <p class="pt-muted" style="margin: 0;">Enter the request number from your confirmation email. You can open requests you submitted; the PTAG team can open any request.</p>
+    </header>
+
+    <form ng-submit="c.lookup()" class="pt-reveal" data-delay="80" novalidate>
+      <div class="pt-field">
+        <label for="pt-trk-number">Request number</label>
+        <div class="pt-flex" style="align-items: stretch; gap: 10px;">
+          <input id="pt-trk-number" class="pt-input" type="text" ng-model="c.number" placeholder="e.g. PTAG0001042" autocomplete="off" maxlength="20" style="margin: 0; flex: 1;">
+          <button class="pt-btn pt-btn--primary" type="submit" ng-disabled="c.busy || !c.number">
+            <svg class="pt-i pt-i--sm pt-spin" ng-if="c.busy"><use href="#ptag-i-loader-circle"/></svg>
+            <svg class="pt-i pt-i--sm" ng-if="!c.busy"><use href="#ptag-i-search"/></svg>
+            {{c.busy ? 'Checking…' : 'Check status'}}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="pt-empty" ng-if="data.searched && !data.found" role="alert">
+      <span class="pt-icon-tile"><svg class="pt-i"><use href="#ptag-i-triangle-alert"/></svg></span>
+      <div class="pt-empty__t">No request matched that number</div>
+      <p class="pt-empty__s">Check the number from your confirmation email &mdash; it looks like <b>PTAG0001042</b>. Requests open only for their requester or the PTAG team.</p>
+    </div>
+
+    <div class="pt-card pt-card--pad-lg" ng-if="data.found">
+      <div class="pt-flex pt-flex--between pt-flex--wrap" style="align-items: flex-start;">
+        <div>
+          <div class="pt-rowcard__num">{{data.rec.number}}</div>
+          <h3 style="margin: 2px 0 4px;">{{data.rec.short_description || data.rec.partner_name}}</h3>
+          <div class="pt-rowcard__meta">{{data.rec.practice || '&mdash;'}} &middot; {{data.rec.route_to_market || '&mdash;'}} &middot; Submitted {{data.rec.created_d}}</div>
+        </div>
+        <span class="pt-chip" data-state="{{data.rec.slug}}">{{data.rec.state_label}}</span>
+      </div>
+
+      <div style="border-top: 1px solid var(--pt-stroke); margin: 20px 0 24px;"></div>
+
+      <div class="pt-timeline">
+        <div class="pt-tl-item" ng-repeat="n in c.nodes" ng-class="n.cls">
+          <div class="pt-tl-node">
+            <svg class="pt-i pt-i--sm" ng-if="!n.neg && !n.attn"><use href="#ptag-i-check"/></svg>
+            <svg class="pt-i pt-i--sm" ng-if="n.attn"><use href="#ptag-i-triangle-alert"/></svg>
+            <svg class="pt-i pt-i--sm" ng-if="n.neg"><use href="#ptag-i-x"/></svg>
+          </div>
+          <div>
+            <div class="pt-tl-title">{{n.t}}</div>
+            <div class="pt-tl-sub">{{n.s}}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-rowcard__meta" style="margin-top: 4px;">Last updated {{data.rec.updated}}<span ng-if="data.rec.assigned_to"> &middot; Owner: {{data.rec.assigned_to}}</span></div>
+    </div>
+
+  </div>
+</section>]]></template>
+    </sp_widget>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</application>
+        <file_path/>
+        <instance_id>70bded75dba641d042b321c4059619ee</instance_id>
+        <instance_name>astrodev</instance_name>
+        <name>sp_widget_602319f4931ec3d04639f8597bba1044</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sp_widget"&gt;&lt;sp_widget action="INSERT_OR_UPDATE"&gt;&lt;category&gt;custom&lt;/category&gt;&lt;client_script&gt;&lt;![CDATA[function($location) {
+  var c = this;
+  /* I6: Idea-lifecycle states. Happy path 1 -&gt; -1 -&gt; 2 -&gt; 4 -&gt; 5 -&gt; 3;
+     -2 renders as an attention node; 7/8/9 as terminal branches. */
+  var SLUGS = {'1': 'submitted', '-2': 'need_info', '-1': 'under_review', '2': 'in_backlog',
+               '4': 'planned', '5': 'in_development', '3': 'completed', '7': 'unlikely',
+               '9': 'cancelled', '8': 'duplicate'};
+  var STEPS = [
+    { v: '1',  t: 'Submitted',      s: 'Request received and queued for triage.' },
+    { v: '-1', t: 'Under Review',   s: 'PTAG is validating scope and fit.' },
+    { v: '2',  t: 'In Backlog',     s: 'Accepted and waiting for capacity.' },
+    { v: '4',  t: 'Planned',        s: 'Scheduled with an owner and a timeline.' },
+    { v: '5',  t: 'In Development', s: 'Work in flight with the assigned team.' },
+    { v: '3',  t: 'Completed',      s: 'Engagement delivered and closed.' }
+  ];
+  var TERMINAL = {
+    '7': { t: 'Unlikely to implement', s: 'Not moving forward after PTAG review.', pred: 2 },
+    '8': { t: 'Duplicate',             s: 'Already tracked under another request.', pred: 2 },
+    '9': { t: 'Cancelled',             s: 'Withdrawn before completion.', pred: 1 }
+  };
+
+  c.number = '';
+  c.busy = false;
+  c.nodes = [];
+
+  function decorate() {
+    c.nodes = [];
+    var rec = c.data &amp;&amp; c.data.rec;
+    if (!rec) { return; }
+    var st = String(rec.state || '1');
+    rec.slug = SLUGS[st] || 'submitted';
+    rec.created_d = String(rec.created || '').split(' ')[0];
+    var i;
+    if (TERMINAL[st]) {
+      for (i = 0; i &lt; TERMINAL[st].pred; i++) {
+        c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: 'is-done', neg: false, attn: false });
+      }
+      c.nodes.push({ t: TERMINAL[st].t, s: TERMINAL[st].s, cls: 'is-negative', neg: true, attn: false });
+      return;
+    }
+    if (st === '-2') {
+      /* attention: review is paused on the requester */
+      c.nodes.push({ t: STEPS[0].t, s: STEPS[0].s, cls: 'is-done', neg: false, attn: false });
+      c.nodes.push({ t: STEPS[1].t, s: STEPS[1].s, cls: 'is-done', neg: false, attn: false });
+      c.nodes.push({ t: 'Need more information', s: 'PTAG is waiting on you - check your email and update the request.', cls: 'is-attn', neg: false, attn: true });
+      for (i = 2; i &lt; STEPS.length; i++) {
+        c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: 'is-future', neg: false, attn: false });
+      }
+      return;
+    }
+    var pos = 0;
+    for (i = 0; i &lt; STEPS.length; i++) { if (STEPS[i].v === st) { pos = i; break; } }
+    for (i = 0; i &lt; STEPS.length; i++) {
+      var cls = (i &lt; pos) ? 'is-done' : ((i === pos) ? 'is-current' : 'is-future');
+      if (st === '3') { cls = 'is-done'; }
+      c.nodes.push({ t: STEPS[i].t, s: STEPS[i].s, cls: cls, neg: false, attn: false });
+    }
+  }
+
+  c.lookup = function() {
+    var n = String(c.number || '').toUpperCase().replace(/\s+/g, '');
+    if (!n || c.busy) { return; }
+    c.number = n;
+    c.busy = true;
+    c.server.get({ number: n }).then(function(r) {
+      c.data.searched = r.data.searched;
+      c.data.found = r.data.found;
+      c.data.rec = r.data.rec;
+      decorate();
+      c.busy = false;
+    }, function() { c.busy = false; });
+  };
+
+  /* auto-lookup when the page carries ?number= (submit receipt / My Engagements) */
+  var q = {};
+  try { q = $location.search() || {}; } catch (e) {}
+  var n0 = q.number || '';
+  if (!n0) {
+    try {
+      var m = (window.location.search || '').match(/[?&amp;]number=([^&amp;]+)/);
+      if (m) { n0 = decodeURIComponent(m[1]); }
+    } catch (e2) {}
+  }
+  if (n0) { c.number = String(n0); c.lookup(); }
+}]]&gt;&lt;/client_script&gt;&lt;controller_as&gt;c&lt;/controller_as&gt;&lt;css&gt;/* I3 SKIN: ptag_track_w - all styling via pt-* classes from ptag_global (design-tokens.css + global.css). Shared additions live in ptag_global css field, SKIN:GLOBAL-COMPONENTS. */
+&lt;/css&gt;&lt;data_table&gt;sp_instance&lt;/data_table&gt;&lt;demo_data/&gt;&lt;description/&gt;&lt;docs/&gt;&lt;field_list/&gt;&lt;has_preview&gt;false&lt;/has_preview&gt;&lt;id&gt;ptag_track_w&lt;/id&gt;&lt;internal&gt;false&lt;/internal&gt;&lt;link&gt;&lt;![CDATA[function link(scope, element, attrs, controller) {  }]]&gt;&lt;/link&gt;&lt;name&gt;PTAG Status Tracker&lt;/name&gt;&lt;option_schema/&gt;&lt;public&gt;false&lt;/public&gt;&lt;roles/&gt;&lt;script&gt;&lt;![CDATA[(function() {
+  /* I6: logged-in lookup by PTAG number. Access enforced HERE (server side):
+       - requester sees records they opened (opened_by = session user)
+       - x_snc_ptag_engage.user / x_snc_ptag_engage.admin see all
+         (gs.hasRole also returns true for admins - intended)
+     status_token stays in the schema, dormant; there is no token path.
+     Anti-enumeration posture kept: exact-match single record, {found:false}
+     on any miss, whitelisted payload only, no record sys_ids. */
+  data.found = false;
+  data.searched = false;
+  if (!gs.getSession().isLoggedIn()) { return; }
+  if (!input || !input.number) { return; }
+  data.searched = true;
+
+  var num = String(input.number).toUpperCase().replace(/\s+/g, '');
+  if (!/^PTAG\d{4,12}$/.test(num)) { return; }
+
+  var canSeeAll = gs.hasRole('x_snc_ptag_engage.user') || gs.hasRole('x_snc_ptag_engage.admin');
+  var gr = new GlideRecord('x_snc_ptag_engage_engagement_request');
+  gr.addQuery('number', num);
+  if (!canSeeAll) { gr.addQuery('opened_by', gs.getUserID()); }
+  gr.setLimit(1);
+  gr.query();
+  if (!gr.next()) { return; }
+
+  /* WHITELIST ONLY - never widen without a security review */
+  data.found = true;
+  data.rec = {
+    number: gr.getValue('number'),
+    state: String(gr.getValue('state') || '1'),
+    state_label: gr.getDisplayValue('state'),
+    practice: gr.getDisplayValue('practice'),
+    route_to_market: gr.getDisplayValue('route_to_market'),
+    partner_name: gr.getDisplayValue('partner'),
+    short_description: gr.getValue('short_description'),
+    assigned_to: gr.getDisplayValue('assigned_to'),
+    created: gr.getDisplayValue('sys_created_on'),
+    updated: gr.getDisplayValue('sys_updated_on')
+  };
+})();]]&gt;&lt;/script&gt;&lt;servicenow&gt;false&lt;/servicenow&gt;&lt;sys_class_name&gt;sp_widget&lt;/sys_class_name&gt;&lt;sys_created_by&gt;jon.deluna&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-22 23:32:13&lt;/sys_created_on&gt;&lt;sys_id&gt;602319f4931ec3d04639f8597bba1044&lt;/sys_id&gt;&lt;sys_mod_count&gt;3&lt;/sys_mod_count&gt;&lt;sys_name&gt;PTAG Status Tracker&lt;/sys_name&gt;&lt;sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage"&gt;b954893487124790e5790f29dabb35fc&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="PTAG Engagement Hub"&gt;b954893487124790e5790f29dabb35fc&lt;/sys_scope&gt;&lt;sys_update_name&gt;sp_widget_602319f4931ec3d04639f8597bba1044&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;jon.deluna&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-23 14:07:34&lt;/sys_updated_on&gt;&lt;template&gt;&lt;![CDATA[&lt;!-- I6 TRACK: ptag_track_w - logged-in lookup by PTAG number (token retired from UI; schema keeps status_token dormant) --&gt;
+&lt;section class="pt-section"&gt;
+  &lt;div class="pt-shell pt-shell--narrow"&gt;
+
+    &lt;header class="pt-center pt-reveal" style="margin-bottom: 28px;"&gt;
+      &lt;h2 style="margin-bottom: 8px;"&gt;Track an engagement&lt;/h2&gt;
+      &lt;p class="pt-muted" style="margin: 0;"&gt;Enter the request number from your confirmation email. You can open requests you submitted; the PTAG team can open any request.&lt;/p&gt;
+    &lt;/header&gt;
+
+    &lt;form ng-submit="c.lookup()" class="pt-reveal" data-delay="80" novalidate&gt;
+      &lt;div class="pt-field"&gt;
+        &lt;label for="pt-trk-number"&gt;Request number&lt;/label&gt;
+        &lt;div class="pt-flex" style="align-items: stretch; gap: 10px;"&gt;
+          &lt;input id="pt-trk-number" class="pt-input" type="text" ng-model="c.number" placeholder="e.g. PTAG0001042" autocomplete="off" maxlength="20" style="margin: 0; flex: 1;"&gt;
+          &lt;button class="pt-btn pt-btn--primary" type="submit" ng-disabled="c.busy || !c.number"&gt;
+            &lt;svg class="pt-i pt-i--sm pt-spin" ng-if="c.busy"&gt;&lt;use href="#ptag-i-loader-circle"/&gt;&lt;/svg&gt;
+            &lt;svg class="pt-i pt-i--sm" ng-if="!c.busy"&gt;&lt;use href="#ptag-i-search"/&gt;&lt;/svg&gt;
+            {{c.busy ? 'Checking…' : 'Check status'}}
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+
+    &lt;div class="pt-empty" ng-if="data.searched &amp;&amp; !data.found" role="alert"&gt;
+      &lt;span class="pt-icon-tile"&gt;&lt;svg class="pt-i"&gt;&lt;use href="#ptag-i-triangle-alert"/&gt;&lt;/svg&gt;&lt;/span&gt;
+      &lt;div class="pt-empty__t"&gt;No request matched that number&lt;/div&gt;
+      &lt;p class="pt-empty__s"&gt;Check the number from your confirmation email &amp;mdash; it looks like &lt;b&gt;PTAG0001042&lt;/b&gt;. Requests open only for their requester or the PTAG team.&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="pt-card pt-card--pad-lg" ng-if="data.found"&gt;
+      &lt;div class="pt-flex pt-flex--between pt-flex--wrap" style="align-items: flex-start;"&gt;
+        &lt;div&gt;
+          &lt;div class="pt-rowcard__num"&gt;{{data.rec.number}}&lt;/div&gt;
+          &lt;h3 style="margin: 2px 0 4px;"&gt;{{data.rec.short_description || data.rec.partner_name}}&lt;/h3&gt;
+          &lt;div class="pt-rowcard__meta"&gt;{{data.rec.practice || '&amp;mdash;'}} &amp;middot; {{data.rec.route_to_market || '&amp;mdash;'}} &amp;middot; Submitted {{data.rec.created_d}}&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;span class="pt-chip" data-state="{{data.rec.slug}}"&gt;{{data.rec.state_label}}&lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;div style="border-top: 1px solid var(--pt-stroke); margin: 20px 0 24px;"&gt;&lt;/div&gt;
+
+      &lt;div class="pt-timeline"&gt;
+        &lt;div class="pt-tl-item" ng-repeat="n in c.nodes" ng-class="n.cls"&gt;
+          &lt;div class="pt-tl-node"&gt;
+            &lt;svg class="pt-i pt-i--sm" ng-if="!n.neg &amp;&amp; !n.attn"&gt;&lt;use href="#ptag-i-check"/&gt;&lt;/svg&gt;
+            &lt;svg class="pt-i pt-i--sm" ng-if="n.attn"&gt;&lt;use href="#ptag-i-triangle-alert"/&gt;&lt;/svg&gt;
+            &lt;svg class="pt-i pt-i--sm" ng-if="n.neg"&gt;&lt;use href="#ptag-i-x"/&gt;&lt;/svg&gt;
+          &lt;/div&gt;
+          &lt;div&gt;
+            &lt;div class="pt-tl-title"&gt;{{n.t}}&lt;/div&gt;
+            &lt;div class="pt-tl-sub"&gt;{{n.s}}&lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="pt-rowcard__meta" style="margin-top: 4px;"&gt;Last updated {{data.rec.updated}}&lt;span ng-if="data.rec.assigned_to"&gt; &amp;middot; Owner: {{data.rec.assigned_to}}&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+  &lt;/div&gt;
+&lt;/section&gt;]]&gt;&lt;/template&gt;&lt;/sp_widget&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>1650787465</payload_hash>
+        <record_name>PTAG Status Tracker</record_name>
+        <reverted_from/>
+        <source>79540db887524790e5790f29dabb35b7</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-23 14:07:34</sys_created_on>
+        <sys_id>727b9441879ac790e5790f29dabb354a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f8f4d95750000001</sys_recorded_at>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-23 14:07:34</sys_updated_on>
+        <type>Widget</type>
+        <update_guid>7e7b9441329ac790f3c8b318ea95e048</update_guid>
+        <update_guid_history>7e7b9441329ac790f3c8b318ea95e048:1650787465,010a94c9f8de87d01b1c85f7cd1562b9:632464014,1b9d19f04a1207d0509d6e41de47acfa:1594907203,a02319f4491ec3d0df9c27d0794fb047:-1200395063</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete display_value="PTAG Status Tracker">15953e85939a4bd04639f8597bba1097</sys_audit_delete>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>jon.deluna</sys_created_by>
+        <sys_created_on>2026-07-24 01:20:50</sys_created_on>
+        <sys_db_object display_value="" name="sp_widget">sp_widget</sys_db_object>
+        <sys_id>2eb61f4e31dd44e4a52af83f15b9bc84</sys_id>
+        <sys_metadata>602319f4931ec3d04639f8597bba1044</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PTAG Status Tracker</sys_name>
+        <sys_package display_value="PTAG Engagement Hub" source="x_snc_ptag_engage">b954893487124790e5790f29dabb35fc</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="PTAG Engagement Hub">b954893487124790e5790f29dabb35fc</sys_scope>
+        <sys_scope_delete display_value="">03813b0e5340432a86171cda984ae284</sys_scope_delete>
+        <sys_update_name>sp_widget_602319f4931ec3d04639f8597bba1044</sys_update_name>
+        <sys_update_version display_value="sp_widget_602319f4931ec3d04639f8597bba1044">727b9441879ac790e5790f29dabb354a</sys_update_version>
+        <sys_updated_by>jon.deluna</sys_updated_by>
+        <sys_updated_on>2026-07-24 01:20:50</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
